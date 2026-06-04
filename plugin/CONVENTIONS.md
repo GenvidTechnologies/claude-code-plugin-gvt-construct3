@@ -9,10 +9,10 @@ This document is the contract between the `genvid-c3` Claude Code plugin and the
 | Requirement | How it's satisfied | Checked by |
 |-------------|--------------------|------------|
 | **A C3-project marker** | `project.c3proj` at the repo root, **or** `.genvid-agent.json` with `features.c3: true`, **or** `.genvid-agent.json` `paths.c3project` pointing at the `.c3proj` file | `audit-c3-conventions` |
-| **construct3-chef MCP server** | Reachable as `npx construct3-chef server`, version ≥ `0.4.0` (installed as `@genvid/construct3-chef`) | `audit-c3-conventions` |
-| **c3-domain-manager MCP server** | Reachable as `npx c3-domain-manager server`, version ≥ `0.1.1` (installed as `@genvid/c3-domain-manager`) | `audit-c3-conventions` |
+| **construct3-chef MCP server** | Launched as `npx -y @genvid/construct3-chef server`, version ≥ `0.4.0` | `audit-c3-conventions` |
+| **c3-domain-manager MCP server** | Launched as `npx -y @genvid/c3-domain-manager server`, version ≥ `0.1.1` | `audit-c3-conventions` |
 
-The plugin **bundles** an `.mcp.json` declaring both servers, so installing `genvid-c3` registers them automatically. Bundled MCP servers install as **"Pending approval"** — approve them once in Claude Code. If the consuming repo also wires these servers in its own `.mcp.json`, that is redundant but harmless.
+The plugin **declares both servers in its `plugin.json`** (`mcpServers`), so they start automatically when `genvid-c3` is enabled. Bundled plugin servers may install as **"Pending approval"** — approve them once in Claude Code. If the consuming repo also wires these servers in its own `.mcp.json`, that is redundant but harmless.
 
 ## Optional, project-owned context the plugin's agents read at runtime
 
@@ -39,7 +39,7 @@ The genericized agents read project-specific conventions from the **consuming re
 
 **Bundled docs** (`docs/c3/`): the canonical **C3 platform reference** — event-sheet architecture, layouts, scripting, TS integration, and `construct3-guide.md`. Agents reference these via `${CLAUDE_PLUGIN_ROOT}/docs/c3/*`.
 
-**Bundled MCP config** (`.mcp.json`): declares the `construct3-chef` and `c3-domain-manager` servers.
+**Bundled MCP servers** (`plugin.json` `mcpServers`): declares the `construct3-chef` and `c3-domain-manager` servers, pinned to their tested versions.
 
 ## Knowledge boundaries
 
