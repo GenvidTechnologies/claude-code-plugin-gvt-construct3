@@ -8,6 +8,9 @@ metadata:
         reason: Runs the validator script
       - command: npx
         reason: Probes construct3-chef and c3-domain-manager versions
+    files:
+      - path: domain-config.json
+        reason: c3-domain-manager requires domain-config.json at the workspace root; the plugin launches its server with no --config, so it resolves the default location.
     mcp:
       - server: construct3-chef
         package: "@genvid/construct3-chef"

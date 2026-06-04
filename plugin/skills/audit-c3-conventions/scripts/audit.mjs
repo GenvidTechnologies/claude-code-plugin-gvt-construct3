@@ -14,7 +14,7 @@
 
 import { promises as fs, readFileSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 import { extractFrontmatter } from './lib/frontmatter.mjs';
@@ -162,9 +162,9 @@ async function loadComponent(type, name, filePath) {
 
 // ---- evaluate ---------------------------------------------------------------
 
-async function evaluateFile(component, entry) {
+export async function evaluateFile(component, entry, repoRoot = REPO_ROOT) {
   const required = entry.required !== false;
-  const path = join(REPO_ROOT, entry.path);
+  const path = join(repoRoot, entry.path);
   const exists = await fileExists(path);
 
   if (exists) {
@@ -181,10 +181,10 @@ async function evaluateFile(component, entry) {
   };
 }
 
-async function evaluateConfig(component, entry) {
+export async function evaluateConfig(component, entry, repoRoot = REPO_ROOT) {
   const required = entry.required !== false;
   const inFile = entry.in ?? '.genvid-agent.json';
-  const filePath = join(REPO_ROOT, inFile);
+  const filePath = join(repoRoot, inFile);
 
   let parsed;
   try {
@@ -411,7 +411,9 @@ function formatFinding(f) {
   return `- **${f.component}** expects ${target} — ${f.detail}.${reason}`;
 }
 
-main().catch((err) => {
-  console.error('audit failed:', err);
-  process.exit(2);
-});
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    console.error('audit failed:', err);
+    process.exit(2);
+  });
+}

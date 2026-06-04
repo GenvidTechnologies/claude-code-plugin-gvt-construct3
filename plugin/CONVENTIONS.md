@@ -35,7 +35,7 @@ The genericized agents read project-specific conventions from the **consuming re
 
 | Skill | Purpose |
 |-------|---------|
-| `audit-c3-conventions` | Read-only validator: checks the C3-project marker and that both MCP servers are reachable at their minimum versions. |
+| `audit-c3-conventions` | Read-only validator: checks the C3-project marker, that `domain-config.json` is present at the workspace root, and that both MCP servers are reachable at their minimum versions. |
 
 **Bundled docs** (`docs/c3/`): the canonical **C3 platform reference** — event-sheet architecture, layouts, scripting, TS integration, and `construct3-guide.md`. Agents reference these via `${CLAUDE_PLUGIN_ROOT}/docs/c3/*`.
 

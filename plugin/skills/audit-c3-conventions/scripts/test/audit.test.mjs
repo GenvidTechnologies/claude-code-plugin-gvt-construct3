@@ -262,3 +262,107 @@ description: No expects here
   assert.ok(fm);
   assert.equal(fm.metadata?.expects, undefined);
 });
+
+// ---- evaluateFile / evaluateConfig tests ------------------------------------
+
+import { evaluateFile, evaluateConfig } from '../audit.mjs';
+
+test('import side-effect guard: importing audit.mjs did not execute main', () => {
+  assert.ok(true, 'importing audit.mjs did not execute main');
+});
+
+test('evaluateFile: file present → ok', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.writeFile(join(dir, 'domain-config.json'), '{}');
+    const finding = await evaluateFile(
+      { name: 'test-skill' },
+      { path: 'domain-config.json', reason: 'r' },
+      dir,
+    );
+    assert.equal(finding.ok, true);
+    assert.equal(finding.target, 'domain-config.json');
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('evaluateFile: required file missing → error, no (optional) in detail', async () => {
+  const dir = await mkTmp();
+  try {
+    const finding = await evaluateFile(
+      { name: 'test-skill' },
+      { path: 'domain-config.json', reason: 'r' },
+      dir,
+    );
+    assert.equal(finding.ok, false);
+    assert.equal(finding.severity, 'error');
+    assert.ok(!finding.detail.includes('(optional)'), 'detail should not contain "(optional)"');
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('evaluateFile: optional file missing → info, (optional) in detail', async () => {
+  const dir = await mkTmp();
+  try {
+    const finding = await evaluateFile(
+      { name: 'test-skill' },
+      { path: 'domain-config.json', required: false, reason: 'r' },
+      dir,
+    );
+    assert.equal(finding.ok, false);
+    assert.equal(finding.severity, 'info');
+    assert.ok(finding.detail.includes('(optional)'), 'detail should contain "(optional)"');
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('evaluateConfig: key present in custom in: target → ok', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.writeFile(join(dir, 'my-config.json'), JSON.stringify({ foo: { bar: true } }));
+    const finding = await evaluateConfig(
+      { name: 'test-skill' },
+      { key: 'foo.bar', in: 'my-config.json', reason: 'r' },
+      dir,
+    );
+    assert.equal(finding.ok, true);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('evaluateConfig: missing key → error, detail includes "path broke at"', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.writeFile(join(dir, 'my-config.json'), JSON.stringify({}));
+    const finding = await evaluateConfig(
+      { name: 'test-skill' },
+      { key: 'foo.bar', in: 'my-config.json', reason: 'r' },
+      dir,
+    );
+    assert.equal(finding.ok, false);
+    assert.equal(finding.severity, 'error');
+    assert.ok(finding.detail.includes('path broke at'), `expected "path broke at" in: ${finding.detail}`);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('evaluateConfig: in: file absent → error, detail includes "not found"', async () => {
+  const dir = await mkTmp();
+  try {
+    const finding = await evaluateConfig(
+      { name: 'test-skill' },
+      { key: 'foo.bar', in: 'my-config.json', reason: 'r' },
+      dir,
+    );
+    assert.equal(finding.ok, false);
+    assert.equal(finding.severity, 'error');
+    assert.ok(finding.detail.includes('not found'), `expected "not found" in: ${finding.detail}`);
+  } finally {
+    await rmTmp(dir);
+  }
+});

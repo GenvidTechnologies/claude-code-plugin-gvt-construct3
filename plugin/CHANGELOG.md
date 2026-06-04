@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `docs/c3/toolchain-config.md`: new reference doc explaining how
+  `construct3-chef` and `c3-domain-manager` resolve configuration from the
+  workspace root (the cwd model), the `extracted/` coupling between the two
+  servers, and the non-root-project limitation.
+- `audit-c3-conventions` now requires `domain-config.json` at the workspace
+  root. `c3-domain-manager` resolves this file from cwd with no `--config`
+  arg, so consumers satisfy the check by placing it at the repo root. The
+  `evaluateFile` and `evaluateConfig` audit helpers are now exported and
+  covered by unit tests.
+- The plugin's MCP server launch args are intentionally left as bare `server`
+  (no `--project-dir` / `--config` / `--extracted`): both servers resolve
+  their config from the Claude-Code-provided workspace cwd, so consumers
+  configure per-repo by dropping config files at the root rather than the
+  plugin hardcoding paths. Monorepo non-root-subdir support requires upstream
+  env-var support in both servers (tracked separately).
+
 ### Changed
 - The shipped plugin now lives in the repo's `plugin/` subfolder, separate from the
   dev workspace at the repo root. The marketplace entry uses a `git-subdir` source

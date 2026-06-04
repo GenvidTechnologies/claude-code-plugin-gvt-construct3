@@ -49,6 +49,8 @@ The plugin deliberately splits C3 knowledge into three homes; respect these when
 - **Tooling reference** (recipe format, generators, CLI, recipe gotchas) → lives in `construct3-chef://docs`, versioned with the tool, **not** duplicated here.
 - **Project-specific facts** (named layouts, file paths, commit format, project gotchas) → live in the **consuming repo's** `CLAUDE.md`, read by the agents at runtime. The agents are genericized and fall back to `{type}: Description` commits when the consuming repo specifies nothing.
 
+There is a fourth, narrower home worth calling out: **cross-tool wiring that neither server's own docs own** — how the two bundled MCP servers resolve their config from the workspace cwd, and the `extracted/` coupling between `construct3-chef` (`extractedDir`) and `c3-domain-manager` (`--extracted`) — lives in `plugin/docs/c3/toolchain-config.md`. It is a *pointer* doc: it documents the interplay and the consuming-repo contract, then links out to each tool's own docs for field-level reference. Do **not** restate a single tool's config schema there (e.g. `domain-config.json`'s domain shape is project-specific and belongs to the consumer / domain-manager's docs), and do not duplicate it into the platform-mechanics docs.
+
 When you find yourself documenting a recipe gotcha vs. a platform gotcha, the distinction matters: platform gotchas (invisible to lint/typecheck, only C3 parses them) belong in `plugin/docs/c3/`; recipe-param/tooling gotchas belong in chef's docs. The `c3-implementer` agent keeps a short cheat-sheet of each but points to the canonical source.
 
 ### Components
