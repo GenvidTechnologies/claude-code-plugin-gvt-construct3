@@ -4,7 +4,7 @@
 //   1. C3-project marker (project.c3proj present, or .genvid-agent.json
 //      features.c3 === true, or paths.c3project pointing at an existing file)
 //   2. MCP servers reachable at minimum versions (construct3-chef >= 0.4.0,
-//      c3-domain-manager >= 0.1.1) — probed via `npx <server> --version`
+//      c3-domain-manager >= 0.1.1) — probed via `npx -y <package> --version`
 //   3. Walk plugin skills/agents metadata.expects (files, config, tools, mcp)
 //
 // Read-only — no --fix / migration mode.
@@ -259,11 +259,15 @@ async function evaluateMcp(component, entry) {
     reason: entry.reason,
   });
 
-  // 1. Reachability — confirm the bin actually runs via npx (the same way the
-  //    bundled .mcp.json launches it: `npx <server> server`).
+  // 1. Reachability — confirm the package actually runs via npx (the same way
+  //    the plugin's plugin.json launches it: `npx -y <package> server`). npx
+  //    resolves by *package* name, so we probe the scoped `package` (e.g.
+  //    @genvid/construct3-chef), not the bare bin name — `npx construct3-chef`
+  //    would 404. Fall back to the bin name only when no package is declared.
+  const probeTarget = pkg ?? server;
   let result;
   try {
-    result = spawnSync('npx', [server, '--version'], {
+    result = spawnSync('npx', ['-y', probeTarget, '--version'], {
       encoding: 'utf8',
       shell: process.platform === 'win32',
     });
