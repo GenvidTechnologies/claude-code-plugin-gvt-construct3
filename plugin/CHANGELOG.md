@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-06-04
+
 ### Added
 - `docs/c3/toolchain-config.md`: new reference doc explaining how
   `construct3-chef` and `c3-domain-manager` resolve configuration from the
