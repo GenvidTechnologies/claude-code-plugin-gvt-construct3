@@ -43,7 +43,7 @@ The script:
 1. **Checks the C3-project marker** — passes if any of: `project.c3proj` exists; `.genvid-agent.json` has `features.c3: true`; or `paths.c3project` points at an existing file.
 2. **Walks the plugin's installed skills and agents** at `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` and `${CLAUDE_PLUGIN_ROOT}/agents/*.md`.
 3. **Parses each component's frontmatter** to collect `metadata.expects.{files,config,tools,mcp}`.
-4. **Evaluates each expectation** against the current working directory, including MCP version probes via `npx <server> --version`.
+4. **Evaluates each expectation** against the current working directory, including MCP version probes via `npx -y <package> --version` (the scoped package, e.g. `@genvid/construct3-chef`).
 5. **Prints a structured report** grouped by severity (errors for required-but-missing; info for optional-but-missing).
 6. **Exits non-zero** if any required expectation is unmet.
 
@@ -61,11 +61,11 @@ When a required check fails, take the reason seriously — it's what the compone
 ## Act on findings
 
 - **Missing C3-project marker** — either this is not a Construct 3 project (and `genvid-c3` does not apply), or add the marker: create `project.c3proj`, or set `features.c3: true` in `.genvid-agent.json`, or set `paths.c3project` to the path of your `.c3proj` file.
-- **MCP server not reachable** — install the package (`npm install -g construct3-chef` or `npm install -g c3-domain-manager`), or add it as a project devDependency. If the server is bundled from the plugin's `.mcp.json`, it needs a one-time interactive approval in Claude Code: the audit's `npx <server> --version` probe is what surfaces the gap.
-- **MCP server version too old** — update the package to the required minimum version.
+- **MCP server not reachable** — the audit probes each server by running `npx -y <package> --version` (the scoped `@genvid/construct3-chef` / `@genvid/c3-domain-manager`). A failure means npx could not fetch or run that package — check network/registry access, or add the package as a project devDependency to pin it locally. The plugin itself launches the same packages via its `plugin.json` `mcpServers`.
+- **MCP server version too old** — bump the pinned version in the plugin's `plugin.json` `mcpServers` (and, for a local devDependency, update the package).
 - **Missing tool** — install `node` or `npx` (both ship with Node.js).
 
-> **Pending approval note:** The bundled MCP servers from this plugin's `.mcp.json` require a one-time interactive approval in Claude Code after the plugin is installed. Until approved, `npx <server> --version` will fail and the audit will report an error. Approve the servers in the Claude Code UI, then re-run the audit.
+> **Plugin-provided servers:** `genvid-c3` declares both MCP servers in its `plugin.json` (`mcpServers`), so they start automatically when the plugin is enabled. Bundled plugin servers may need a one-time approval in Claude Code before the agents can call their tools — approve them in the Claude Code UI. This is independent of the audit's `npx` probe above, which invokes npx directly and needs no approval.
 
 ## Output format
 

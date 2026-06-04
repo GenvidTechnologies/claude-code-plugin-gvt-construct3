@@ -7,5 +7,15 @@
   },
   "repository": "https://github.com/genvid-holdings/claude-code-plugin-genvid-c3",
   "license": "MIT-0",
-  "keywords": ["genvid", "construct3", "c3", "game-engine", "mcp"]
+  "keywords": ["genvid", "construct3", "c3", "game-engine", "mcp"],
+  "mcpServers": {
+    "construct3-chef": {
+      "command": "npx",
+      "args": ["-y", "@genvid/construct3-chef@0.6.0", "server"]
+    },
+    "c3-domain-manager": {
+      "command": "npx",
+      "args": ["-y", "@genvid/c3-domain-manager@0.3.0", "server"]
+    }
+  }
 }

@@ -4,6 +4,9 @@
     "host": "github"
   },
   "commands": {
-    "validate": "claude plugin validate . && node --test skills/audit-c3-conventions/scripts/test/*.test.mjs"
+    "validate": "cd plugin && claude plugin validate . && node --test skills/audit-c3-conventions/scripts/test/*.test.mjs"
+  },
+  "paths": {
+    "plugin_root": "plugin"
   }
 }
