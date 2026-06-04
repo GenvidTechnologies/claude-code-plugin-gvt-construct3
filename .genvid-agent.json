@@ -1,0 +1,9 @@
+{
+  "repo": {
+    "default_branch": "main",
+    "host": "github"
+  },
+  "commands": {
+    "validate": "claude plugin validate . && node --test skills/audit-c3-conventions/scripts/test/*.test.mjs"
+  }
+}
