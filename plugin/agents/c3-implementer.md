@@ -18,21 +18,54 @@ Read these as needed at runtime:
 
 ## MCP Tools
 
+These are the construct3-chef tools at the pinned `@0.6.0`. (Unlike `c3-explorer`,
+this agent has no `tools:` allow-list — it can call anything, so this list is for
+accuracy, not capability gating.)
+
 **Reading** (always safe):
 - `read-dsl` — human-readable eventSheet logic
 - `read-dsl-index` — JSON paths and SIDs for recipe targeting
+- `read-event-sids` — SIDs read straight from the source eventSheet JSON (not `extracted/`)
 - `read-scripts` — extracted TypeScript with imports
 - `read-layout` — layout summary (layers, instances, hierarchy)
 - `read-template-scope` — template availability across layouts
+- `read-sid-registry` — every SID in use across the project (pair with `generate-sids` for collision-free minting — gotchas #14, #16)
 - `read-domain-index` — find files by feature area
 - `search` — regex search across extracted files (`type`: `dsl`, `ts`, `layout`, `md`, `json`, `idx`; `path`: optional subdirectory; `context`: lines around each match)
+- `resolve-anchor` — look up a DSL coordinate (line/SID/name) → JSON path + SID for stable recipe targeting
+- `validate-project` — dry-run sync of `project.c3proj` vs disk; reports drift before you `sync-project` (non-mutating)
+- `generate-sids` — mint fresh unique SIDs seeded from the registry (non-mutating); use these instead of hand-picking (gotcha #14)
 
 **Mutation**:
 - `validate-recipe` — dry-run validation, returns txId
 - `apply-recipe` — apply recipe with optional regeneration
 - `regenerate` — run all C3 generators
-- `scaffold-layout` / `scaffold-sprite` — clone with UID/SID remapping
+- `scaffold-layout` / `scaffold-sprite` — clone a layout / objectType with UID/SID remapping
 - `sync-project` — sync project.c3proj after file changes
+
+**Template & layer mutations** (the recipes that *execute* a `c3-explorer` swap/replica recon):
+- `extract-template` — extract an instance + its scene-graph children from a layout into a reusable master template
+- `templatize-in-place` — convert an existing instance into the master template on its current layout
+- `clone-replica-to-layouts` — add a replica of a `templatesLayout`-defined template to one or more layouts
+- `replace-instance-with-replica` — remove an instance and drop a named template's replica into its spot (the swap primitive)
+- `remove-layer` — remove a layer from a layout (strict by default; fails if it has instances/sublayers)
+
+## Domain-config maintenance (c3-domain-manager @0.3.0)
+
+The domain-manager server (pinned `@0.3.0`) also exposes write tools for the
+project's domain taxonomy. The *capability* is generic, but the **content is
+project-specific** — which file maps to which domain is a fact that lives in the
+consuming repo, not here. Treat these as you would any project-specific edit:
+read the consuming repo's `CLAUDE.md`/domain conventions first, and prefer
+letting the orchestrator drive taxonomy decisions.
+
+- `set-overrides` — add/update overrides in `domain-config.json` (map a file path to a domain)
+- `remove-overrides` — remove overrides by file path
+- `regenerate` — run the domain index generator and refresh `extracted/domain-index/` (clears the `domainDirty` flag)
+
+After moving or renaming C3 files, a domain override may go stale — `c3-explorer`'s
+`list-stale-overrides` surfaces these; fix with `remove-overrides` (or `set-overrides`)
+then `regenerate`.
 
 ## Recipe-tooling cheat-sheet (canonical: `construct3-chef://docs` → recipe-reference.md)
 

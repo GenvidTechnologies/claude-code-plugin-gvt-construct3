@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- `c3-explorer` now enumerates the **full read-only tool surface** of both
+  pinned servers (`construct3-chef@0.6.0`, `c3-domain-manager@0.3.0`) in its
+  `tools:` allow-list and body. Newly available reads: chef
+  `read-event-sids`, `read-sid-registry`, `resolve-anchor`,
+  `list-global-layers`, `get-state`, plus the non-mutating helpers
+  `validate-project` / `generate-sids`; and c3-domain-manager
+  `glossary-check`, `validate-boundaries`, `domain-health`, `context-map`.
+  Because the agent's `tools:` is a hard allow-list, these reads were
+  previously uncallable (issue #4).
+- `c3-implementer` documents the construct3-chef template/layer mutation
+  recipes added at `@0.6.0` (`extract-template`, `templatize-in-place`,
+  `clone-replica-to-layouts`, `replace-instance-with-replica`,
+  `remove-layer`, `generate-sids`) and the mutation-flow reads
+  `read-event-sids` / `read-sid-registry` / `resolve-anchor` /
+  `validate-project`. Adds a "Domain-config maintenance" section covering
+  c3-domain-manager's `set-overrides` / `remove-overrides` / `regenerate`,
+  flagging that domain *content* is project-specific (issue #4).
+
 ## [1.1.0] - 2026-06-04
 
 ### Added
