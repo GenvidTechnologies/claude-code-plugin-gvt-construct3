@@ -4,9 +4,17 @@
     "host": "github"
   },
   "commands": {
-    "validate": "cd plugin && claude plugin validate . && node --test skills/audit-c3-conventions/scripts/test/*.test.mjs"
+    "validate": "cd plugin && claude plugin validate . && node --test skills/*/scripts/test/*.test.mjs"
   },
   "paths": {
     "plugin_root": "plugin"
+  },
+  "bugTracker": {
+    "kind": "github",
+    "actionQuery": "gh issue list --state open -L 200 --json number,title,labels,body,assignees",
+    "comparisonQuery": "gh issue list --state all -L 500 --json number,title,labels,state",
+    "readOne": "gh issue view {id} --json number,title,body,labels,comments",
+    "triagedLabel": "triaged",
+    "needsInfoLabel": "needs-info"
   }
 }

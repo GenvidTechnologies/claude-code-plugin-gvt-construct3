@@ -172,3 +172,58 @@ C3 layouts navigate using the System `GoToLayout` action. Two common patterns:
 - **Embedded layer modals**: a popup lives on its own layer within the current layout and is toggled with `set-layer-visible` / `set-layer-interactive` rather than a layout change.
 
 construct3-chef's `navigation-graph` subcommand surfaces the `GoToLayout` edges between event sheets, which is the tool-visible view of a project's navigation structure.
+
+### How navigation renders in the extracted DSL
+
+`navigation-graph` finds navigation by scanning the **extracted DSL** text line by
+line with regexes. What it matches depends on *how the navigation call renders*, so
+authoring a detection convention requires knowing the rendered forms:
+
+- **Built-in System action** (auto-detected, no config needed). The two built-in
+  actions render as:
+
+  ```
+  System.go-to-layout(layout=<LayoutName>)          # by reference — unquoted layout name
+  System.go-to-layout-by-name(layout="<expr>")      # by name — quoted string/expression
+  ```
+
+  These are matched out of the box; a project using only these needs no `navigation`
+  config.
+
+- **Wrapper function** (needs a detection pattern). A project that routes navigation
+  through its own function (e.g. `GoToLayout("Title")`) renders the **call site** as:
+
+  ```
+  do: call <Fn>("<LayoutName>", ...)                # event-sheet action
+  <Fn>("<LayoutName>", ...)                          # bare call inside a TypeScript script
+  ```
+
+  Note event-sheet string arguments render **double-quoted** in the DSL, which is what
+  a `…("([^"]+)"…` capture keys off. The wrapper's own **definition** line —
+  `function <Fn>(...)` — also contains the function name and can false-match a naive
+  pattern; it must be excluded (see below).
+
+**Call site vs. definition line.** The single most common authoring pitfall: a pattern
+that matches `GoToLayout("…")` will also match the wrapper's `function GoToLayout(target = "Menu")`
+definition, injecting a phantom edge. The convention separates the two with a
+*definition marker* — a substring (e.g. `"function GoToLayout"`) that marks a line as a
+definition to skip.
+
+**Configuring a wrapper convention.** Point the graph at the wrapper via the
+`navigation` block in `construct3-chef.config.json`:
+
+```jsonc
+{
+  "navigation": {
+    "targetPatterns": ["GoToLayout\\(\"([^\"]+)\""],  // exactly one capture group = target layout name
+    "definitionMarkers": ["function GoToLayout"]        // substring → line is a definition, skipped
+  }
+}
+```
+
+Each `targetPatterns` entry must have **exactly one capture group**, and that group is
+the resolved target layout name. `definitionMarkers` are matched as plain substrings.
+The field-level schema and matching semantics are owned by construct3-chef — see
+`construct3-chef://docs` (`cli.md`, the **Configuration file** and **navigation-graph**
+sections). The `/genvid-c3:author-navigation-patterns` skill helps inspect a project's
+DSL and author/validate these entries.

@@ -67,6 +67,32 @@ consuming repo or each server's own docs).
    Add a CHANGELOG entry under `plugin/CHANGELOG.md` → `[Unreleased]` for any
    agent-facing change (the agents ship; this doc does not).
 
+## Grounding skill/doc design in chef behavior
+
+The same `npm pack` move is the fastest way to **ground new genvid-c3 content in
+how chef actually behaves** — not just to diff the tool surface. Whenever a skill
+or a platform doc depends on chef's runtime semantics (how a value renders in the
+DSL, what a config field means, which capture group wins, whether a feature is an
+MCP tool or a CLI subcommand), pull the pinned package and read the source of
+truth instead of guessing:
+
+```bash
+cd "$(mktemp -d)"
+npm pack @genvid/construct3-chef@<pinned>
+tar -xzf *.tgz
+# algorithms / semantics:
+ls package/dist/**          # e.g. dist/c3/navConvention.js, dist/c3/chefConfig.d.ts
+# config + CLI reference:
+sed -n '1,80p' package/docs/cli.md
+```
+
+Worked example: the `author-navigation-patterns` skill's design questions —
+capture-group contract (group 1 = target), `definitionMarkers` semantics
+(substring `line.includes`, bad regex dropped not thrown), and "is `navigation-graph`
+an MCP tool?" (no — CLI-only) — were all answered from `dist/c3/navConvention.js`
++ `docs/cli.md`, which is what let the skill's preview helper mirror chef's
+`resolveNavConvention` exactly. Read the package, don't infer from memory or READMEs.
+
 ## Ground-truth cross-check
 
 `genvid-holdings/burbank` is the real embedded consumer. Its
