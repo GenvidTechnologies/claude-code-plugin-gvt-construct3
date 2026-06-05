@@ -89,8 +89,6 @@ async function loadConfig(configPath) {
 
 // ---- DSL file collection ----------------------------------------------------
 
-const DSL_EXTENSIONS = new Set(['.dsl.txt', '.txt', '.ts']);
-
 function isDslFile(name) {
   // Check for compound extension .dsl.txt first
   if (name.endsWith('.dsl.txt')) return true;
