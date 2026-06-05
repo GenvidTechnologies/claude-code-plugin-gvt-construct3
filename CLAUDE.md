@@ -27,8 +27,8 @@ All plugin checks run inside `plugin/` (that's what `commands.validate` in `.gen
 # Validate the plugin manifest + structure (run before any release/PR)
 cd plugin && claude plugin validate .
 
-# Run the audit-skill test suite
-cd plugin && node --test skills/audit-c3-conventions/scripts/test/*.test.mjs
+# Run all skill test suites
+cd plugin && node --test skills/*/scripts/test/*.test.mjs
 
 # Run a single test by name
 cd plugin && node --test --test-name-pattern="semver: higher patch" skills/audit-c3-conventions/scripts/test/audit.test.mjs

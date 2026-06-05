@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `author-navigation-patterns` skill (`/genvid-c3:author-navigation-patterns`):
+  helps a user author and validate a construct3-chef `navigation.targetPatterns`
+  / `definitionMarkers` convention for a project that routes navigation through a
+  wrapper function. Inspects the extracted DSL, proposes a one-capture-group
+  regex, previews captures/skips with a bundled helper, and validates against
+  `construct3-chef navigation-graph`. Declares `construct3-chef` `minVersion
+  0.7.0` in its `metadata.expects` (the config surface landed there), so
+  `audit-c3-conventions` reports the requirement with no audit-script change.
+- `docs/c3/layout-reference.md` now documents how navigation renders in the
+  extracted DSL (built-in `System.go-to-layout` forms, wrapper call sites, and
+  the call-site-vs-definition-line distinction) — the platform knowledge the new
+  skill links to.
+
 ### Changed
 - Bumped the pinned `construct3-chef` MCP server `0.6.0` → `0.7.0` (adds the
   configurable `navigation.targetPatterns` / `definitionMarkers` convention,

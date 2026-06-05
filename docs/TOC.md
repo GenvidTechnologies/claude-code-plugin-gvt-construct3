@@ -19,6 +19,6 @@ The canonical reference for how Construct 3 itself behaves — owned by this plu
 - [plugin/docs/c3/README.md](../plugin/docs/c3/README.md) — overview of the platform reference and why it lives here.
 - [plugin/docs/c3/construct3-guide.md](../plugin/docs/c3/construct3-guide.md) — Construct 3 platform behavior; the *why* behind the platform gotchas.
 - [plugin/docs/c3/event-sheet-architecture.md](../plugin/docs/c3/event-sheet-architecture.md) — event sheet JSON structure, the five event/action types, include composition, trigger ordering.
-- [plugin/docs/c3/layout-reference.md](../plugin/docs/c3/layout-reference.md) — layout/layer JSON, render order, the template/replica system, UID/SID constraints.
+- [plugin/docs/c3/layout-reference.md](../plugin/docs/c3/layout-reference.md) — layout/layer JSON, render order, the template/replica system, UID/SID constraints, and how navigation renders in the extracted DSL (the `navigation.targetPatterns` convention).
 - [plugin/docs/c3/scripting-reference.md](../plugin/docs/c3/scripting-reference.md) — Construct 3 scripting API quick reference (`IRuntime`, system expressions, iteration conditions).
 - [plugin/docs/c3/typescript-integration.md](../plugin/docs/c3/typescript-integration.md) — C3 TypeScript scripting: runtime access, async/concurrency model, local-variable scoping.
