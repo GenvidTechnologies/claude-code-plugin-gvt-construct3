@@ -39,6 +39,8 @@ node plugin/skills/audit-c3-conventions/scripts/audit.mjs
 
 There is no build step, no package.json, no lint config — the audit script and its libs are plain ESM `.mjs` run directly by Node. Tests use the built-in `node:test` runner only.
 
+`commands.validate` runs the test glob `skills/*/scripts/test/*.test.mjs`, so **a new skill's tests are picked up by validation automatically — but only if they live at `skills/<name>/scripts/test/*.test.mjs`.** Put a skill's tests there (the `author-navigation-patterns` skill follows this); tests placed anywhere else are silently excluded from the suite.
+
 ## Architecture
 
 ### Three knowledge boundaries (the central design principle)
@@ -58,9 +60,11 @@ When you find yourself documenting a recipe gotcha vs. a platform gotcha, the di
 - **`plugin/agents/*.md`** — flat Markdown files with YAML frontmatter, dispatched as `subagent_type: "genvid-c3:<name>"`.
   - `c3-explorer` (model: `haiku`) — strictly read-only recon. Its `tools:` frontmatter explicitly enumerates the read-only MCP tools it may call.
   - `c3-implementer` (model: `opus`) — all C3 mutations via the recipe system. TypeScript *modules* are out of scope (it hands cross-domain edits back to the orchestrator); it does write TS embedded in eventSheet script actions.
-- **`plugin/skills/<name>/SKILL.md`** — a skill is a directory containing `SKILL.md` plus any scripts. Invoked as `/genvid-c3:<name>`. Only `audit-c3-conventions` currently exists.
+- **`plugin/skills/<name>/SKILL.md`** — a skill is a directory containing `SKILL.md` plus any scripts. Invoked as `/genvid-c3:<name>`. Two skills exist: `audit-c3-conventions` (the contract validator) and `author-navigation-patterns` (authors/validates a chef `navigation.targetPatterns` convention).
 - **`plugin/docs/c3/`** — the platform reference (event-sheet architecture, layouts, scripting, TS integration, `construct3-guide.md`).
 - **`plugin/.claude-plugin/plugin.json`** — the manifest, including the `mcpServers` block that declares both C3 servers (scoped `@genvid/*` packages, pinned, launched via `npx -y … server`).
+
+> **Pattern — a skill that authors a tool's config** (e.g. `author-navigation-patterns`): mirror the tool's algorithm only against its **documented contract**, defer the field-level schema to the tool's own docs (`construct3-chef://docs`), and treat the **tool's own output as the authoritative validator** (`navigation-graph`) — any bundled helper script is a fast *preview* that must agree with, not replace, that output. Pin the mirrored logic to ground truth from the package source (see [`docs/tool-surface-reconciliation.md`](docs/tool-surface-reconciliation.md) → "Grounding skill/doc design in chef behavior").
 
 ### The convention contract & the audit (`plugin/skills/audit-c3-conventions/`)
 
