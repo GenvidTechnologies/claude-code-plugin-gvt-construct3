@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-06-05
+
 ### Added
 - `author-navigation-patterns` skill (`/genvid-c3:author-navigation-patterns`):
   helps a user author and validate a construct3-chef `navigation.targetPatterns`
