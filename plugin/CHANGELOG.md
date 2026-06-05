@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- `c3-explorer` now enumerates the **full read-only tool surface** of both
+  pinned servers (`construct3-chef@0.6.0`, `c3-domain-manager@0.3.0`) in its
+  `tools:` allow-list and body. Newly available reads: chef
+  `read-event-sids`, `read-sid-registry`, `resolve-anchor`,
+  `list-global-layers`, `get-state`, plus the non-mutating helpers
+  `validate-project` / `generate-sids`; and c3-domain-manager
+  `glossary-check`, `validate-boundaries`, `domain-health`, `context-map`.
+  Because the agent's `tools:` is a hard allow-list, these reads were
+  previously uncallable (issue #4).
+
 ## [1.1.0] - 2026-06-04
 
 ### Added

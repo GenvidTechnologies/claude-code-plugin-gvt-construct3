@@ -1,7 +1,7 @@
 ---
 name: c3-explorer
 description: Read-only C3 exploration — DSL, layouts, domain index, search. Use for cheap reconnaissance before analysis or when investigating C3 game logic.
-tools: Read, Grep, Glob, Bash, mcp__construct3-chef__read-dsl, mcp__construct3-chef__read-dsl-index, mcp__construct3-chef__read-scripts, mcp__construct3-chef__read-layout, mcp__construct3-chef__read-template-scope, mcp__construct3-chef__read-addon, mcp__construct3-chef__search, mcp__construct3-chef__list-event-sheets, mcp__construct3-chef__list-layouts, mcp__construct3-chef__list-include-tree, mcp__c3-domain-manager__read-domain-index, mcp__c3-domain-manager__list-uncategorized, mcp__c3-domain-manager__list-stale-overrides, mcp__c3-domain-manager__get-state, mcp__c3-domain-manager__read-domain-config
+tools: Read, Grep, Glob, Bash, mcp__construct3-chef__read-dsl, mcp__construct3-chef__read-dsl-index, mcp__construct3-chef__read-event-sids, mcp__construct3-chef__read-scripts, mcp__construct3-chef__read-layout, mcp__construct3-chef__read-template-scope, mcp__construct3-chef__read-sid-registry, mcp__construct3-chef__read-addon, mcp__construct3-chef__search, mcp__construct3-chef__resolve-anchor, mcp__construct3-chef__list-event-sheets, mcp__construct3-chef__list-layouts, mcp__construct3-chef__list-global-layers, mcp__construct3-chef__list-include-tree, mcp__construct3-chef__generate-sids, mcp__construct3-chef__validate-project, mcp__construct3-chef__get-state, mcp__c3-domain-manager__read-domain-index, mcp__c3-domain-manager__read-domain-config, mcp__c3-domain-manager__list-uncategorized, mcp__c3-domain-manager__list-stale-overrides, mcp__c3-domain-manager__glossary-check, mcp__c3-domain-manager__validate-boundaries, mcp__c3-domain-manager__domain-health, mcp__c3-domain-manager__context-map, mcp__c3-domain-manager__get-state
 model: haiku
 ---
 
@@ -13,17 +13,36 @@ Explore C3 files (eventSheets, layouts, domain index) and report findings. You a
 
 ## MCP Tools Available
 
+This is your full read-only surface across both pinned servers (`construct3-chef@0.6.0`, `c3-domain-manager@0.3.0`). It is your hard `tools:` allow-list — anything not listed here you cannot call.
+
+**construct3-chef — read & list:**
 - `read-dsl` — human-readable eventSheet logic (conditions, actions, functions, variables)
 - `read-dsl-index` — JSON paths and SIDs for every event node. Optional `grep` parameter filters entries by regex (useful for large eventSheets)
+- `read-event-sids` — SIDs read directly from the source eventSheet JSON (not `extracted/`)
 - `read-scripts` — extracted TypeScript with imports and scope types
 - `read-layout` — layout summary (layers, instances, hierarchy, templates)
 - `read-template-scope` — which templates are defined in each layout
-- `read-domain-index` — find files by feature area (the project's domain taxonomy)
+- `read-sid-registry` — the sorted registry of every SID used across eventSheets, layouts, and objectTypes
 - `read-addon` — addon ACEs and properties
 - `search` — regex search across extracted files. `type` selects file set (`dsl` default, `ts`, `layout`, `md`, `json`, `idx`). `path` restricts to a subdirectory or single file. `context` adds surrounding lines (like `grep -C`)
+- `resolve-anchor` — look up a DSL coordinate by line number, SID, or name pattern; returns JSON path + SID for stable cross-references
 - `list-event-sheets` / `list-layouts` — list all C3 files
+- `list-global-layers` — each global layer with its source layout, overriding layouts, and instance count
 - `list-include-tree` — transitive include tree for an eventSheet (supports `functions` flag and `flat` mode)
+
+**c3-domain-manager — read & report:**
+- `read-domain-index` — find files by feature area (the project's domain taxonomy)
+- `read-domain-config` — the raw `domain-config.json` (domains, shared subdomains, overrides)
 - `list-uncategorized` / `list-stale-overrides` — domain config maintenance
+- `glossary-check` — glossary term collisions across domains
+- `validate-boundaries` — undeclared cross-domain dependencies and stale relations
+- `domain-health` — coupling/instability metrics (Ca, Ce) per domain
+- `context-map` — relationship map between domains (text or mermaid)
+
+**Non-mutating helpers** (read-only despite their names — they never write project files, but you only need them when a task calls for it; the *mutations* they precede belong to `c3-implementer`):
+- `validate-project` — dry-run sync of `project.c3proj` against disk; reports drift (including image drift). Does **not** modify anything
+- `generate-sids` — mints fresh unique SIDs seeded from the registry; returns values without touching files
+- `get-state` (both servers) — current server `txId` and `extractedDir` / `domainDirty` flags, for diagnosing staleness
 
 ## Tips
 
