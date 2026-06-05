@@ -8,6 +8,10 @@ Index of the docs in this repo. genvid plugin agents and skills consult this to 
 - [CLAUDE.md](../CLAUDE.md) — guidance for Claude Code working in this repo: commands, architecture, and the three knowledge boundaries.
 - [plugin/CONVENTIONS.md](../plugin/CONVENTIONS.md) — the genvid-c3 plugin's own convention contract (what a *consuming* repo must provide). Distinct from genvid-dev's conventions.
 
+## Maintainer procedures (dev workspace, not shipped)
+
+- [docs/tool-surface-reconciliation.md](tool-surface-reconciliation.md) — how to re-reconcile the `c3-explorer` / `c3-implementer` tool inventories against the pinned MCP server versions. Run on every chef/dm version bump.
+
 ## C3 platform reference (`plugin/docs/c3/`)
 
 The canonical reference for how Construct 3 itself behaves — owned by this plugin and shipped in the `plugin/` subtree.
