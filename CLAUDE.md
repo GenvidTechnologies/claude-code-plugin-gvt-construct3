@@ -80,6 +80,7 @@ Audit exit codes: `0` all required expectations met, `1` an error finding, `2` u
 
 - Top-level frontmatter keys are fixed to `name`, `description`, and Anthropic-supported fields (`model`, `tools`). **Custom expectations go under `metadata.expects`** — never invent new top-level keys, or `claude plugin validate` and downstream tooling will choke.
 - Keep agent bodies generic across C3 projects. Anything project-specific belongs in the consuming repo, not here (see knowledge boundaries above).
+- **Respect each agent's capability envelope (`model` + `tools`).** Don't instruct an agent to do what it can't observe. `c3-explorer` is `haiku` and reads layout/addon JSON, *not pixels* — so its swap-recon guidance reports observable geometry (size, origin/anchor, frame inventory) and hands visual-silhouette judgment back to a human, rather than claiming to compare shapes. When adding guidance, write the observable-data steps and explicitly flag anything that needs a capability the agent lacks.
 - Commit format observed in history: `{type}: short description` (e.g. `feat:`, `docs:`).
 
 ## Release status
