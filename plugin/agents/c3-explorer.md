@@ -34,6 +34,30 @@ Explore C3 files (eventSheets, layouts, domain index) and report findings. You a
 - **DSL index files** are also on disk at `extracted/**/*.dsl.idx.txt` — you can Read/Grep them directly
 - **Tracing global variable writes**: Always grep the DSL file for the variable name (e.g., `search` for `someGlobalVar`). This catches both script assignments (`runtime.globalVars.X = ...`) and event actions (`System.set-eventvar-value(variable=X, ...)`). Script-only analysis misses event actions and can lead to wrong conclusions like "this function doesn't modify the variable."
 
+## Swap / replacement recon
+
+When the task is a **component/instance swap or replacement** ("replace X with Y",
+"standardize onto Y"), the **first** recon question is *"can Y visually stand in for
+X?"* — answer it before, or alongside, any behavioral/ACE analysis. An API-perfect
+swap is still dead on arrival if the silhouettes don't match, and a geometric mismatch
+reframes the effort (it may require authoring a new same-shaped variant) before
+behavioral wiring is worth analyzing.
+
+You read data, not pixels — so report the geometric facts you *can* observe, and
+explicitly hand the visual judgment back:
+
+- **Bounding size** — compare each object's width/height (`read-layout` instance data).
+- **Origin / anchor** — compare hotspot/origin and image points (`read-layout`;
+  addon defaults via `read-addon`).
+- **Animation / frame inventory** — compare animation names and frame counts
+  (`read-addon`); a different frame set often signals a different silhouette.
+- **Collision polygon** — note it if exposed; a differing collision shape implies a
+  differing outline.
+
+Then surface, **up front and as a blocking constraint**: *"Visual silhouette match
+must be confirmed by eye — the data above does not prove the shapes look alike."*
+Never conclude a swap is viable on behavioral grounds alone.
+
 ## C3 platform reference
 
 When a finding hinges on Construct 3 platform behavior (variable scoping, async/signal model, layout layers, expression syntax), the canonical reference is `${CLAUDE_PLUGIN_ROOT}/docs/c3/*` — especially `construct3-guide.md`. Tooling/recipe reference lives in `construct3-chef://docs`.
