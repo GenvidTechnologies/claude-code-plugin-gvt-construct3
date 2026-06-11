@@ -45,7 +45,8 @@ consuming repo or each server's own docs).
    The tool name is the first argument to `registerTool(...)` — or to whatever
    one-arg helper wraps it.)
 
-   **Sanity-check the count before trusting the diff.** chef exposes ~28+ tools.
+   **Sanity-check the count before trusting the diff.** chef exposes ~28+ tools;
+   c3-domain-manager exposes ~13 (12 before the `0.4.0` `validate-editor` addition).
    If the grep returns **0** or an implausibly small set, the registration pattern
    changed (moved behind a differently-named wrapper, or into another module under
    `dist/`) — open `server.js` and find how `registerTool` is actually invoked,
