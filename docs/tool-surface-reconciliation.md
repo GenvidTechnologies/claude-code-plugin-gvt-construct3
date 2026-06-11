@@ -34,12 +34,24 @@ consuming repo or each server's own docs).
    for t in *.tgz; do tar -xzf "$t"; done
 
    echo "=== construct3-chef ==="
-   grep -oE 'registerTool\(\s*"[a-z0-9-]+"' package*/dist/mcp/server.js 2>/dev/null \
+   # chef may wrap registerTool in a local helper — 0.8.0+ registers via a
+   # `reg("name", …)` wrapper that calls `server.registerTool(...)`. Match both
+   # the direct call and a one-arg wrapper so the grep survives that refactor:
+   grep -ohE '(registerTool|reg)\(\s*"[a-z0-9-]+"' package*/dist/mcp/server.js 2>/dev/null \
      | sed -E 's/.*"([a-z0-9-]+)"/\1/' | sort -u
    ```
 
    (Run the same `grep` against the c3-domain-manager `package/dist/mcp/server.js`.
-   The tool name is the first argument to `registerTool(...)`.)
+   The tool name is the first argument to `registerTool(...)` — or to whatever
+   one-arg helper wraps it.)
+
+   **Sanity-check the count before trusting the diff.** chef exposes ~28+ tools.
+   If the grep returns **0** or an implausibly small set, the registration pattern
+   changed (moved behind a differently-named wrapper, or into another module under
+   `dist/`) — open `server.js` and find how `registerTool` is actually invoked,
+   then widen the pattern. A silent zero reads as *"every tool was removed,"* which
+   is exactly the wrong conclusion (this bit the 0.7.0→0.8.0 bump, when the direct
+   `registerTool("name"` grep matched nothing because 0.8.0 had moved to `reg(...)`).
 
    To also pull each tool's `description` / `readOnlyHint` for classification,
    walk the `registerTool("name", { ... },` blocks with a small Node script —
@@ -59,6 +71,22 @@ consuming repo or each server's own docs).
      mutation-flow-relevant, to `c3-implementer`'s reading list.
    - Added mutation → document in `c3-implementer` under the right subsection.
    - Renamed / removed → update or delete the stale entry in **both** agents.
+
+3.5. **Sweep stale pinned-version strings.** Reconciling the allow-lists is not
+   enough — the *old* pinned version is also written into agent/doc prose, and it
+   drifts every bump if you don't sweep it (the 0.6.0→0.7.0 bump fixed the
+   allow-lists but left the bodies reading `@0.6.0`, and the CHANGELOG even claimed
+   otherwise). After bumping, grep the plugin subtree for the **old** version and
+   update every prose occurrence:
+
+   ```bash
+   grep -rn '@0\.7\.0' plugin/agents plugin/docs   # ← the version you bumped FROM
+   ```
+
+   Known homes: `plugin/agents/c3-explorer.md` body, `plugin/agents/c3-implementer.md`
+   body, `plugin/docs/c3/toolchain-config.md` example. **Do not** sweep the
+   `minVersion` floors in `plugin/skills/*/SKILL.md` — those are deliberate floor
+   decisions, not the pin (a pin bump is not a floor bump).
 
 4. **Validate & record:**
    ```bash
@@ -89,9 +117,16 @@ sed -n '1,80p' package/docs/cli.md
 Worked example: the `author-navigation-patterns` skill's design questions —
 capture-group contract (group 1 = target), `definitionMarkers` semantics
 (substring `line.includes`, bad regex dropped not thrown), and "is `navigation-graph`
-an MCP tool?" (no — CLI-only) — were all answered from `dist/c3/navConvention.js`
-+ `docs/cli.md`, which is what let the skill's preview helper mirror chef's
-`resolveNavConvention` exactly. Read the package, don't infer from memory or READMEs.
+an MCP tool?" — were all answered from `dist/c3/navConvention.js` + `docs/cli.md`,
+which is what let the skill's preview helper mirror chef's `resolveNavConvention`
+exactly. Read the package, don't infer from memory or READMEs.
+
+That last question is also a standing reminder that the answer can *change*:
+`navigation-graph` was **CLI-only through 0.7.0**, then chef 0.8.0 (#85) promoted
+it to an MCP tool — so the 0.7.0→0.8.0 reconciliation had to add it to
+`c3-explorer`'s allow-list. A "CLI-only" finding has a shelf life; re-derive it
+from the pinned package each bump rather than trusting a prior reconciliation
+(this is exactly what the count sanity-check and version sweep above guard against).
 
 ## Ground-truth cross-check
 

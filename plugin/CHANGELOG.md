@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `c3-explorer` can now call chef's **`navigation-graph`** MCP tool (added to its
+  `tools:` allow-list and "MCP Tools Available" body list). It renders the layout
+  navigation graph (every `System.go-to-layout` / configured nav call in the
+  extracted DSL) as a `from sheet → target layout → line` table, or a PlantUML
+  diagram via `format: "plantuml"`. The tool is `READ_ONLY`, so it belongs on the
+  read-only explorer; it is not part of the recipe-mutation flow, so it is not
+  added to `c3-implementer`. (`navigation-graph` was CLI-only at `0.7.0`;
+  construct3-chef#85 exposes it as an MCP tool at `0.8.0`.)
+
+### Changed
+- Bumped the pinned `construct3-chef` MCP server `0.7.0` → `0.8.0`. **Tool-surface
+  reconciliation run** (`registerTool` diff, 28 → 29 tools): the only surface
+  change is the added `navigation-graph` tool above — no tools were renamed or
+  removed. The other `0.8.0` changes are runtime/behavioral and need no agent
+  edits: single-block tool responses (`txId` folded into the success block,
+  errors as a single `Error:` block — construct3-chef#80), `list-event-sheets` /
+  `list-layouts` pagination (#82), and `validateForEditor` editor-strictness
+  validation (#86). The `construct3-chef` minimum-version floor in
+  `CONVENTIONS.md` / `audit-c3-conventions` stays `≥ 0.4.0` — this is a pin bump,
+  not a floor bump.
+- Corrected stale pinned-version strings in the agent/doc prose that still read
+  `@0.6.0` after the `0.7.0` bump: `c3-explorer` and `c3-implementer` bodies and
+  the `docs/c3/toolchain-config.md` example now read `@0.8.0`.
+
 ## [1.2.0] - 2026-06-05
 
 ### Added
