@@ -18,7 +18,7 @@ Read these as needed at runtime:
 
 ## MCP Tools
 
-These are the construct3-chef tools at the pinned `@0.6.0`. (Unlike `c3-explorer`,
+These are the construct3-chef tools at the pinned `@0.8.0`. (Unlike `c3-explorer`,
 this agent has no `tools:` allow-list — it can call anything, so this list is for
 accuracy, not capability gating.)
 

@@ -25,7 +25,7 @@ Placed at the **workspace root**. This file is **required** by c3-domain-manager
 The plugin declares both servers in `plugin.json` as bare `server` invocations:
 
 ```json
-"construct3-chef": { "command": "npx", "args": ["-y", "@genvid/construct3-chef@0.6.0", "server"] }
+"construct3-chef": { "command": "npx", "args": ["-y", "@genvid/construct3-chef@0.8.0", "server"] }
 "c3-domain-manager": { "command": "npx", "args": ["-y", "@genvid/c3-domain-manager@0.3.0", "server"] }
 ```
 
