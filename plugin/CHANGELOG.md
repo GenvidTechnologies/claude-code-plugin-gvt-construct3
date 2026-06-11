@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-06-11
+
 ### Added
 - `c3-explorer` and `c3-implementer` now document c3-domain-manager's
   **`validate-editor`** MCP tool (new at `0.4.0`). It is `READ_ONLY` — an
