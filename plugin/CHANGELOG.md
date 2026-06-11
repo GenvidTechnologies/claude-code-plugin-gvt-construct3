@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `c3-explorer` and `c3-implementer` now document c3-domain-manager's
+  **`validate-editor`** MCP tool (new at `0.4.0`). It is `READ_ONLY` — an
+  editor-strictness diagnostic that re-walks `eventSheets/` fresh (never the
+  cached domain index) and reports what the C3 editor would reject. Added to
+  `c3-explorer`'s `tools:` allow-list + "read & report" body (next to
+  `validate-boundaries`), and to `c3-implementer`'s "Domain-config maintenance"
+  section as a post-mutation editor-strictness check complementing
+  `validate-project`. (c3-domain-manager#13, adopts `@genvid/c3source` 1.4.0
+  `validateForEditor`.)
 - `c3-explorer` can now call chef's **`navigation-graph`** MCP tool (added to its
   `tools:` allow-list and "MCP Tools Available" body list). It renders the layout
   navigation graph (every `System.go-to-layout` / configured nav call in the
@@ -18,6 +27,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   construct3-chef#85 exposes it as an MCP tool at `0.8.0`.)
 
 ### Changed
+- Bumped the pinned `c3-domain-manager` MCP server `0.3.0` → `0.4.0`.
+  **Tool-surface reconciliation run** (`registerTool` diff, 12 → 13 tools): the
+  only surface change is the added `validate-editor` tool above — no tools were
+  renamed or removed. The enriched cross-domain dependency graph
+  (`domain-health` / `validate-boundaries` / `context-map` now also account for
+  event-variable references, not just `include` edges — c3-domain-manager#14) is
+  richer output with the same one-line tool purposes, so the agent descriptions
+  are unchanged. The `c3-domain-manager` minimum-version floor in
+  `CONVENTIONS.md` / `audit-c3-conventions` is unaffected — this is a pin bump,
+  not a floor bump. Also swept the now-stale `@0.3.0` pinned-version strings in
+  the `c3-explorer` / `c3-implementer` bodies and the
+  `docs/c3/toolchain-config.md` example to `@0.4.0`.
 - Bumped the pinned `construct3-chef` MCP server `0.7.0` → `0.8.0`. **Tool-surface
   reconciliation run** (`registerTool` diff, 28 → 29 tools): the only surface
   change is the added `navigation-graph` tool above — no tools were renamed or
