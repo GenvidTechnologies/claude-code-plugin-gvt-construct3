@@ -50,14 +50,15 @@ accuracy, not capability gating.)
 - `replace-instance-with-replica` — remove an instance and drop a named template's replica into its spot (the swap primitive)
 - `remove-layer` — remove a layer from a layout (strict by default; fails if it has instances/sublayers)
 
-## Domain-config maintenance (c3-domain-manager @0.3.0)
+## Domain-config maintenance (c3-domain-manager @0.4.0)
 
-The domain-manager server (pinned `@0.3.0`) also exposes write tools for the
-project's domain taxonomy. The *capability* is generic, but the **content is
-project-specific** — which file maps to which domain is a fact that lives in the
-consuming repo, not here. Treat these as you would any project-specific edit:
-read the consuming repo's `CLAUDE.md`/domain conventions first, and prefer
-letting the orchestrator drive taxonomy decisions.
+The domain-manager server (pinned `@0.4.0`) exposes write tools for the
+project's domain taxonomy, plus the `validate-editor` read diagnostic. The
+*capability* is generic, but the **content is project-specific** — which file
+maps to which domain is a fact that lives in the consuming repo, not here. Treat
+the write tools as you would any project-specific edit: read the consuming repo's
+`CLAUDE.md`/domain conventions first, and prefer letting the orchestrator drive
+taxonomy decisions.
 
 - `set-overrides` — add/update overrides in `domain-config.json` (map a file path to a domain)
 - `remove-overrides` — remove overrides by file path
@@ -66,6 +67,11 @@ letting the orchestrator drive taxonomy decisions.
 After moving or renaming C3 files, a domain override may go stale — `c3-explorer`'s
 `list-stale-overrides` surfaces these; fix with `remove-overrides` (or `set-overrides`)
 then `regenerate`.
+
+`validate-editor` (READ_ONLY) re-walks `eventSheets/` fresh (never the cached
+domain index) and reports what the C3 editor would reject — a useful
+post-mutation editor-strictness check after `apply-recipe`, complementing
+`validate-project`'s `project.c3proj`-vs-disk drift check.
 
 ## Recipe-tooling cheat-sheet (canonical: `construct3-chef://docs` → recipe-reference.md)
 
