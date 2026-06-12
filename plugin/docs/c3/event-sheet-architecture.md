@@ -155,6 +155,14 @@ When unsure whether a parameter is an expression or enum, check an existing even
 { "customAction": "Initialize", "objectClass": "CardScroller", "parameters": ["1", "\"heroes\""] }
 ```
 
+When the custom action is **defined on a family** but called on one of its **member instances** (`InstanceType.FamilyAction()`), the action JSON also needs `customActionObjectClass` -- the family that defines the `custom-ace-block` -- while `objectClass` stays the member instance the action runs on:
+
+```json
+{ "customAction": "Refresh", "objectClass": "Widget", "customActionObjectClass": "WidgetFamily", "parameters": [] }
+```
+
+`customActionObjectClass` is **required** when calling a family-defined custom action on a member, and omitted when the ACE is defined directly on the object type. **Missing it fails silently at runtime:** C3 imports the project fine and the DSL renders byte-identically (renderers that format from `objectClass`/`customAction`/`parameters` never read `customActionObjectClass`), so the defect escapes editor import, visual review, and DSL diffs -- the action simply no-ops. Editor-import success does **not** mean the action resolves.
+
 **Comment action** -- inline documentation inside a block's actions array:
 
 ```json
