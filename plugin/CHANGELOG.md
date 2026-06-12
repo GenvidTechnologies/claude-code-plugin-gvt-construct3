@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`build-reference` skill** (`/genvid-c3:build-reference`): produces
+  construct3-chef's `c3-reference` cache (`<extractedDir>/c3-reference/index.json`)
+  so `search-docs` can resolve **built-in plugin ACEs, layout/scripting docs, and
+  the Expression language** — coverage that needs the cache (custom-addon ACEs
+  already work live). Reads the version-pinned C3 manual PDF (the only
+  machine-reachable source for built-ins; construct.net is Cloudflare-challenge-
+  walled, so its URLs serve only as `canonicalUrl` anchors), extracts built-in ACE
+  tables + concept prose, and writes a schema-valid cache via a bundled assembler
+  (`scripts/build-index.mjs` + `scripts/lib/reference-index.mjs`, 21 unit tests).
+  The bundled validator mirrors chef's `ReferenceIndexSchema` as a *preview*;
+  chef's own `search-docs` is the authoritative check. The cache holds
+  `source:"builtin"` ACEs + chunks **only** — chef reads `addons/*/aces.json` live
+  and merges it, so caching addon ACEs would double-count them. Declares
+  construct3-chef `minVersion 0.9.0` in `metadata.expects`. (Closes #13;
+  construct3-chef#87.)
+- `docs/c3/ace-reference.md`: new platform-reference doc for the ACE
+  (action/condition/expression) metadata model — the `aces.json` structure for
+  custom addons (category-keyed; params keyed by `id`; expressions use
+  `expressionName`; `$schema` skipped) and why built-in/system plugins have no
+  `aces.json` (C3 is a webapp — no install). The durable platform knowledge the
+  `build-reference` skill relies on, documented once per the chef-owns-tooling /
+  plugin-owns-platform split.
+- `c3-explorer` and `c3-implementer` now document construct3-chef's **`search-docs`**
+  MCP tool (new at `0.9.0`). It is `READ_ONLY` — looks up C3 ACE (action/condition/
+  expression) reference (parameter names/types, expression syntax, condition/action
+  ids). Custom-addon ACEs are always available (read from the project's `addons/`);
+  built-in plugins, layouts, scripting, and the Expression language light up when the
+  `c3-reference` cache is present. Added to `c3-explorer`'s `tools:` allow-list +
+  "read & list" body, and to `c3-implementer`'s "Reading" list. (construct3-chef#87.)
+
+### Changed
+- Bumped the pinned `construct3-chef` MCP server `0.8.0` → `0.9.0`. **Tool-surface
+  reconciliation run** (`registerTool` diff, 29 → 30 tools): the only surface change
+  is the added `search-docs` tool above — no tools were renamed or removed. The
+  `construct3-chef` minimum-version floor in `CONVENTIONS.md` / `audit-c3-conventions`
+  stays `≥ 0.4.0` — this is a pin bump, not a floor bump. Also swept the now-stale
+  `@0.8.0` pinned-version strings in the `c3-explorer` / `c3-implementer` bodies and
+  the `docs/c3/toolchain-config.md` example to `@0.9.0`.
+
 ## [1.3.0] - 2026-06-11
 
 ### Added

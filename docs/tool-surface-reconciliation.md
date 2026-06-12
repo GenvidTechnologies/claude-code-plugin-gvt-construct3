@@ -122,6 +122,16 @@ an MCP tool?" — were all answered from `dist/c3/navConvention.js` + `docs/cli.
 which is what let the skill's preview helper mirror chef's `resolveNavConvention`
 exactly. Read the package, don't infer from memory or READMEs.
 
+**Ground the *ingestion/merge path*, not just the schema.** When a skill *produces
+data a tool consumes* (a cache, not just a config), the schema is only half the
+question — also ask *"does the tool already generate part of this data itself, and
+how does it combine the two?"* The `build-reference` skill's design hinged on this:
+chef's `aceLookup.js` `lookup()` reads `addons/*/aces.json` **live** and concatenates
+it with the cache's `aces` (no dedup), so the `c3-reference` cache must hold
+**built-in/manual ACEs + chunks only** — caching `source:"addon"` entries would
+double-count every one. That fact lives in `dist/c3/aceRegistry.js` /
+`aceLookup.js`, not in any schema; only reading the ingestion code surfaces it.
+
 That last question is also a standing reminder that the answer can *change*:
 `navigation-graph` was **CLI-only through 0.7.0**, then chef 0.8.0 (#85) promoted
 it to an MCP tool — so the 0.7.0→0.8.0 reconciliation had to add it to

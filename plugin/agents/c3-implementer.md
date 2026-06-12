@@ -18,7 +18,7 @@ Read these as needed at runtime:
 
 ## MCP Tools
 
-These are the construct3-chef tools at the pinned `@0.8.0`. (Unlike `c3-explorer`,
+These are the construct3-chef tools at the pinned `@0.9.0`. (Unlike `c3-explorer`,
 this agent has no `tools:` allow-list — it can call anything, so this list is for
 accuracy, not capability gating.)
 
@@ -32,6 +32,7 @@ accuracy, not capability gating.)
 - `read-sid-registry` — every SID in use across the project (pair with `generate-sids` for collision-free minting — gotchas #14, #16)
 - `read-domain-index` — find files by feature area
 - `search` — regex search across extracted files (`type`: `dsl`, `ts`, `layout`, `md`, `json`, `idx`; `path`: optional subdirectory; `context`: lines around each match)
+- `search-docs` — look up C3 ACE reference (param names/types, expression syntax, condition/action ids) before authoring a recipe; covers custom addons always, and built-ins/layouts/scripting/Expression-language when the `c3-reference` cache is present (produced by the `build-reference` skill)
 - `resolve-anchor` — look up a DSL coordinate (line/SID/name) → JSON path + SID for stable recipe targeting
 - `validate-project` — dry-run sync of `project.c3proj` vs disk; reports drift before you `sync-project` (non-mutating)
 - `generate-sids` — mint fresh unique SIDs seeded from the registry (non-mutating); use these instead of hand-picking (gotcha #14)
