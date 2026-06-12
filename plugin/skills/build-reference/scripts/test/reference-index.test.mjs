@@ -74,6 +74,27 @@ test('validateAceEntry: missing id is rejected', () => {
   assert.ok(errors.some((e) => e.includes('id')));
 });
 
+test('validateAceEntry: missing source is rejected', () => {
+  const errors = [];
+  const { source, ...noSource } = goodAce;
+  validateAceEntry(noSource, 'a', errors);
+  assert.ok(errors.some((e) => e.includes('source')));
+});
+
+test('validateAceEntry: missing objectClass is rejected', () => {
+  const errors = [];
+  const { objectClass, ...noClass } = goodAce;
+  validateAceEntry(noClass, 'a', errors);
+  assert.ok(errors.some((e) => e.includes('objectClass')));
+});
+
+test('validateAceEntry: missing kind is rejected', () => {
+  const errors = [];
+  const { kind, ...noKind } = goodAce;
+  validateAceEntry(noKind, 'a', errors);
+  assert.ok(errors.some((e) => e.includes('kind')));
+});
+
 test('validateAceEntry: params must be {name,type} objects', () => {
   const errors = [];
   validateAceEntry({ ...goodAce, params: [{ id: 'x', type: 'number' }] }, 'a', errors);
