@@ -130,7 +130,9 @@ partial built-in coverage is fine and honest.
 
 - **Copyright:** write only to the gitignored cache path; never commit manual text,
   and never write manual prose anywhere tracked.
-- **No addon ACEs in the cache** (double-count — see above).
+- **No addon ACEs in the cache** (double-count — see above). chef merges live addon
+  ACEs with `cache.aces` without dedup; a self-enforcing guard upstream is tracked in
+  construct3-chef#91.
 - **No network at query time:** all fetching happens here, in this human-run step,
   by design — chef stays offline when answering.
 - **Honesty over coverage:** report built-in ACE extraction gaps explicitly rather
