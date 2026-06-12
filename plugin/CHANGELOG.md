@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `c3-explorer` and `c3-implementer` now document construct3-chef's **`search-docs`**
+  MCP tool (new at `0.9.0`). It is `READ_ONLY` — looks up C3 ACE (action/condition/
+  expression) reference (parameter names/types, expression syntax, condition/action
+  ids). Custom-addon ACEs are always available (read from the project's `addons/`);
+  built-in plugins, layouts, scripting, and the Expression language light up when the
+  `c3-reference` cache is present. Added to `c3-explorer`'s `tools:` allow-list +
+  "read & list" body, and to `c3-implementer`'s "Reading" list. (construct3-chef#87.)
+
+### Changed
+- Bumped the pinned `construct3-chef` MCP server `0.8.0` → `0.9.0`. **Tool-surface
+  reconciliation run** (`registerTool` diff, 29 → 30 tools): the only surface change
+  is the added `search-docs` tool above — no tools were renamed or removed. The
+  `construct3-chef` minimum-version floor in `CONVENTIONS.md` / `audit-c3-conventions`
+  stays `≥ 0.4.0` — this is a pin bump, not a floor bump. Also swept the now-stale
+  `@0.8.0` pinned-version strings in the `c3-explorer` / `c3-implementer` bodies and
+  the `docs/c3/toolchain-config.md` example to `@0.9.0`.
+
 ## [1.3.0] - 2026-06-11
 
 ### Added
