@@ -10,7 +10,8 @@ Index of the docs in this repo. genvid plugin agents and skills consult this to 
 
 ## Maintainer procedures (dev workspace, not shipped)
 
-- [docs/tool-surface-reconciliation.md](tool-surface-reconciliation.md) — how to re-reconcile the `c3-explorer` / `c3-implementer` tool inventories against the pinned MCP server versions. Run on every chef/dm version bump.
+- [docs/tool-surface-reconciliation.md](tool-surface-reconciliation.md) — C3-specific reconciliation anchors (agent allow-lists, package names, surface counts) + burbank cross-check; defers the procedure to the `/genvid-dev:reconcile-mcp-pin` skill. Run on every chef/dm pin bump.
+- [docs/grounding-in-chef-behavior.md](grounding-in-chef-behavior.md) — how to ground new genvid-c3 skills/platform-docs in chef's actual source via `npm pack` (vs. inferring from memory/READMEs).
 
 ## C3 platform reference (`plugin/docs/c3/`)
 
