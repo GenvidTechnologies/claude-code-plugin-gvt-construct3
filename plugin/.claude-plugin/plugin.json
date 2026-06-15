@@ -11,7 +11,7 @@
   "mcpServers": {
     "construct3-chef": {
       "command": "npx",
-      "args": ["-y", "@genvid/construct3-chef@0.9.0", "server"]
+      "args": ["-y", "@genvid/construct3-chef@0.10.1", "server"]
     },
     "c3-domain-manager": {
       "command": "npx",

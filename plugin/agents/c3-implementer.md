@@ -18,7 +18,7 @@ Read these as needed at runtime:
 
 ## MCP Tools
 
-These are the construct3-chef tools at the pinned `@0.9.0`. (Unlike `c3-explorer`,
+These are the construct3-chef tools at the pinned `@0.10.1`. (Unlike `c3-explorer`,
 this agent has no `tools:` allow-list — it can call anything, so this list is for
 accuracy, not capability gating.)
 
@@ -36,6 +36,7 @@ accuracy, not capability gating.)
 - `resolve-anchor` — look up a DSL coordinate (line/SID/name) → JSON path + SID for stable recipe targeting
 - `validate-project` — dry-run sync of `project.c3proj` vs disk; reports drift before you `sync-project` (non-mutating)
 - `generate-sids` — mint fresh unique SIDs seeded from the registry (non-mutating); use these instead of hand-picking (gotcha #14)
+- `list-ops` — list the project's user-defined ops (parameterized recipe templates) with their parameters; use it to discover which `op-<name>` tools exist before applying one
 
 **Mutation**:
 - `validate-recipe` — dry-run validation, returns txId
@@ -50,6 +51,12 @@ accuracy, not capability gating.)
 - `clone-replica-to-layouts` — add a replica of a `templatesLayout`-defined template to one or more layouts
 - `replace-instance-with-replica` — remove an instance and drop a named template's replica into its spot (the swap primitive)
 - `remove-layer` — remove a layer from a layout (strict by default; fails if it has instances/sublayers)
+
+**User-defined ops** (parameterized recipe templates loaded from the project's `ops/` dir; one JSON file per op):
+- `apply-op` — apply a user-defined op by name, substituting its typed params into the underlying recipe; pass `--dry-run` to validate (params + substituted recipe) without writing, `--params-file` for values awkward to pass on the CLI
+- `op-<name>` — the MCP-side equivalent: one dynamically-registered tool per op file in `ops/`, hot-reloaded as files change. Enumerate the live set with `list-ops` (the names are not fixed)
+
+To author or fix an op *wrapper* (params + `{{PARAM}}` placement) and dry-run-validate it before applying, use the `/genvid-c3:create-c3-op` skill.
 
 ## Domain-config maintenance (c3-domain-manager @0.4.0)
 

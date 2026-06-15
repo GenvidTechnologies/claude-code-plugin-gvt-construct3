@@ -36,9 +36,20 @@ C3-specific anchors the generic skill needs to know for this repo:
   tool lists). Respect the read/mutate split when updating either agent.
 - **Packages pinned:** `@genvid/construct3-chef` and `@genvid/c3-domain-manager`
   (in `plugin/.claude-plugin/plugin.json` `mcpServers`).
-- **Count sanity-check anchors:** chef ≈ 28+ tools; c3-domain-manager ≈ 13. If
-  the skill's surface grep returns **0** or an implausibly small set, the
-  registration pattern moved — don't trust a silent zero.
+- **Count sanity-check anchors:** chef's **static** `reg(...)`/`registerTool(...)`
+  surface in `dist/mcp/server.js` ≈ **30** (unchanged 0.9.0 → 0.10.1);
+  c3-domain-manager ≈ 13. If the skill's surface grep returns **0** or an
+  implausibly small set, the registration pattern moved — don't trust a silent zero.
+- **Ops tools live outside `server.js` (since chef 0.10.0, #89).** The user-defined-ops
+  surface — the static `list-ops` tool plus dynamically-registered `op-<name>` tools
+  (one per file in the project's `ops/` dir, hot-reloaded) — is registered in
+  **`dist/mcp/opsRegistry.js`** via `server.registerTool`, *not* in `server.js`. So a
+  `server.js`-only `reg`/`registerTool` grep will **diff empty for an ops bump** even
+  though the surface grew. When a bump's release notes mention ops, grep
+  `opsRegistry.js` too (the names and their `READ_ONLY`/`MUTATE` annotations are
+  there). `list-ops` is `READ_ONLY` (→ `c3-explorer` allow-list); `op-<name>` is
+  `MUTATE` and dynamic (→ `c3-implementer` docs only, documented as a class — the names
+  are not fixed, enumerate via `list-ops`).
 - For grounding new skills or platform docs in chef's actual source (not just
   reconciling tool names), see [`docs/grounding-in-chef-behavior.md`](grounding-in-chef-behavior.md).
 
