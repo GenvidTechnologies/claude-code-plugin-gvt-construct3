@@ -56,8 +56,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `recipe-reference.md` + the `c3-implementer` agent, and the skill never runs a
   writing `apply-op`. Declares construct3-chef `minVersion 0.10.0` in
   `metadata.expects` (the feature floor — ops landed in #89). (Refs #21.)
-- The README skill table now lists `author-navigation-patterns`, `build-reference`,
-  and `create-c3-op` (previously only `audit-c3-conventions` was shown).
+- The README **and shipped `CONVENTIONS.md`** skill tables now list
+  `author-navigation-patterns`, `build-reference`, and `create-c3-op` (both
+  previously omitted `build-reference` and `create-c3-op`).
 
 ### Changed
 - Bumped the pinned `construct3-chef` MCP server `0.8.0` → `0.9.0`. **Tool-surface
