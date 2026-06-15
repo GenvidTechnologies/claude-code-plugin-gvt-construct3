@@ -37,6 +37,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   built-in plugins, layouts, scripting, and the Expression language light up when the
   `c3-reference` cache is present. Added to `c3-explorer`'s `tools:` allow-list +
   "read & list" body, and to `c3-implementer`'s "Reading" list. (construct3-chef#87.)
+- `c3-explorer` and `c3-implementer` now document construct3-chef's **user-defined
+  ops** surface (new at `0.10.0`, construct3-chef#89). `list-ops` is `READ_ONLY` —
+  lists the project's parameterized recipe-template ops (from the `ops/` dir) with
+  their params; added to `c3-explorer`'s `tools:` allow-list + "read & list" body and
+  `c3-implementer`'s "Reading" list. `apply-op` and the dynamically-registered
+  `op-<name>` tools (one per op file, hot-reloaded) are `MUTATE` — documented as a
+  class in `c3-implementer`'s mutation lists (the names are not fixed; enumerate via
+  `list-ops`), and deliberately kept off `c3-explorer`'s read-only allow-list.
 
 ### Changed
 - Bumped the pinned `construct3-chef` MCP server `0.8.0` → `0.9.0`. **Tool-surface
@@ -46,6 +54,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stays `≥ 0.4.0` — this is a pin bump, not a floor bump. Also swept the now-stale
   `@0.8.0` pinned-version strings in the `c3-explorer` / `c3-implementer` bodies and
   the `docs/c3/toolchain-config.md` example to `@0.9.0`.
+- Bumped the pinned `construct3-chef` MCP server `0.9.0` → `0.10.1`. **Tool-surface
+  reconciliation run**: the static `dist/mcp/server.js` `registerTool` surface is
+  unchanged (30 tools), but chef `0.10.0` (construct3-chef#89) adds the
+  user-defined-ops surface registered in `dist/mcp/opsRegistry.js` (the `list-ops` +
+  dynamic `op-<name>` tools above) — a `server.js`-only grep diffs empty even though
+  the surface grew, so `docs/tool-surface-reconciliation.md`'s count anchor now records
+  where the ops tools live and their `READ_ONLY`/`MUTATE` split. No tools renamed or
+  removed. The `construct3-chef` floor in `CONVENTIONS.md` / `audit-c3-conventions`
+  stays `≥ 0.4.0` — pin bump, not a floor bump. Swept the now-stale `@0.9.0`
+  pinned-version strings in the `c3-explorer` / `c3-implementer` bodies and the
+  `docs/c3/toolchain-config.md` example to `@0.10.1`. (#21; supersedes #18.)
 
 ## [1.3.0] - 2026-06-11
 
