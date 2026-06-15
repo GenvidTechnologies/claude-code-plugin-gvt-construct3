@@ -56,6 +56,8 @@ accuracy, not capability gating.)
 - `apply-op` — apply a user-defined op by name, substituting its typed params into the underlying recipe; pass `--dry-run` to validate (params + substituted recipe) without writing, `--params-file` for values awkward to pass on the CLI
 - `op-<name>` — the MCP-side equivalent: one dynamically-registered tool per op file in `ops/`, hot-reloaded as files change. Enumerate the live set with `list-ops` (the names are not fixed)
 
+To author or fix an op *wrapper* (params + `{{PARAM}}` placement) and dry-run-validate it before applying, use the `/genvid-c3:create-c3-op` skill.
+
 ## Domain-config maintenance (c3-domain-manager @0.4.0)
 
 The domain-manager server (pinned `@0.4.0`) exposes write tools for the

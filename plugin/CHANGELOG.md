@@ -45,6 +45,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `op-<name>` tools (one per op file, hot-reloaded) are `MUTATE` — documented as a
   class in `c3-implementer`'s mutation lists (the names are not fixed; enumerate via
   `list-ops`), and deliberately kept off `c3-explorer`'s read-only allow-list.
+- **`create-c3-op` skill** (`/genvid-c3:create-c3-op`): authors and dry-run-validates
+  a construct3-chef **user-defined op** — a parameterized recipe template (one JSON
+  file in the ops dir whose filename is the op name). Elicits typed params (flagging
+  the `required:false`-without-`default`, `default`/`type`-mismatch, and typed
+  whole-value-vs-embedded-vs-object-key substitution pitfalls), places `{{PARAM}}`
+  tokens, and writes the op-file shell on confirmation, then validates via chef's
+  `list-ops` + `apply-op --dry-run` (the sole authoritative checks — no bundled
+  helper script). Authors the op **wrapper only**; the recipe body defers to chef's
+  `recipe-reference.md` + the `c3-implementer` agent, and the skill never runs a
+  writing `apply-op`. Declares construct3-chef `minVersion 0.10.0` in
+  `metadata.expects` (the feature floor — ops landed in #89). (Refs #21.)
+- The README skill table now lists `author-navigation-patterns`, `build-reference`,
+  and `create-c3-op` (previously only `audit-c3-conventions` was shown).
 
 ### Changed
 - Bumped the pinned `construct3-chef` MCP server `0.8.0` → `0.9.0`. **Tool-surface

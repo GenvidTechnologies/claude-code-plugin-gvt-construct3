@@ -37,6 +37,9 @@ The audit checks for a **C3-project marker** and that both MCP servers are reach
 | Skill | Purpose |
 |-------|---------|
 | `audit-c3-conventions` | Read-only validator — C3-project marker + MCP server reachability/versions |
+| `author-navigation-patterns` | Authors/validates a chef `navigation.targetPatterns` convention for wrapper-routed navigation |
+| `build-reference` | Builds chef's `c3-reference` cache (built-in ACEs + concept docs) so `search-docs` resolves built-ins |
+| `create-c3-op` | Authors + dry-run-validates a construct3-chef user-defined op wrapper (params + `{{PARAM}}` placement) |
 
 **Bundled docs** (`plugin/docs/c3/`): the canonical **C3 platform reference** — event-sheet architecture, layouts, scripting, TS integration, and `construct3-guide.md`. The agents link these via `${CLAUDE_PLUGIN_ROOT}/docs/c3/*`.
 
