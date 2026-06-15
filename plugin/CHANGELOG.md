@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-06-15
+
 ### Added
 - **`build-reference` skill** (`/genvid-c3:build-reference`): produces
   construct3-chef's `c3-reference` cache (`<extractedDir>/c3-reference/index.json`)
