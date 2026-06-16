@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-06-16
+
 ### Changed
 - **`build-reference` now sources built-in ACE *shape* from the C3 editor CDN's
   `allAces.json`** instead of heuristic manual-PDF table parsing — shape (kebab `id`,

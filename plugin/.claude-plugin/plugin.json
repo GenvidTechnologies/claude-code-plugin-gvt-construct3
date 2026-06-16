@@ -1,6 +1,6 @@
 {
   "name": "genvid-c3",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Construct 3 platform knowledge, C3 agents (c3-explorer, c3-implementer), and a convention audit for Claude Code. Bundles the construct3-chef and c3-domain-manager MCP servers; owns the C3 platform reference (docs/c3/). For any repo with a Construct 3 project on disk.",
   "author": {
     "name": "Genvid"
