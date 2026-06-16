@@ -2,7 +2,8 @@
 // array of builtin ACE records ready for the construct3-chef `c3-reference` cache.
 //
 // The CDN document shape (fetched from the C3 editor CDN, e.g.
-// `https://editor.construct.net/[version]/exporters/html5/js/allAces.json`):
+// `https://editor.construct.net/<rev>/plugins/allAces.json` and
+// `https://editor.construct.net/<rev>/behaviors/allAces.json`):
 //
 //   {
 //     "<PluginKey>": {
