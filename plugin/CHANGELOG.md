@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **`build-reference` now sources built-in ACE *shape* from the C3 editor CDN's
+  `allAces.json`** instead of heuristic manual-PDF table parsing — shape (kebab `id`,
+  `scriptName`/`expressionName`, params **with real types**, `kind`) is now
+  deterministic with full coverage. The manual PDF is demoted to **descriptions +
+  concept chunks**, joined onto the CDN shape via a two-tier name match (exact
+  normalized, then token-subset, e.g. `IsAnimPlaying` ↔ "Is playing"). Adds two
+  reusable scripts alongside `build-index.mjs`: `fetch-aces.mjs` (download
+  `plugins/` + `behaviors/` `allAces.json` for an editor `--rev`, or `--input` a
+  local file offline) and `merge.mjs` (join descriptions onto CDN shape with a
+  plugin-name alias map + per-objectClass coverage report). `manualVersion` now
+  records the editor revision + manual pull date (e.g. `r476-4+manual-2026-06-11`).
+  Shape is authoritative for 100% of built-in ACEs; description-join coverage stays
+  best-effort and is reported honestly. (Closes #24.)
+
 ## [1.4.0] - 2026-06-15
 
 ### Added
