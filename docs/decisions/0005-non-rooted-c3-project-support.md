@@ -1,7 +1,7 @@
-# 0001. Non-Rooted C3 Project Support
+# 0005. Non-Rooted C3 Project Support
 
 - **Status:** Accepted
-- **Date:** 2026-06-18
+- **Recorded:** 2026-06-18
 - **Issue:** #26
 
 ## Context

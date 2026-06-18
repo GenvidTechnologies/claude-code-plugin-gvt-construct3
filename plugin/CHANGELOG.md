@@ -29,11 +29,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   workspace-root `.mcp.json` override entry). Also corrects `domain-config.json`
   placement from "workspace root" to "C3 project root" to match the actual
   resolution model. (#26)
-- **ADR `docs/decisions/0001-non-rooted-c3-project-support.md`** (dev workspace,
+- **ADR `docs/decisions/0005-non-rooted-c3-project-support.md`** (dev workspace,
   not shipped): records why `plugin.json` stays bare (static manifest cannot
   express a per-consumer subdir; `--project-dir ${CLAUDE_PROJECT_DIR}` suppresses
   auto-discovery) and why `metadata.expects.files` gains a per-entry `base:` field
   rather than a hardcoded filename allow-list or a per-skill base. (#26)
+- **Backfilled four earlier architecture decisions as ADRs** (dev workspace, not
+  shipped), dated from their original commits and recorded 2026-06-18: 0001 the
+  three knowledge boundaries, 0002 the data-driven audit contract + minimal
+  frontmatter parser, 0003 the two-agent capability split, 0004 the `plugin/`
+  subfolder split + `git-subdir` marketplace source. The non-rooted ADR was
+  renumbered 0001 → 0005 so the records read chronologically.
 
 ### Changed
 - **Bumped bundled MCP server pins:** `construct3-chef` `0.10.1` → `0.10.2`
