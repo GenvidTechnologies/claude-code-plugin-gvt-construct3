@@ -40,6 +40,16 @@ async function main() {
   const components = await walkComponents(PLUGIN_ROOT);
   const findings = [];
 
+  // Parse .genvid-agent.json once for projectRoot resolution; tolerate missing/invalid
+  let parsedAgentJson = null;
+  try {
+    const raw = await fs.readFile(join(REPO_ROOT, '.genvid-agent.json'), 'utf8');
+    parsedAgentJson = JSON.parse(raw);
+  } catch {
+    // Missing or invalid JSON — projectRoot falls back to repoRoot
+  }
+  const projectRoot = resolveProjectRoot(REPO_ROOT, parsedAgentJson);
+
   // 1. C3-project marker check (bespoke OR-check across three indicators)
   findings.push(await checkC3Marker(REPO_ROOT));
 
@@ -49,10 +59,10 @@ async function main() {
     if (!expects) continue;
 
     for (const entry of expects.files ?? []) {
-      findings.push(await evaluateFile(component, entry));
+      findings.push(await evaluateFile(component, entry, REPO_ROOT, projectRoot));
     }
     for (const entry of expects.config ?? []) {
-      findings.push(await evaluateConfig(component, entry));
+      findings.push(await evaluateConfig(component, entry, REPO_ROOT, projectRoot));
     }
     for (const entry of expects.tools ?? []) {
       findings.push(evaluateTool(component, entry));
