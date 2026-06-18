@@ -10,6 +10,7 @@ metadata:
         reason: Runs construct3-chef search-docs to validate the produced cache against the real tool
     files:
       - path: construct3-chef.config.json
+        base: project
         required: false
         reason: Optional — only needed to read a non-default `extractedDir`; the cache path derives from it (defaults to `extracted/`).
     mcp:

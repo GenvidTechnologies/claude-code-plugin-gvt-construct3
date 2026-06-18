@@ -10,6 +10,7 @@ metadata:
         reason: Runs construct3-chef navigation-graph for authoritative validation
     files:
       - path: construct3-chef.config.json
+        base: project
         required: false
         reason: The navigation convention is written here; the file is optional and this skill helps author it, so its absence is informational, not an error.
     mcp:
