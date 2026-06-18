@@ -18,7 +18,7 @@ For the authoritative list of all fields and the full CLI reference (`--project-
 
 ### `domain-config.json` (required)
 
-Placed at the **workspace root**. This file is **required** by c3-domain-manager; the server errors on startup without it. Its content is your project's DDD domain topology (domains, shared subdomains, overrides, relationships) — that schema is project-specific and documented in c3-domain-manager's own `domain-architecture.md`, not here.
+Placed at the **C3 project root** (which is the workspace root for the standard single-project layout, or the project subdirectory for non-rooted repos — see below). This file is **required** by c3-domain-manager; the server errors on startup without it. Its content is your project's DDD domain topology (domains, shared subdomains, overrides, relationships) — that schema is project-specific and documented in c3-domain-manager's own `domain-architecture.md`, not here.
 
 ## Why the Bundled Servers Work With No Launch Flags
 
@@ -47,13 +47,60 @@ They must point at the **same tree**. The defaults agree out of the box. If you 
 
 **Recommendation:** keep the default `extracted/` unless you have a strong reason to change it. If you do change it, change both.
 
-## Non-Root C3 Project Limitation
+## Non-Rooted C3 Projects (project in a subdirectory)
 
-The zero-flags story depends on cwd equalling the workspace root. In a monorepo where the C3 project lives in a **subdirectory**, the cwd-relative lookups miss — `project.c3proj`, `construct3-chef.config.json`, and `domain-config.json` are not at cwd — and the bundled plugin's static `plugin.json` args cannot express a per-repo project directory without hardcoding (which would break other consumers).
+Both servers resolve the C3 project root via `resolveRootFolder` (from `@genvid/mcp-utils`). The full field-level reference is in each server's own docs; what follows is the consumer contract.
 
-There is currently no env-var or config-file override for `--project-dir`, `--config`, or `--extracted`; upstream support is tracked but not yet available.
+### Precedence (high to low)
 
-**Workaround today:** keep the C3 project at the workspace root. The reference consumer (genvid-holdings/burbank) does exactly this: `project.c3proj`, `domain-config.json`, and `extracted/` all live at the repo root, no `construct3-chef.config.json` override, both servers launched bare via the plugin.
+1. **Explicit `--project-dir <dir>` CLI flag** — absolute override.
+2. **`C3_PROJECT_DIR` env var** — set in the workspace shell or a local `.mcp.json`.
+3. **Auto-discovery** — check cwd itself (depth 0), then immediate child directories only (depth 1). Exactly **one** child containing `project.c3proj` wins; zero matches falls through to cwd; two or more is ambiguous (see divergence below).
+4. **cwd fallback** — used when nothing above resolves.
+
+### Auto-discovery zero-config path
+
+If your repo has **exactly one** immediate child directory containing `project.c3proj` (e.g. `sample/project.c3proj`), both servers auto-resolve to that subdirectory with **zero consumer config**. The plugin's bare `plugin.json` launch args are intentional — they let this discovery work for every consumer without hardcoding a path.
+
+A project nested **two or more levels deep** (e.g. `client/game/project.c3proj`) is **not** auto-discovered; it requires an explicit override (see below).
+
+### Ambiguity divergence
+
+When two or more child directories each contain `project.c3proj`:
+
+- **construct3-chef** warns to stderr and falls back to cwd.
+- **c3-domain-manager** exits with an error.
+
+Resolve ambiguity with an explicit `--project-dir` or `C3_PROJECT_DIR`.
+
+### Consumer escape hatches for deep or ambiguous layouts
+
+**Option A — set `C3_PROJECT_DIR` in the workspace shell.** Both servers read it before discovery. Set it in your shell profile or in a `.envrc` (direnv), pointing at the absolute path of the C3 project subdirectory.
+
+**Option B — workspace-root `.mcp.json` that replaces the server entry.** Claude Code's MCP config has no field-merge — a same-name entry fully overrides the plugin-declared one. Add a workspace-root `.mcp.json` that repeats the full server invocation plus `--project-dir`:
+
+```json
+{
+  "mcpServers": {
+    "construct3-chef": {
+      "command": "npx",
+      "args": ["-y", "@genvid/construct3-chef@0.10.2", "server", "--project-dir", "game"]
+    }
+  }
+}
+```
+
+Precedence across config levels: **local > project > user > plugin-declared**. A workspace-root `.mcp.json` is the "local" level and takes priority.
+
+### Why `--project-dir` is not added to `plugin.json`
+
+`${CLAUDE_PROJECT_DIR}` is the repo root — adding `--project-dir ${CLAUDE_PROJECT_DIR}` would merely restate the cwd default and, worse, suppress auto-discovery for every consumer. The static manifest also cannot read a consumer's `.genvid-agent.json` `paths.c3project`. The plugin stays bare so that single-project-subdir auto-discovery and explicit overrides both work correctly.
+
+### The `extracted/` coupling under a non-rooted layout
+
+Both servers resolve `extracted/` relative to **their own project root**. If you override the project root for one server (via `--project-dir` or `C3_PROJECT_DIR`) but not the other, the two `extracted/` trees diverge silently — construct3-chef writes to one path, c3-domain-manager indexes another.
+
+**Override identically for both servers.** This is the non-rooted analogue of the "change both extracted dirs" warning above.
 
 ## External References
 
