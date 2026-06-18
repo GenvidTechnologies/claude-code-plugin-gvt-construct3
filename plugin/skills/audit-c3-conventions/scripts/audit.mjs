@@ -13,7 +13,7 @@
 // finding; 2 on unexpected script error.
 
 import { promises as fs, readFileSync } from 'node:fs';
-import { join, dirname, resolve } from 'node:path';
+import { join, dirname, resolve, basename } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
@@ -25,6 +25,16 @@ const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = resolve(SCRIPT_DIR, '..', '..', '..');
 
 const REPO_ROOT = process.cwd();
+
+export function resolveProjectRoot(repoRoot, agentJson) {
+  if (agentJson && typeof agentJson === 'object') {
+    const result = resolveKey(agentJson, 'paths.c3project');
+    if (result.found && typeof result.value === 'string') {
+      return dirname(resolve(repoRoot, result.value));
+    }
+  }
+  return repoRoot;
+}
 
 async function main() {
   const components = await walkComponents(PLUGIN_ROOT);
@@ -162,18 +172,23 @@ async function loadComponent(type, name, filePath) {
 
 // ---- evaluate ---------------------------------------------------------------
 
-export async function evaluateFile(component, entry, repoRoot = REPO_ROOT) {
+export async function evaluateFile(component, entry, repoRoot = REPO_ROOT, projectRoot = repoRoot) {
   const required = entry.required !== false;
-  const path = join(repoRoot, entry.path);
+  const root = entry.base === 'project' ? projectRoot : repoRoot;
+  const path = join(root, entry.path);
   const exists = await fileExists(path);
 
+  const disambiguator =
+    projectRoot !== repoRoot ? ` (project root: ${basename(projectRoot)})` : '';
+  const target = `${entry.path}${disambiguator}`;
+
   if (exists) {
-    return { kind: 'file', component: component.name, target: entry.path, ok: true };
+    return { kind: 'file', component: component.name, target, ok: true };
   }
   return {
     kind: 'file',
     component: component.name,
-    target: entry.path,
+    target,
     ok: false,
     severity: required ? 'error' : 'info',
     detail: `file not found${required ? '' : ' (optional)'}`,
@@ -181,10 +196,15 @@ export async function evaluateFile(component, entry, repoRoot = REPO_ROOT) {
   };
 }
 
-export async function evaluateConfig(component, entry, repoRoot = REPO_ROOT) {
+export async function evaluateConfig(component, entry, repoRoot = REPO_ROOT, projectRoot = repoRoot) {
   const required = entry.required !== false;
   const inFile = entry.in ?? '.genvid-agent.json';
-  const filePath = join(repoRoot, inFile);
+  const root = entry.base === 'project' ? projectRoot : repoRoot;
+  const filePath = join(root, inFile);
+
+  const disambiguator =
+    projectRoot !== repoRoot ? ` (project root: ${basename(projectRoot)})` : '';
+  const target = `${entry.key} in ${inFile}${disambiguator}`;
 
   let parsed;
   try {
@@ -194,7 +214,7 @@ export async function evaluateConfig(component, entry, repoRoot = REPO_ROOT) {
     return {
       kind: 'config',
       component: component.name,
-      target: `${entry.key} in ${inFile}`,
+      target,
       ok: false,
       severity: required ? 'error' : 'info',
       detail:
@@ -210,14 +230,14 @@ export async function evaluateConfig(component, entry, repoRoot = REPO_ROOT) {
     return {
       kind: 'config',
       component: component.name,
-      target: `${entry.key} in ${inFile}`,
+      target,
       ok: true,
     };
   }
   return {
     kind: 'config',
     component: component.name,
-    target: `${entry.key} in ${inFile}`,
+    target,
     ok: false,
     severity: required ? 'error' : 'info',
     detail: `key not found (path broke at "${result.missingAt}")${required ? '' : ' (optional)'}`,

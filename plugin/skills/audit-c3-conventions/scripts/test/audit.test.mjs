@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { promises as fs } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve, basename } from 'node:path';
 import os from 'node:os';
 
 // ---- helpers ----------------------------------------------------------------
@@ -265,7 +265,7 @@ description: No expects here
 
 // ---- evaluateFile / evaluateConfig tests ------------------------------------
 
-import { evaluateFile, evaluateConfig } from '../audit.mjs';
+import { evaluateFile, evaluateConfig, resolveProjectRoot } from '../audit.mjs';
 
 test('import side-effect guard: importing audit.mjs did not execute main', () => {
   assert.ok(true, 'importing audit.mjs did not execute main');
@@ -362,6 +362,145 @@ test('evaluateConfig: in: file absent → error, detail includes "not found"', a
     assert.equal(finding.ok, false);
     assert.equal(finding.severity, 'error');
     assert.ok(finding.detail.includes('not found'), `expected "not found" in: ${finding.detail}`);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+// ---- resolveProjectRoot tests -----------------------------------------------
+
+test('resolveProjectRoot: agentJson with paths.c3project returns parent dir', () => {
+  const repoRoot = '/tmp/x';
+  const agentJson = { paths: { c3project: 'sub/project.c3proj' } };
+  const result = resolveProjectRoot(repoRoot, agentJson);
+  assert.equal(result, resolve(join(repoRoot, 'sub')));
+});
+
+test('resolveProjectRoot: agentJson with no paths key → returns repoRoot', () => {
+  const repoRoot = '/tmp/x';
+  const result = resolveProjectRoot(repoRoot, {});
+  assert.equal(result, repoRoot);
+});
+
+test('resolveProjectRoot: agentJson null → returns repoRoot', () => {
+  const repoRoot = '/tmp/x';
+  const result = resolveProjectRoot(repoRoot, null);
+  assert.equal(result, repoRoot);
+});
+
+// ---- evaluateFile base:project tests ----------------------------------------
+
+test('evaluateFile base:project, file present in projectRoot subdir → ok', async () => {
+  const dir = await mkTmp();
+  try {
+    const sub = join(dir, 'sub');
+    await fs.mkdir(sub);
+    await fs.writeFile(join(sub, 'domain-config.json'), '{}');
+    const finding = await evaluateFile(
+      { name: 'x' },
+      { path: 'domain-config.json', base: 'project' },
+      dir,
+      sub,
+    );
+    assert.equal(finding.ok, true);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('evaluateFile base:project, file only at repoRoot not in sub/ → ok false', async () => {
+  const dir = await mkTmp();
+  try {
+    // file at repoRoot only
+    await fs.writeFile(join(dir, 'domain-config.json'), '{}');
+    const sub = join(dir, 'sub');
+    await fs.mkdir(sub);
+    const finding = await evaluateFile(
+      { name: 'x' },
+      { path: 'domain-config.json', base: 'project' },
+      dir,
+      sub,
+    );
+    assert.equal(finding.ok, false);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('evaluateFile default base (no base field), file at repoRoot → ok even when projectRoot differs', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.writeFile(join(dir, 'domain-config.json'), '{}');
+    const sub = join(dir, 'sub');
+    await fs.mkdir(sub);
+    const finding = await evaluateFile(
+      { name: 'x' },
+      { path: 'domain-config.json' },
+      dir,
+      sub,
+    );
+    assert.equal(finding.ok, true);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('evaluateFile base:repo explicit, file at repoRoot → ok even when projectRoot differs', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.writeFile(join(dir, 'domain-config.json'), '{}');
+    const sub = join(dir, 'sub');
+    await fs.mkdir(sub);
+    const finding = await evaluateFile(
+      { name: 'x' },
+      { path: 'domain-config.json', base: 'repo' },
+      dir,
+      sub,
+    );
+    assert.equal(finding.ok, true);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+// ---- frontmatter parser: base field parsed correctly ------------------------
+
+test('frontmatter parser: base: project field is preserved in parsed entry', () => {
+  const src = `---
+name: test-skill
+metadata:
+  expects:
+    files:
+      - path: domain-config.json
+        base: project
+        reason: needs project file
+---
+
+# Body
+`;
+  const fm = extractFrontmatter(src);
+  assert.ok(fm, 'frontmatter should be parsed');
+  const files = fm.metadata?.expects?.files;
+  assert.ok(Array.isArray(files), 'files should be an array');
+  assert.equal(files[0].path, 'domain-config.json');
+  assert.equal(files[0].base, 'project');
+});
+
+// ---- evaluateConfig base:project test ---------------------------------------
+
+test('evaluateConfig base:project, key in projectRoot subdir file → ok', async () => {
+  const dir = await mkTmp();
+  try {
+    const sub = join(dir, 'sub');
+    await fs.mkdir(sub);
+    await fs.writeFile(join(sub, 'somecfg.json'), JSON.stringify({ k: 1 }));
+    const finding = await evaluateConfig(
+      { name: 'x' },
+      { key: 'k', in: 'somecfg.json', base: 'project' },
+      dir,
+      sub,
+    );
+    assert.equal(finding.ok, true);
   } finally {
     await rmTmp(dir);
   }
