@@ -34,7 +34,7 @@ No `--project-dir`, `--config`, or `--extracted` flags are passed. This works be
 - construct3-chef's `--project-dir` defaults to cwd, so it finds `construct3-chef.config.json` (if present) and the `.c3proj` file at the workspace root.
 - c3-domain-manager looks for `<cwd>/domain-config.json` by default.
 
-A consumer therefore configures each server simply by dropping those files at the workspace root — no plugin edit or local MCP server override required.
+A consumer therefore configures each server simply by dropping those files at the workspace root — no plugin edit or local MCP server override required. (When the C3 project lives in a *subdirectory* rather than at the workspace root, the servers resolve their real project root dynamically — see [Non-Rooted C3 Projects](#non-rooted-c3-projects-project-in-a-subdirectory) below.)
 
 ## The `extracted/` Coupling
 
