@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-06-18
+
 ### Added
 - **`audit-c3-conventions` now resolves `expects.files` entries relative to the
   C3 project root** when a file is annotated `base: project` in the component's
