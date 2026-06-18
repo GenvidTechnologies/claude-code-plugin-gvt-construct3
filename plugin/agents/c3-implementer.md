@@ -18,7 +18,7 @@ Read these as needed at runtime:
 
 ## MCP Tools
 
-These are the construct3-chef tools at the pinned `@0.10.1`. (Unlike `c3-explorer`,
+These are the construct3-chef tools at the pinned `@0.10.2`. (Unlike `c3-explorer`,
 this agent has no `tools:` allow-list — it can call anything, so this list is for
 accuracy, not capability gating.)
 
@@ -58,9 +58,9 @@ accuracy, not capability gating.)
 
 To author or fix an op *wrapper* (params + `{{PARAM}}` placement) and dry-run-validate it before applying, use the `/genvid-c3:create-c3-op` skill.
 
-## Domain-config maintenance (c3-domain-manager @0.4.0)
+## Domain-config maintenance (c3-domain-manager @0.5.0)
 
-The domain-manager server (pinned `@0.4.0`) exposes write tools for the
+The domain-manager server (pinned `@0.5.0`) exposes write tools for the
 project's domain taxonomy, plus the `validate-editor` read diagnostic. The
 *capability* is generic, but the **content is project-specific** — which file
 maps to which domain is a fact that lives in the consuming repo, not here. Treat

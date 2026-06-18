@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Bumped bundled MCP server pins:** `construct3-chef` `0.10.1` → `0.10.2`
+  (#28) and `c3-domain-manager` `0.4.0` → `0.5.0` (#27). Both releases add
+  project-root resolution (`--project-dir` flag / `C3_PROJECT_DIR` env var /
+  `project.c3proj` discovery, precedence in that order, falling back to `cwd`),
+  letting the servers target a C3 project that is **not** at the launch cwd —
+  the server-side groundwork for non-rooted C3 projects (#26). **No MCP tool
+  surface change** (chef stays at 31 tools, domain-manager at 13; verified by
+  diffing `registerTool` across both packages' `dist/`), so no agent
+  `tools:` allow-list changes — only the pinned-version prose in
+  `c3-explorer`, `c3-implementer`, and `docs/c3/toolchain-config.md` was swept.
+
 ## [1.5.0] - 2026-06-16
 
 ### Changed
