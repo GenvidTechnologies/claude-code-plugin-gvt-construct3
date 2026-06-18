@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`audit-c3-conventions` now resolves `expects.files` entries relative to the
+  C3 project root** when a file is annotated `base: project` in the component's
+  frontmatter. The project root is derived from `.genvid-agent.json`
+  `paths.c3project`, falling back to the repo root when absent. Four
+  `expects.files` entries are annotated with `base: project`:
+  `domain-config.json` in `audit-c3-conventions`, and
+  `construct3-chef.config.json` in `author-navigation-patterns`,
+  `build-reference`, and `create-c3-op`. Entries without `base:`
+  continue to resolve against the repo root (no behavior change for rooted
+  consumers). The `base:` field is now part of the data-driven `metadata.expects`
+  contract; adding a new project-root file requirement needs only a frontmatter
+  annotation, no audit-script change. (#26)
+- **`docs/c3/toolchain-config.md`** rewritten: the stale "Non-Root C3 Project
+  Limitation" section (which claimed no override existed) is replaced with an
+  accurate "Non-Rooted C3 Projects" section covering the four-tier precedence
+  (`--project-dir` > `C3_PROJECT_DIR` > depth-1 auto-discovery > cwd fallback),
+  the zero-config single-project-subdir path, ambiguity divergence between the
+  two servers, and the consumer escape hatches (`C3_PROJECT_DIR` or a
+  workspace-root `.mcp.json` override entry). Also corrects `domain-config.json`
+  placement from "workspace root" to "C3 project root" to match the actual
+  resolution model. (#26)
+- **ADR `docs/decisions/0001-non-rooted-c3-project-support.md`** (dev workspace,
+  not shipped): records why `plugin.json` stays bare (static manifest cannot
+  express a per-consumer subdir; `--project-dir ${CLAUDE_PROJECT_DIR}` suppresses
+  auto-discovery) and why `metadata.expects.files` gains a per-entry `base:` field
+  rather than a hardcoded filename allow-list or a per-skill base. (#26)
+
 ### Changed
 - **Bumped bundled MCP server pins:** `construct3-chef` `0.10.1` → `0.10.2`
   (#28) and `c3-domain-manager` `0.4.0` → `0.5.0` (#27). Both releases add
