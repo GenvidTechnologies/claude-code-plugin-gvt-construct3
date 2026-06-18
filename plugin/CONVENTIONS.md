@@ -35,7 +35,7 @@ The genericized agents read project-specific conventions from the **consuming re
 
 | Skill | Purpose |
 |-------|---------|
-| `audit-c3-conventions` | Read-only validator: checks the C3-project marker, that `domain-config.json` is present at the workspace root, and that both MCP servers are reachable at their minimum versions. |
+| `audit-c3-conventions` | Read-only validator: checks the C3-project marker, that `domain-config.json` is present at the C3 project root, and that both MCP servers are reachable at their minimum versions. |
 | `author-navigation-patterns` | Authors and validates a construct3-chef `navigation.targetPatterns` / `definitionMarkers` convention for a project that navigates through a wrapper function: inspects the extracted DSL, proposes the capture-group regex, previews captures/skips, and validates against `navigation-graph`. Requires `construct3-chef ≥ 0.7.0` (declared in its own `metadata.expects`, above the baseline `≥ 0.4.0` floor). |
 | `build-reference` | Produces construct3-chef's `c3-reference` cache (built-in plugin ACEs + layout/scripting/Expression concept chunks) so `search-docs` resolves built-ins, not just custom-addon ACEs. Requires `construct3-chef ≥ 0.9.0` (declared in its own `metadata.expects`). |
 | `create-c3-op` | Authors and dry-run-validates a construct3-chef user-defined op (a parameterized recipe template): elicits typed params, places `{{PARAM}}` tokens, writes the op-file wrapper, and validates via `list-ops` + `apply-op --dry-run`. Authors the op wrapper only (recipe body defers to chef's docs + `c3-implementer`) and never runs a writing `apply-op`. Requires `construct3-chef ≥ 0.10.0` (declared in its own `metadata.expects`, above the baseline `≥ 0.4.0` floor). |

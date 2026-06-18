@@ -8,6 +8,7 @@ metadata:
         reason: Runs construct3-chef list-ops and apply-op --dry-run — the authoritative validators for a user-defined op.
     files:
       - path: construct3-chef.config.json
+        base: project
         required: false
         reason: Optional — only read to resolve a non-default ops.dir (defaults to "ops"). A missing ops block means defaults; its absence is informational, not an error.
     mcp:

@@ -11,11 +11,11 @@
   "mcpServers": {
     "construct3-chef": {
       "command": "npx",
-      "args": ["-y", "@genvid/construct3-chef@0.10.1", "server"]
+      "args": ["-y", "@genvid/construct3-chef@0.10.2", "server"]
     },
     "c3-domain-manager": {
       "command": "npx",
-      "args": ["-y", "@genvid/c3-domain-manager@0.4.0", "server"]
+      "args": ["-y", "@genvid/c3-domain-manager@0.5.0", "server"]
     }
   }
 }
