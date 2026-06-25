@@ -123,7 +123,9 @@ Note the field name: nested events live under `children`, not `events`. Only the
 Action and condition `parameters` values are **C3 expressions**, not plain strings. This distinction matters for string literals:
 
 - **Expression parameters** (e.g., `animation`, `layer`, `text`, `path`, `first-value`, `second-value`) — string literal values must be wrapped in escaped quotes: `"\"pressed\""`. A bare `"pressed"` is parsed as a variable name, producing "Unknown expression 'pressed'" errors. Numeric literals and variable references are bare: `"0"`, `"currentLevelIndex"`
-- **Enum parameters** (e.g., `visibility`, `from`, `comparison`, `type`) — use bare keyword values: `"invisible"`, `"beginning"`, `"start"`. These are C3 enums, not expressions
+- **Enum parameters** — C3 enums, not expressions. Two flavors:
+  - **Keyword enums** (e.g., `visibility`, `from`, `type`) — bare keyword values: `"invisible"`, `"beginning"`, `"start"`.
+  - **Numeric / combo-index enums** (e.g., `comparison`) — a bare *number* that indexes into a fixed combo, **not** a keyword: `"comparison": 4`. See [The comparison enum](#the-comparison-enum-compare-aces) below for the mapping.
 
 ```json
 // ✓ Correct — string expression with escaped quotes, enum bare
@@ -136,6 +138,29 @@ Action and condition `parameters` values are **C3 expressions**, not plain strin
 ```
 
 When unsure whether a parameter is an expression or enum, check an existing eventSheet that uses the same action/condition.
+
+#### The comparison enum (compare ACEs)
+
+System **Compare two values** (`compare-two-values`) and the other compare ACEs
+(Compare instance variable, Compare variable, Sprite: Compare X, …) all share one
+**numeric `comparison` enum** — a combo *index*, stored as a bare number in both
+the raw event-sheet JSON (`"comparison": 4`) and the extracted DSL
+(`System.compare-two-values(first-value=X.Count, comparison=4, second-value=1)`).
+Nothing in the JSON or DSL spells out the operator, so the number must be decoded:
+
+| `comparison` | Operator | Meaning |
+|---|---|---|
+| `0` | `=` | Equal to |
+| `1` | `≠` | Not equal to |
+| `2` | `<` | Less than |
+| `3` | `≤` | Less than or equal to |
+| `4` | `>` | Greater than |
+| `5` | `≥` | Greater than or equal to |
+
+This is the standard order of C3's "Comparison" combo and is reused wherever a
+compare ACE exposes a `comparison` parameter. Misreading it is a real hazard: a
+guard like `X.Count comparison=4 second-value=1` means `X.Count > 1` (**not** `≥`
+or `==`), so it skips the block whenever the count is exactly `1`.
 
 **Script action** -- embedded TypeScript (what `extract-scripts` extracts):
 
