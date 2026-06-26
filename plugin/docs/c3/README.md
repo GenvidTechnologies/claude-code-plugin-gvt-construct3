@@ -8,7 +8,7 @@ One doc in this set — `toolchain-config.md` — covers a cross-tool concern (h
 
 | Doc | Covers |
 | --- | ------ |
-| [event-sheet-architecture.md](event-sheet-architecture.md) | Event sheet JSON structure (`events`/`children`, blocks, the five event types, the five action shapes), include composition and trigger ordering, and the expression-vs-enum parameter rule that drives many recipe gotchas |
+| [event-sheet-architecture.md](event-sheet-architecture.md) | Event sheet JSON structure (`events`/`children`, blocks, the five event types, the five action shapes), include composition and trigger ordering, and the expression-vs-enum parameter rule (including the numeric `comparison` enum used by compare ACEs) that drives many recipe gotchas |
 | [layout-reference.md](layout-reference.md) | Layout/layer JSON structure, layer render order, the template/replica system and `"o"` per-instance overrides, global layers and override mechanics, the `subLayers` casing gotcha, and UID/SID uniqueness constraints |
 | [ace-reference.md](ace-reference.md) | The ACE (action/condition/expression) metadata model: the `aces.json` structure for custom addons (category-keyed; params by `id`; expressions by `expressionName`; `$schema` skipped) and why built-in/system plugins have no `aces.json` (C3 is a webapp — no install) |
 | [scripting-reference.md](scripting-reference.md) | Construct 3 scripting API quick reference — `IRuntime`, object/layout interfaces, system expressions and iteration conditions, with links to the official manual |
