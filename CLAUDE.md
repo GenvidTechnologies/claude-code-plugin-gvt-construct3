@@ -55,6 +55,8 @@ There is a fourth, narrower home worth calling out: **cross-tool wiring that nei
 
 When you find yourself documenting a recipe gotcha vs. a platform gotcha, the distinction matters: platform gotchas (invisible to lint/typecheck, only C3 parses them) belong in `plugin/docs/c3/`; recipe-param/tooling gotchas belong in chef's docs. The `c3-implementer` agent keeps a short cheat-sheet of each but points to the canonical source.
 
+**c3source — the typed on-disk model — is a knowledge home too, but not one the agents read.** `@genvid/c3source` (which `construct3-chef` *adopts*) is the TypeScript model of C3's folder-project JSON and the home of the DSL renderer (`extractEventSheetScripts`). A fact about C3's on-disk *format* (e.g. the numeric `comparison` combo enum) can feel like it belongs to c3source's typed model — but it still goes in `plugin/docs/c3/`, because the agents read those docs and inspect **raw** event-sheet JSON at runtime; they never import c3source's types. c3source is the right home only for the complementary *code-facing* typed model (a `ComparisonOperator` enum, a renderer that annotates the symbol) — file that as a c3source issue. **Misattribution caveat:** the DSL renderer lives in c3source, not chef, so an issue saying "chef's renderer emits X" usually means c3source's.
+
 ### Components
 
 - **`plugin/agents/*.md`** — flat Markdown files with YAML frontmatter, dispatched as `subagent_type: "genvid-c3:<name>"`.
