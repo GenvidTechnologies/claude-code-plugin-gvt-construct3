@@ -4,14 +4,14 @@ Index of the docs in this repo. genvid plugin agents and skills consult this to 
 
 ## Project overview
 
-- [README.md](../README.md) — what the `genvid-c3` plugin provides, install steps, the agent/skill inventory, and knowledge boundaries.
+- [README.md](../README.md) — what the `gvt-construct3` plugin provides, install steps, the agent/skill inventory, and knowledge boundaries.
 - [CLAUDE.md](../CLAUDE.md) — guidance for Claude Code working in this repo: commands, architecture, and the three knowledge boundaries.
-- [plugin/CONVENTIONS.md](../plugin/CONVENTIONS.md) — the genvid-c3 plugin's own convention contract (what a *consuming* repo must provide). Distinct from genvid-dev's conventions.
+- [plugin/CONVENTIONS.md](../plugin/CONVENTIONS.md) — the gvt-construct3 plugin's own convention contract (what a *consuming* repo must provide). Distinct from genvid-dev's conventions.
 
 ## Maintainer procedures (dev workspace, not shipped)
 
 - [docs/tool-surface-reconciliation.md](tool-surface-reconciliation.md) — C3-specific reconciliation anchors (agent allow-lists, package names, surface counts) + burbank cross-check; defers the procedure to the `/genvid-dev:reconcile-mcp-pin` skill. Run on every chef/dm pin bump.
-- [docs/grounding-in-chef-behavior.md](grounding-in-chef-behavior.md) — how to ground new genvid-c3 skills/platform-docs in chef's actual source via `npm pack` (vs. inferring from memory/READMEs).
+- [docs/grounding-in-chef-behavior.md](grounding-in-chef-behavior.md) — how to ground new gvt-construct3 skills/platform-docs in chef's actual source via `npm pack` (vs. inferring from memory/READMEs).
 
 ## Decision Records
 

@@ -1,11 +1,26 @@
 # Changelog
 
-All notable changes to the `genvid-c3` plugin are documented here.
+All notable changes to the `gvt-construct3` plugin (formerly `genvid-c3`) are
+documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Changed
+
+- **BREAKING: the plugin is renamed `genvid-c3` → `gvt-construct3`**, matching the
+  repository rename (`claude-code-plugin-genvid-c3` → `claude-code-plugin-gvt-construct3`).
+  This changes the plugin's identifier everywhere consumers reference it:
+  - **Install id:** `genvid-c3@genvid-plugins` → `gvt-construct3@genvid-plugins`.
+    Consumers must **uninstall the old plugin and install the new one** — a
+    `/plugin update` does not rename it.
+  - **Skill invocation:** `/genvid-c3:<skill>` → `/gvt-construct3:<skill>`.
+  - **Agent dispatch:** `subagent_type: "genvid-c3:<agent>"` → `"gvt-construct3:<agent>"`.
+  - The `audit-c3-conventions` report now labels the component `gvt-construct3`.
+
+  Historical changelog entries below keep the `genvid-c3` name they shipped under.
 
 ## [1.6.0] - 2026-06-18
 

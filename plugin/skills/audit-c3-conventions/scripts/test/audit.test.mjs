@@ -13,7 +13,7 @@ import os from 'node:os';
 // ---- helpers ----------------------------------------------------------------
 
 async function mkTmp() {
-  return fs.mkdtemp(join(os.tmpdir(), 'genvid-c3-audit-test-'));
+  return fs.mkdtemp(join(os.tmpdir(), 'gvt-construct3-audit-test-'));
 }
 
 async function rmTmp(dir) {
@@ -28,10 +28,10 @@ import { resolveKey } from '../lib/config-resolve.mjs';
 
 // Re-implement checkC3Marker inline for test purposes (mirrors audit.mjs exactly)
 async function checkC3Marker(repoRoot) {
-  const COMPONENT = 'genvid-c3';
+  const COMPONENT = 'gvt-construct3';
   const KIND = 'marker';
   const REASON =
-    'genvid-c3 only applies to Construct 3 projects; this repo does not look like one.';
+    'gvt-construct3 only applies to Construct 3 projects; this repo does not look like one.';
 
   const { promises: fsLocal } = await import('node:fs');
   const { join: joinLocal, resolve: resolveLocal } = await import('node:path');

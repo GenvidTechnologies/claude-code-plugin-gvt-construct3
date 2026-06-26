@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-This repository develops the **`genvid-c3` Claude Code plugin** — not application code. The plugin packages Construct 3 (C3) domain knowledge for Claude Code: two agents, one audit skill, the canonical C3 platform reference (`plugin/docs/c3/`), and its `plugin.json` `mcpServers` declaration for the `construct3-chef` and `c3-domain-manager` MCP servers. The plugin is **independent of the `genvid-dev` plugin** and installs on its own.
+This repository develops the **`gvt-construct3` Claude Code plugin** — not application code. The plugin packages Construct 3 (C3) domain knowledge for Claude Code: two agents, one audit skill, the canonical C3 platform reference (`plugin/docs/c3/`), and its `plugin.json` `mcpServers` declaration for the `construct3-chef` and `c3-domain-manager` MCP servers. The plugin is **independent of the `genvid-dev` plugin** and installs on its own.
 
 ### Repo layout — artifact vs. workspace
 
@@ -15,7 +15,7 @@ The repo is split in two on purpose:
 
 The plugin is distributed through the [`claude-code-marketplace`](https://github.com/genvid-holdings/claude-code-marketplace) catalog (marketplace name `genvid-plugins`). Because the artifact is in a subfolder, the marketplace entry uses a `git-subdir` source with `path: "plugin"`.
 
-> **Why the split:** keeping the artifact in `plugin/` means the genvid-dev consumer files at the root (and any future CI/dev tooling) never collide with what ships, and the genvid-c3 contract (`plugin/CONVENTIONS.md`) is unambiguously distinct from genvid-dev's root-level conventions. A `genvid-dev:audit-conventions --fix` at the root only touches workspace files, never the plugin.
+> **Why the split:** keeping the artifact in `plugin/` means the genvid-dev consumer files at the root (and any future CI/dev tooling) never collide with what ships, and the gvt-construct3 contract (`plugin/CONVENTIONS.md`) is unambiguously distinct from genvid-dev's root-level conventions. A `genvid-dev:audit-conventions --fix` at the root only touches workspace files, never the plugin.
 
 > **Note on `--fix`:** this repo is in genvid-dev **MIGRATED** state (it has `.genvid-agent.json`), so `genvid-dev:audit-conventions --fix` does **not** run the greenfield/legacy scaffolder here. Still, the `.genvid-agent.json` / `docs/TOC.md` were hand-tuned for this repo — if a future audit reports gaps, prefer editing them by hand over a blanket fixer run.
 
@@ -59,10 +59,10 @@ When you find yourself documenting a recipe gotcha vs. a platform gotcha, the di
 
 ### Components
 
-- **`plugin/agents/*.md`** — flat Markdown files with YAML frontmatter, dispatched as `subagent_type: "genvid-c3:<name>"`.
+- **`plugin/agents/*.md`** — flat Markdown files with YAML frontmatter, dispatched as `subagent_type: "gvt-construct3:<name>"`.
   - `c3-explorer` (model: `haiku`) — strictly read-only recon. Its `tools:` frontmatter explicitly enumerates the read-only MCP tools it may call.
   - `c3-implementer` (model: `opus`) — all C3 mutations via the recipe system. TypeScript *modules* are out of scope (it hands cross-domain edits back to the orchestrator); it does write TS embedded in eventSheet script actions.
-- **`plugin/skills/<name>/SKILL.md`** — a skill is a directory containing `SKILL.md` plus any scripts. Invoked as `/genvid-c3:<name>`. Four skills exist: `audit-c3-conventions` (the contract validator), `author-navigation-patterns` (authors/validates a chef `navigation.targetPatterns` convention), `build-reference` (produces chef's `c3-reference` cache — built-in plugin ACEs + concept chunks — that chef's `search-docs` tool reads), and `create-c3-op` (authors/dry-run-validates a chef user-defined op wrapper — params + `{{PARAM}}` placement — via `list-ops` / `apply-op --dry-run`).
+- **`plugin/skills/<name>/SKILL.md`** — a skill is a directory containing `SKILL.md` plus any scripts. Invoked as `/gvt-construct3:<name>`. Four skills exist: `audit-c3-conventions` (the contract validator), `author-navigation-patterns` (authors/validates a chef `navigation.targetPatterns` convention), `build-reference` (produces chef's `c3-reference` cache — built-in plugin ACEs + concept chunks — that chef's `search-docs` tool reads), and `create-c3-op` (authors/dry-run-validates a chef user-defined op wrapper — params + `{{PARAM}}` placement — via `list-ops` / `apply-op --dry-run`).
 - **`plugin/docs/c3/`** — the platform reference (event-sheet architecture, layouts, scripting, TS integration, the ACE/`aces.json` metadata model in `ace-reference.md`, `construct3-guide.md`).
 - **`plugin/.claude-plugin/plugin.json`** — the manifest, including the `mcpServers` block that declares both C3 servers (scoped `@genvid/*` packages, pinned, launched via `npx -y … server`).
 

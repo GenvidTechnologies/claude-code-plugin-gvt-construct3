@@ -1,6 +1,6 @@
 ---
 name: audit-c3-conventions
-description: Validates a repo against the genvid-c3 plugin contract — checks the C3-project marker and probes construct3-chef / c3-domain-manager MCP servers for reachability at minimum versions. Read-only.
+description: Validates a repo against the gvt-construct3 plugin contract — checks the C3-project marker and probes construct3-chef / c3-domain-manager MCP servers for reachability at minimum versions. Read-only.
 metadata:
   expects:
     tools:
@@ -25,13 +25,13 @@ metadata:
 
 # Audit C3 Conventions
 
-Validates the consuming repo against the `genvid-c3` plugin contract and reports findings.
+Validates the consuming repo against the `gvt-construct3` plugin contract and reports findings.
 
 **This skill ships a deterministic validator script.** The script does the actual checking; this body tells you when to run it, how to read the output, and how to act on findings.
 
 ## When to run
 
-- After installing or updating the `genvid-c3` plugin (the plugin may have added new expectations).
+- After installing or updating the `gvt-construct3` plugin (the plugin may have added new expectations).
 - Before opening a PR, to verify the repo still satisfies the contract.
 - When another skill reports that a C3-project marker or MCP server expectation is not met.
 - Any time you want to confirm both MCP servers are reachable at the minimum required versions.
@@ -55,7 +55,7 @@ The script:
 
 Each finding includes:
 
-- The **component** that declared the expectation (skill or agent name, or `genvid-c3` for the marker check).
+- The **component** that declared the expectation (skill or agent name, or `gvt-construct3` for the marker check).
 - **What was expected** (file path, config key, tool command, or MCP server name).
 - **What was found** (missing, unreachable, version too old, etc.).
 - **The reason** the component needs it — verbatim from the component's `metadata.expects[].reason`.
@@ -64,22 +64,22 @@ When a required check fails, take the reason seriously — it's what the compone
 
 ## Act on findings
 
-- **Missing C3-project marker** — either this is not a Construct 3 project (and `genvid-c3` does not apply), or add the marker: create `project.c3proj`, or set `features.c3: true` in `.genvid-agent.json`, or set `paths.c3project` to the path of your `.c3proj` file.
+- **Missing C3-project marker** — either this is not a Construct 3 project (and `gvt-construct3` does not apply), or add the marker: create `project.c3proj`, or set `features.c3: true` in `.genvid-agent.json`, or set `paths.c3project` to the path of your `.c3proj` file.
 - **MCP server not reachable** — the audit probes each server by running `npx -y <package> --version` (the scoped `@genvid/construct3-chef` / `@genvid/c3-domain-manager`). A failure means npx could not fetch or run that package — check network/registry access, or add the package as a project devDependency to pin it locally. The plugin itself launches the same packages via its `plugin.json` `mcpServers`.
 - **MCP server version too old** — bump the pinned version in the plugin's `plugin.json` `mcpServers` (and, for a local devDependency, update the package).
 - **Missing tool** — install `node` or `npx` (both ship with Node.js).
 
-> **Plugin-provided servers:** `genvid-c3` declares both MCP servers in its `plugin.json` (`mcpServers`), so they start automatically when the plugin is enabled. Bundled plugin servers may need a one-time approval in Claude Code before the agents can call their tools — approve them in the Claude Code UI. This is independent of the audit's `npx` probe above, which invokes npx directly and needs no approval.
+> **Plugin-provided servers:** `gvt-construct3` declares both MCP servers in its `plugin.json` (`mcpServers`), so they start automatically when the plugin is enabled. Bundled plugin servers may need a one-time approval in Claude Code before the agents can call their tools — approve them in the Claude Code UI. This is independent of the audit's `npx` probe above, which invokes npx directly and needs no approval.
 
 ## Output format
 
 The script prints findings as Markdown so the report renders cleanly when Claude surfaces it back to the user. Example:
 
 ```markdown
-## genvid-c3 Audit Results
+## gvt-construct3 Audit Results
 
 ### Errors (must fix)
-- **genvid-c3** expects `C3-project marker` — No C3-project marker found (need `project.c3proj`, or `.genvid-agent.json` `features.c3: true`, or `paths.c3project`). Reason: genvid-c3 only applies to Construct 3 projects; this repo does not look like one.
+- **gvt-construct3** expects `C3-project marker` — No C3-project marker found (need `project.c3proj`, or `.genvid-agent.json` `features.c3: true`, or `paths.c3project`). Reason: gvt-construct3 only applies to Construct 3 projects; this repo does not look like one.
 
 ### Summary
 - 3 of 4 required expectations satisfied.

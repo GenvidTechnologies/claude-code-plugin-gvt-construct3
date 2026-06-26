@@ -57,7 +57,7 @@ C3-specific anchors the generic skill needs to know for this repo:
 
 `genvid-holdings/burbank` is the real embedded consumer. Its
 `.claude/settings.json` allow-list (entries prefixed
-`mcp__plugin_genvid-c3_<server>__<tool>`) is a useful sanity check on which
+`mcp__plugin_gvt-construct3_<server>__<tool>`) is a useful sanity check on which
 tools are actually exercised in practice — but it is a *subset* (only what that
 project has needed), so treat the package's `registerTool` list as authoritative
 for completeness and burbank as confirmation of real usage.
