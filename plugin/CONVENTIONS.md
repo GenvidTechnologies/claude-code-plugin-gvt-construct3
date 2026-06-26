@@ -1,8 +1,8 @@
-# genvid-c3 Plugin Conventions
+# gvt-construct3 Plugin Conventions
 
-This document is the contract between the `genvid-c3` Claude Code plugin and the repositories that install it. Unlike a generic workflow plugin, `genvid-c3` is **domain-specific**: it only applies to repositories that contain a **Construct 3 project** and have the **construct3-chef** and **c3-domain-manager** MCP servers available.
+This document is the contract between the `gvt-construct3` Claude Code plugin and the repositories that install it. Unlike a generic workflow plugin, `gvt-construct3` is **domain-specific**: it only applies to repositories that contain a **Construct 3 project** and have the **construct3-chef** and **c3-domain-manager** MCP servers available.
 
-`genvid-c3` is **independent of the `genvid-dev` plugin** — it ships its own convention contract and its own audit (`audit-c3-conventions`). It does not depend on genvid-dev being installed.
+`gvt-construct3` is **independent of the `genvid-dev` plugin** — it ships its own convention contract and its own audit (`audit-c3-conventions`). It does not depend on genvid-dev being installed.
 
 ## What a consuming repo must provide
 
@@ -12,7 +12,7 @@ This document is the contract between the `genvid-c3` Claude Code plugin and the
 | **construct3-chef MCP server** | Launched as `npx -y @genvid/construct3-chef server`, version ≥ `0.4.0` | `audit-c3-conventions` |
 | **c3-domain-manager MCP server** | Launched as `npx -y @genvid/c3-domain-manager server`, version ≥ `0.1.1` | `audit-c3-conventions` |
 
-The plugin **declares both servers in its `plugin.json`** (`mcpServers`), so they start automatically when `genvid-c3` is enabled. Bundled plugin servers may install as **"Pending approval"** — approve them once in Claude Code. If the consuming repo also wires these servers in its own `.mcp.json`, that is redundant but harmless.
+The plugin **declares both servers in its `plugin.json`** (`mcpServers`), so they start automatically when `gvt-construct3` is enabled. Bundled plugin servers may install as **"Pending approval"** — approve them once in Claude Code. If the consuming repo also wires these servers in its own `.mcp.json`, that is redundant but harmless.
 
 ## Optional, project-owned context the plugin's agents read at runtime
 
@@ -24,14 +24,14 @@ The genericized agents read project-specific conventions from the **consuming re
 
 ## What the plugin provides
 
-**Agents** (dispatched as `subagent_type: "genvid-c3:<name>"`):
+**Agents** (dispatched as `subagent_type: "gvt-construct3:<name>"`):
 
 | Agent | Role |
 |-------|------|
 | `c3-explorer` | Read-only C3 recon (DSL, layouts, domain index, search). Cheap, `haiku`. |
 | `c3-implementer` | C3 mutations via recipes, layout/sprite scaffolding, project sync. `opus`. |
 
-**Skills** (invoked as `/genvid-c3:<name>`):
+**Skills** (invoked as `/gvt-construct3:<name>`):
 
 | Skill | Purpose |
 |-------|---------|
@@ -46,7 +46,7 @@ The genericized agents read project-specific conventions from the **consuming re
 
 ## Knowledge boundaries
 
-`genvid-c3` owns **C3 platform reference** (how Construct 3 itself behaves). It deliberately does **not** duplicate:
+`gvt-construct3` owns **C3 platform reference** (how Construct 3 itself behaves). It deliberately does **not** duplicate:
 
 - **Tooling reference** (recipe format, generators, CLI, recipe gotchas) — that lives in `construct3-chef://docs`, versioned with the tool it describes.
 - **Project-specific facts** (named layouts, file paths, commit format, project gotchas) — those live in the consuming repo.

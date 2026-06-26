@@ -4,7 +4,7 @@ How Construct 3 plugins and behaviors declare their **ACEs** — **A**ctions,
 **C**onditions, and **E**xpressions — the verbs and queries an object type exposes
 to the event sheet and the expression language. This is C3 *platform* structure
 (the addon SDK's on-disk contract), distinct from how any tool indexes or searches
-it. The genvid-c3 `build-reference` skill reads these files to produce
+it. The gvt-construct3 `build-reference` skill reads these files to produce
 construct3-chef's `c3-reference` cache; the cache's own schema is owned by chef
 (see `construct3-chef://docs`), not restated here.
 

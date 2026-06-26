@@ -1,11 +1,11 @@
 {
-  "name": "genvid-c3",
+  "name": "gvt-construct3",
   "version": "1.6.0",
   "description": "Construct 3 platform knowledge, C3 agents (c3-explorer, c3-implementer), and a convention audit for Claude Code. Bundles the construct3-chef and c3-domain-manager MCP servers; owns the C3 platform reference (docs/c3/). For any repo with a Construct 3 project on disk.",
   "author": {
     "name": "Genvid"
   },
-  "repository": "https://github.com/genvid-holdings/claude-code-plugin-genvid-c3",
+  "repository": "https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3",
   "license": "MIT-0",
   "keywords": ["genvid", "construct3", "c3", "game-engine", "mcp"],
   "mcpServers": {

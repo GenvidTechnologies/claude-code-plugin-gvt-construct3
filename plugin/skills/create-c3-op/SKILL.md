@@ -22,22 +22,22 @@ metadata:
 
 Help a user **author and dry-run-validate** a construct3-chef **user-defined op** — a parameterized recipe template stored as a single JSON file in the project's ops directory. The filename (sans `.json`) is the op name; a valid op registers as an MCP `op-<name>` tool and as a CLI `apply-op <name>` subcommand.
 
-**This skill covers the op wrapper only:** `description`, `params`, and `{{PARAM}}` placement within the recipe skeleton. The recipe body's content and syntax are the domain of chef's recipe reference (`construct3-chef://docs`, `recipe-reference.md`) and the `genvid-c3:c3-implementer` agent — this skill places the substitution tokens, not the recipe ops themselves. **This skill is the intelligence; chef is the validator.** `list-ops` and `apply-op --dry-run` are the sole authoritative checks — no `validate-op` command exists.
+**This skill covers the op wrapper only:** `description`, `params`, and `{{PARAM}}` placement within the recipe skeleton. The recipe body's content and syntax are the domain of chef's recipe reference (`construct3-chef://docs`, `recipe-reference.md`) and the `gvt-construct3:c3-implementer` agent — this skill places the substitution tokens, not the recipe ops themselves. **This skill is the intelligence; chef is the validator.** `list-ops` and `apply-op --dry-run` are the sole authoritative checks — no `validate-op` command exists.
 
-The skill **never runs a writing `apply-op`**. It stops at a green dry-run and hands real application to the user or `genvid-c3:c3-implementer`.
+The skill **never runs a writing `apply-op`**. It stops at a green dry-run and hands real application to the user or `gvt-construct3:c3-implementer`.
 
 ## When to run
 
 - Authoring a new user-defined op (a recipe you want to reuse with different param values across layouts, object classes, or other axes).
 - Validating or fixing an existing op file that fails `list-ops` or `apply-op --dry-run`.
 
-**Decline and stop** if the ask is a one-off recipe with no reuse intent and no params — that is a plain recipe, not an op. Direct the user to chef's recipe reference and hand execution to `genvid-c3:c3-implementer` instead.
+**Decline and stop** if the ask is a one-off recipe with no reuse intent and no params — that is a plain recipe, not an op. Direct the user to chef's recipe reference and hand execution to `gvt-construct3:c3-implementer` instead.
 
 ## Scope & boundaries
 
 This skill does NOT:
 
-- Author the recipe body inside the op (the `recipe` array's content/syntax — defer to `construct3-chef://docs` → `recipe-reference.md` and `genvid-c3:c3-implementer`).
+- Author the recipe body inside the op (the `recipe` array's content/syntax — defer to `construct3-chef://docs` → `recipe-reference.md` and `gvt-construct3:c3-implementer`).
 - Run a writing `apply-op` (dry-run only — never `apply-op <name>` without `--dry-run`).
 - Add a bundled helper script — `list-ops` and `apply-op --dry-run` are the entire validation surface.
 
@@ -88,7 +88,7 @@ Confirm which placement each param needs before finalizing the skeleton.
 
 Propose the complete op JSON (with a recipe skeleton noting where the recipe body should go). **Write the file only when the user explicitly agrees.**
 
-Placement of the recipe body: co-author it with `genvid-c3:c3-implementer` or chef's `recipe-reference.md`. This skill places the `{{PARAM}}` tokens at the agreed positions — it does not design the recipe ops. The recipe is valid only after substitution, so placeholder content is fine at this stage; the dry-run in step 4 validates the post-substitution recipe.
+Placement of the recipe body: co-author it with `gvt-construct3:c3-implementer` or chef's `recipe-reference.md`. This skill places the `{{PARAM}}` tokens at the agreed positions — it does not design the recipe ops. The recipe is valid only after substitution, so placeholder content is fine at this stage; the dry-run in step 4 validates the post-substitution recipe.
 
 If the ops directory does not exist, create it when writing the file.
 
@@ -120,7 +120,7 @@ Iterate (edit file → `list-ops` → `apply-op --dry-run`) until `list-ops` sho
 
 ### 5. Stop at green dry-run
 
-Once the dry-run passes, the op file is valid and ready. Hand real application to the user or `genvid-c3:c3-implementer`:
+Once the dry-run passes, the op file is valid and ready. Hand real application to the user or `gvt-construct3:c3-implementer`:
 
 - **MCP:** the `op-<name>` tool (receives already-typed values; the CLI boolean-coercion gotcha does not apply here).
 - **CLI:** `npx construct3-chef apply-op <name> --param KEY=VALUE …`

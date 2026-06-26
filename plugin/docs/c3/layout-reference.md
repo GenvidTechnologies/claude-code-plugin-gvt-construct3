@@ -225,5 +225,5 @@ Each `targetPatterns` entry must have **exactly one capture group**, and that gr
 the resolved target layout name. `definitionMarkers` are matched as plain substrings.
 The field-level schema and matching semantics are owned by construct3-chef — see
 `construct3-chef://docs` (`cli.md`, the **Configuration file** and **navigation-graph**
-sections). The `/genvid-c3:author-navigation-patterns` skill helps inspect a project's
+sections). The `/gvt-construct3:author-navigation-patterns` skill helps inspect a project's
 DSL and author/validate these entries.

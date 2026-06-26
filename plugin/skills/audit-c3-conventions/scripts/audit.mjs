@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Validates the consuming repo against the genvid-c3 plugin's convention
+// Validates the consuming repo against the gvt-construct3 plugin's convention
 // contract. Checks:
 //   1. C3-project marker (project.c3proj present, or .genvid-agent.json
 //      features.c3 === true, or paths.c3project pointing at an existing file)
@@ -82,10 +82,10 @@ async function main() {
 // ---- C3 marker check --------------------------------------------------------
 
 async function checkC3Marker(repoRoot) {
-  const COMPONENT = 'genvid-c3';
+  const COMPONENT = 'gvt-construct3';
   const KIND = 'marker';
   const REASON =
-    'genvid-c3 only applies to Construct 3 projects; this repo does not look like one.';
+    'gvt-construct3 only applies to Construct 3 projects; this repo does not look like one.';
 
   // Option A: project.c3proj exists
   const c3projPath = join(repoRoot, 'project.c3proj');
@@ -400,7 +400,7 @@ function formatReport(findings) {
   const requiredTotal = findings.filter((f) => f.severity !== 'info').length;
 
   const lines = [];
-  lines.push('## genvid-c3 Audit Results');
+  lines.push('## gvt-construct3 Audit Results');
   lines.push('');
 
   if (errors.length > 0) {

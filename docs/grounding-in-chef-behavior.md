@@ -1,10 +1,10 @@
-# Grounding genvid-c3 content in chef behavior
+# Grounding gvt-construct3 content in chef behavior
 
 This is a **dev-workspace** doc: it is not shipped in the `plugin/` subtree. It
-covers how to ground new genvid-c3 skills and platform docs in chef's *actual*
+covers how to ground new gvt-construct3 skills and platform docs in chef's *actual*
 runtime behavior — using the pinned package source rather than memory or READMEs.
 
-> This pattern applies when **designing or authoring** new genvid-c3 skills or
+> This pattern applies when **designing or authoring** new gvt-construct3 skills or
 > platform docs. For keeping agent tool inventories honest after a pin bump, see
 > [`docs/tool-surface-reconciliation.md`](tool-surface-reconciliation.md) and
 > run the `/genvid-dev:reconcile-mcp-pin` skill.
