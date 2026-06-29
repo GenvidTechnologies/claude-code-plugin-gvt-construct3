@@ -593,6 +593,8 @@ group "My Group" (active)
 
 Symptom: C3 editor reports `Property 'X' does not exist on type 'IConstructProjectLocalVariables_<SID>'`. The SID in the error is the consuming scope's SID — it doesn't include sheet-root variables in its typed interface. The fix is always the same: place the variable (and every script block that reads or writes it) inside the same top-level group.
 
+Related: a non-static local that's written, then read by a **deferred trigger** firing ticks later, reads its reset default — see [Deferred Triggers Read Variables at Fire Time](#deferred-triggers-read-variables-at-fire-time).
+
 ### Function/ACE Calls Hoist; Handler Blocks Don't
 
 C3 has an asymmetric scoping rule that bites async fetch flows:
@@ -631,6 +633,29 @@ The canonical pattern uses an instVar discriminator (e.g., `ParsingKey`) because
 ```
 
 Reset `ParsingKey` to `""` after firing the signal — prevents stale matches if some unrelated parse happens later on the same instance.
+
+### Deferred Triggers Read Variables at Fire Time
+
+A trigger handler that fires **ticks after** the action that scheduled it — `on-parse-success`, `AJAX.on-completed`, a plugin's `on-subtitles-available`, any async/deferred response — reads event variables **when it fires**, not when the work was scheduled. A **non-static** group/block-local set earlier will have reset to its initial value by the time the deferred handler runs, so the handler silently reads the declared default.
+
+This is the combination of two individually-documented rules — non-static locals reset on each scope entry (see [Sheet-Root Variables Are Globals](#sheet-root-variables-are-globals)) and async/deferred handlers fire on a later tick (see [JSON Plugin `set-json` Parses Async](#json-plugin-set-json-parses-async--signal-from-on-parse-success)). The conclusion is non-obvious even when both facts are known, and the symptom is silent: no error, the handler just applies the variable's default.
+
+```text
+# Broken — non-static local resets before the deferred trigger reads it
+group "Subtitles" (active)
+  var defaultOption: string = "off"            # non-static: resets each scope entry
+  block when: LocalStorage.on-item-get(...)
+    do: set defaultOption = <stored value>     # set on tick N
+  block when: Player.on-subtitles-available()  # fires on tick N+k, after async parse
+    do: ... use defaultOption ...              # reads "off" — the reset default
+
+# Working — static local survives until the deferred trigger fires
+group "Subtitles" (active)
+  static var defaultOption: string = "off"
+  ...
+```
+
+If a deferred handler must consume a value computed earlier, either (a) store it in a **static** local (or a global / instance variable on a data object), or (b) recompute or read it from an authoritative source inside the handler itself.
 
 ### HTML Controls Don't Respect Layer Visibility
 
