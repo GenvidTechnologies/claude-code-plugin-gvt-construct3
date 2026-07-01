@@ -36,10 +36,14 @@ C3-specific anchors the generic skill needs to know for this repo:
   tool lists). Respect the read/mutate split when updating either agent.
 - **Packages pinned:** `@genvidtech/construct3-chef` and `@genvidtech/c3-domain-manager`
   (in `plugin/.claude-plugin/plugin.json` `mcpServers`).
-- **Count sanity-check anchors:** chef's **static** `reg(...)`/`registerTool(...)`
-  surface in `dist/mcp/server.js` ≈ **30** (unchanged 0.9.0 → 0.10.1);
-  c3-domain-manager ≈ 13. If the skill's surface grep returns **0** or an
-  implausibly small set, the registration pattern moved — don't trust a silent zero.
+- **Count sanity-check anchors:** chef registers its core tools in
+  `dist/mcp/server.js` via the **`reg("…")`** idiom — **30** of them (stable
+  `0.9.0` → `0.11.2`) — plus `list-ops` from `opsRegistry.js`, for **31 total**. A
+  bare `registerTool(` grep barely matches chef (only `list-ops` + the dynamic
+  `op-<name>` wrapper use that idiom), so grep **`reg(`** in `server.js` for the
+  authoritative list. c3-domain-manager uses `registerTool` — **13** tools. If a
+  surface grep returns **0** or an implausibly small set, the registration
+  idiom/file moved — don't trust a silent zero.
 - **Ops tools live outside `server.js` (since chef 0.10.0, #89).** The user-defined-ops
   surface — the static `list-ops` tool plus dynamically-registered `op-<name>` tools
   (one per file in the project's `ops/` dir, hot-reloaded) — is registered in
@@ -52,6 +56,35 @@ C3-specific anchors the generic skill needs to know for this repo:
   are not fixed, enumerate via `list-ops`).
 - For grounding new skills or platform docs in chef's actual source (not just
   reconciling tool names), see [`docs/grounding-in-chef-behavior.md`](grounding-in-chef-behavior.md).
+
+## Scope rename (a broader pin bump)
+
+A package **scope rename** (e.g. `@genvid/*` → `@genvidtech/*`, shipped as chef
+`0.11.2` / dm `0.6.1`, #39/#40) is a pin bump that also changes the package
+**name**, so it reaches past the agent tool lists into three distinct categories —
+handle each differently:
+
+- **Functional (must migrate):** the pins in `plugin.json`, **and** every skill's
+  `metadata.expects.mcp.package` field. Those `package:` names drive the audit's
+  `npx -y <package> --version` probe and its `node_modules` version walk — leaving
+  them on the frozen old scope makes the audit validate a *deprecated* package.
+  Also revisit each `minVersion` floor: the new scope's **first-published** version
+  may exceed the old floor (nothing is published below it under the new scope), so
+  it is a deliberate keep-vs-raise call, not an automatic copy.
+- **Live prose (should migrate):** version/scope mentions in the agent bodies,
+  `plugin/CONVENTIONS.md`, `plugin/docs/c3/toolchain-config.md`, this repo's
+  `CLAUDE.md`, and the grounding/reconciliation docs (their `npm pack` commands
+  must name the live scope).
+- **Historical records (must NOT rewrite):** past `plugin/CHANGELOG.md` entries and
+  `docs/decisions/*.md` ADRs record the scope that *shipped at the time*; rewriting
+  them falsifies history. Only the new `[Unreleased]` CHANGELOG entry names the new scope.
+
+The old scope stays resolvable (frozen, not unpublished), so `npx @old/… --version`
+still "works" against a stale package — **verify the tool surface is unchanged by
+packing BOTH the old and new versions and diffing** their `reg(…)`/`registerTool(…)`
+names, rather than trusting the bump issue's "no change" claim. A scope rename often
+carries transitive renames (`@genvidtech/c3source`, `@genvidtech/mcp-utils`) — sweep
+those live references too, but again leave historical mentions intact.
 
 ## Ground-truth cross-check
 
