@@ -34,7 +34,7 @@ C3-specific anchors the generic skill needs to know for this repo:
 - **Agents reconciled:** `plugin/agents/c3-explorer.md` (hard `tools:` allow-list
   — both frontmatter and body) and `plugin/agents/c3-implementer.md` (docs-only
   tool lists). Respect the read/mutate split when updating either agent.
-- **Packages pinned:** `@genvid/construct3-chef` and `@genvid/c3-domain-manager`
+- **Packages pinned:** `@genvidtech/construct3-chef` and `@genvidtech/c3-domain-manager`
   (in `plugin/.claude-plugin/plugin.json` `mcpServers`).
 - **Count sanity-check anchors:** chef's **static** `reg(...)`/`registerTool(...)`
   surface in `dist/mcp/server.js` ≈ **30** (unchanged 0.9.0 → 0.10.1);

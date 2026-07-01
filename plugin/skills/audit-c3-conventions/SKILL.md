@@ -14,12 +14,12 @@ metadata:
         reason: c3-domain-manager requires domain-config.json at the C3 project root; the plugin launches its server with no --config, so it resolves the default location.
     mcp:
       - server: construct3-chef
-        package: "@genvid/construct3-chef"
-        minVersion: "0.4.0"
+        package: "@genvidtech/construct3-chef"
+        minVersion: "0.11.2"
         reason: Recipe tools and construct3-chef://docs (the canonical tooling reference)
       - server: c3-domain-manager
-        package: "@genvid/c3-domain-manager"
-        minVersion: "0.1.1"
+        package: "@genvidtech/c3-domain-manager"
+        minVersion: "0.6.1"
         reason: Domain index and maintenance tools
 ---
 
@@ -47,7 +47,7 @@ The script:
 1. **Checks the C3-project marker** — passes if any of: `project.c3proj` exists; `.genvid-agent.json` has `features.c3: true`; or `paths.c3project` points at an existing file.
 2. **Walks the plugin's installed skills and agents** at `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` and `${CLAUDE_PLUGIN_ROOT}/agents/*.md`.
 3. **Parses each component's frontmatter** to collect `metadata.expects.{files,config,tools,mcp}`.
-4. **Evaluates each expectation** against the current working directory, including MCP version probes via `npx -y <package> --version` (the scoped package, e.g. `@genvid/construct3-chef`).
+4. **Evaluates each expectation** against the current working directory, including MCP version probes via `npx -y <package> --version` (the scoped package, e.g. `@genvidtech/construct3-chef`).
 5. **Prints a structured report** grouped by severity (errors for required-but-missing; info for optional-but-missing).
 6. **Exits non-zero** if any required expectation is unmet.
 
@@ -65,7 +65,7 @@ When a required check fails, take the reason seriously — it's what the compone
 ## Act on findings
 
 - **Missing C3-project marker** — either this is not a Construct 3 project (and `gvt-construct3` does not apply), or add the marker: create `project.c3proj`, or set `features.c3: true` in `.genvid-agent.json`, or set `paths.c3project` to the path of your `.c3proj` file.
-- **MCP server not reachable** — the audit probes each server by running `npx -y <package> --version` (the scoped `@genvid/construct3-chef` / `@genvid/c3-domain-manager`). A failure means npx could not fetch or run that package — check network/registry access, or add the package as a project devDependency to pin it locally. The plugin itself launches the same packages via its `plugin.json` `mcpServers`.
+- **MCP server not reachable** — the audit probes each server by running `npx -y <package> --version` (the scoped `@genvidtech/construct3-chef` / `@genvidtech/c3-domain-manager`). A failure means npx could not fetch or run that package — check network/registry access, or add the package as a project devDependency to pin it locally. The plugin itself launches the same packages via its `plugin.json` `mcpServers`.
 - **MCP server version too old** — bump the pinned version in the plugin's `plugin.json` `mcpServers` (and, for a local devDependency, update the package).
 - **Missing tool** — install `node` or `npx` (both ship with Node.js).
 

@@ -13,7 +13,7 @@ metadata:
         reason: Optional — only read to resolve a non-default ops.dir (defaults to "ops"). A missing ops block means defaults; its absence is informational, not an error.
     mcp:
       - server: construct3-chef
-        package: "@genvid/construct3-chef"
+        package: "@genvidtech/construct3-chef"
         minVersion: "0.10.0"
         reason: User-defined ops (the ops/ directory, list-ops and apply-op CLI/MCP surfaces, OpTemplate substitution) landed in 0.10.0 (construct3-chef #89). The skill is inert below this version.
 ---

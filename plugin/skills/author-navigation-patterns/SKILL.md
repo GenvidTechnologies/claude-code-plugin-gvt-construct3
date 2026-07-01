@@ -15,7 +15,7 @@ metadata:
         reason: The navigation convention is written here; the file is optional and this skill helps author it, so its absence is informational, not an error.
     mcp:
       - server: construct3-chef
-        package: "@genvid/construct3-chef"
+        package: "@genvidtech/construct3-chef"
         minVersion: "0.7.0"
         reason: The navigation.targetPatterns / definitionMarkers config surface and the navigation-graph subcommand landed in 0.7.0 (construct3-chef#43).
 ---

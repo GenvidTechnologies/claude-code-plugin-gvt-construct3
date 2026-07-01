@@ -15,7 +15,7 @@ metadata:
         reason: Optional — only needed to read a non-default `extractedDir`; the cache path derives from it (defaults to `extracted/`).
     mcp:
       - server: construct3-chef
-        package: "@genvid/construct3-chef"
+        package: "@genvidtech/construct3-chef"
         minVersion: "0.9.0"
         reason: The `search-docs` tool and the `c3-reference` cache contract (ReferenceIndexSchema, loadReferenceCache) landed in 0.9.0 (construct3-chef#87).
 ---
