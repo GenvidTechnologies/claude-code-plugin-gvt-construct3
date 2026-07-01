@@ -25,8 +25,8 @@ Placed at the **C3 project root** (which is the workspace root for the standard 
 The plugin declares both servers in `plugin.json` as bare `server` invocations:
 
 ```json
-"construct3-chef": { "command": "npx", "args": ["-y", "@genvid/construct3-chef@0.10.2", "server"] }
-"c3-domain-manager": { "command": "npx", "args": ["-y", "@genvid/c3-domain-manager@0.5.0", "server"] }
+"construct3-chef": { "command": "npx", "args": ["-y", "@genvidtech/construct3-chef@0.11.2", "server"] }
+"c3-domain-manager": { "command": "npx", "args": ["-y", "@genvidtech/c3-domain-manager@0.6.1", "server"] }
 ```
 
 No `--project-dir`, `--config`, or `--extracted` flags are passed. This works because Claude Code launches plugin-declared MCP servers with cwd set to the workspace root, and both servers resolve configuration from cwd:
@@ -49,7 +49,7 @@ They must point at the **same tree**. The defaults agree out of the box. If you 
 
 ## Non-Rooted C3 Projects (project in a subdirectory)
 
-Both servers resolve the C3 project root via `resolveRootFolder` (from `@genvid/mcp-utils`). The full field-level reference is in each server's own docs; what follows is the consumer contract.
+Both servers resolve the C3 project root via `resolveRootFolder` (from `@genvidtech/mcp-utils`). The full field-level reference is in each server's own docs; what follows is the consumer contract.
 
 ### Precedence (high to low)
 
@@ -84,7 +84,7 @@ Resolve ambiguity with an explicit `--project-dir` or `C3_PROJECT_DIR`.
   "mcpServers": {
     "construct3-chef": {
       "command": "npx",
-      "args": ["-y", "@genvid/construct3-chef@0.10.2", "server", "--project-dir", "game"]
+      "args": ["-y", "@genvidtech/construct3-chef@0.11.2", "server", "--project-dir", "game"]
     }
   }
 }

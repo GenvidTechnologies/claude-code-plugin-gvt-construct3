@@ -8,6 +8,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Both bundled MCP servers moved from the `@genvid` npm scope to `@genvidtech`,
+  with a version bump each:** `construct3-chef` `@genvid/…@0.10.2` →
+  `@genvidtech/construct3-chef@0.11.2` (#39) and `c3-domain-manager`
+  `@genvid/…@0.5.0` → `@genvidtech/c3-domain-manager@0.6.1` (#40). The old
+  `@genvid` scope is frozen/deprecated (chef last published `0.11.1`, dm `0.5.0`);
+  `@genvidtech` is the live scope. The bump also carries chef's adoption of
+  `@genvidtech/c3source` 1.7.0 (comparison-operator DSL annotation, inherited
+  transparently) and both servers' migration to `@genvidtech/mcp-utils`.
+  **No MCP tool-surface change** — chef stays at 31 tools, domain-manager at 13;
+  verified by diffing the `reg(…)` / `registerTool(…)` names of the old pins
+  against the new (`0.10.2`↔`0.11.2`, `0.5.0`↔`0.6.1` both identical), so the
+  `c3-explorer` `tools:` allow-list and the agents' tool enumerations are
+  unchanged apart from the pinned-version prose.
+- **`audit-c3-conventions` minimum-version floors raised to the new scope's
+  first-published releases:** `construct3-chef` `≥ 0.4.0` → `≥ 0.11.2` and
+  `c3-domain-manager` `≥ 0.1.1` → `≥ 0.6.1` (nothing is published below those
+  under `@genvidtech`), reflected in both the `metadata.expects.mcp` entries and
+  `CONVENTIONS.md`. The `expects.mcp.package` names across every skill
+  (`audit-c3-conventions`, `build-reference`, `author-navigation-patterns`,
+  `create-c3-op`) now probe the `@genvidtech` packages the plugin actually
+  launches. (#39, #40)
+
 ## [2.0.0] - 2026-06-29
 
 ### Changed
