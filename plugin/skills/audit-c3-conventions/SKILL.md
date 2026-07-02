@@ -65,7 +65,7 @@ When a required check fails, take the reason seriously — it's what the compone
 ## Act on findings
 
 - **Missing C3-project marker** — either this is not a Construct 3 project (and `gvt-construct3` does not apply), or add the marker: create `project.c3proj`, or set `features.c3: true` in `.gvt-agent.json`, or set `paths.c3project` to the path of your `.c3proj` file.
-- **Deprecated config filename** — an info finding ``using deprecated `.genvid-agent.json` — rename to `.gvt-agent.json` `` means the repo still uses the old gvt-dev config name. Rename the file to `.gvt-agent.json`; the audit accepts either during the transition, preferring the new name.
+- **Deprecated config filename** — an info finding that the repo still uses the old gvt-dev config name `.genvid-agent.json`. Rename the file to `.gvt-agent.json`; the audit accepts either during the transition, preferring the new name.
 - **MCP server not reachable** — the audit probes each server by running `npx -y <package> --version` (the scoped `@genvidtech/construct3-chef` / `@genvidtech/c3-domain-manager`). A failure means npx could not fetch or run that package — check network/registry access, or add the package as a project devDependency to pin it locally. The plugin itself launches the same packages via its `plugin.json` `mcpServers`.
 - **MCP server version too old** — bump the pinned version in the plugin's `plugin.json` `mcpServers` (and, for a local devDependency, update the package).
 - **Missing tool** — install `node` or `npx` (both ship with Node.js).
