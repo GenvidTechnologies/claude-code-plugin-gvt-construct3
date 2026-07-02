@@ -1,8 +1,8 @@
 # Bug Triage Conventions
 
-> Project conventions consumed by `/genvid-dev:triage-bugs`. Access mechanics
+> Project conventions consumed by `/gvt-dev:triage-issues`. Access mechanics
 > (fetch queries, label names) live in the `bugTracker` block of
-> `.genvid-agent.json`. Commands assume **GitHub Issues via the `gh` CLI**.
+> `.gvt-agent.json`. Commands assume **GitHub Issues via the `gh` CLI**.
 >
 > **This repo is small and tracks features/chores, not a bug factory.** The
 > taxonomy below is deliberately lightweight: it reuses GitHub's *stock* labels

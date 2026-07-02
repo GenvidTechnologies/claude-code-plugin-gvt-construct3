@@ -25,7 +25,7 @@ consuming repo or each server's own docs).
 
 ## Procedure
 
-The step-by-step procedure now lives in the **`/genvid-dev:reconcile-mcp-pin`**
+The step-by-step procedure now lives in the **`/gvt-dev:reconcile-mcp-pin`**
 skill. Run it on every `construct3-chef` / `c3-domain-manager` pin bump; it stops
 short of the release — hand off to `release-plugin` when done.
 

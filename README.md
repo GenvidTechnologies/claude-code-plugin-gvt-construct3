@@ -2,7 +2,7 @@
 
 The **`gvt-construct3` plugin** for Claude Code — Construct 3 platform knowledge, C3 agents, and a convention audit for any repository with a Construct 3 project on disk.
 
-It bundles the **construct3-chef** and **c3-domain-manager** MCP servers, ships the `c3-explorer` and `c3-implementer` agents, and owns the canonical **C3 platform reference** (`plugin/docs/c3/`). It is **independent of the `genvid-dev` plugin** — installable on its own.
+It bundles the **construct3-chef** and **c3-domain-manager** MCP servers, ships the `c3-explorer` and `c3-implementer` agents, and owns the canonical **C3 platform reference** (`plugin/docs/c3/`). It is **independent of the `gvt-dev` plugin** — installable on its own.
 
 It is distributed through the [`claude-code-marketplace`](https://github.com/genvid-holdings/claude-code-marketplace) catalog (marketplace name `genvid-plugins`).
 
@@ -57,7 +57,7 @@ The audit checks for a **C3-project marker** and that both MCP servers are reach
 
 ## Contributing
 
-The shipped plugin lives in the **`plugin/`** subfolder; the repo root is the dev workspace (a `genvid-dev` consumer). See [`CLAUDE.md`](CLAUDE.md) for the full layout.
+The shipped plugin lives in the **`plugin/`** subfolder; the repo root is the dev workspace (a `gvt-dev` consumer). See [`CLAUDE.md`](CLAUDE.md) for the full layout.
 
 - Skills are directories with `SKILL.md`; agents are flat `.md` files in `plugin/agents/`.
 - Top-level frontmatter is fixed (`name`, `description`, plus Anthropic-supported fields); custom expectations go under `metadata.expects`.

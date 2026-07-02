@@ -7,7 +7,7 @@ runtime behavior — using the pinned package source rather than memory or READM
 > This pattern applies when **designing or authoring** new gvt-construct3 skills or
 > platform docs. For keeping agent tool inventories honest after a pin bump, see
 > [`docs/tool-surface-reconciliation.md`](tool-surface-reconciliation.md) and
-> run the `/genvid-dev:reconcile-mcp-pin` skill.
+> run the `/gvt-dev:reconcile-mcp-pin` skill.
 
 ## Why read the package source
 
@@ -61,6 +61,6 @@ each bump. `navigation-graph` was CLI-only through 0.7.0, then chef 0.8.0 (#85)
 promoted it to an MCP tool — so the 0.7.0→0.8.0 reconciliation had to add it to
 `c3-explorer`'s allow-list. Re-derive from the pinned package each bump rather than
 trusting a prior finding. The count sanity-check and version sweep in the
-`/genvid-dev:reconcile-mcp-pin` procedure (see
+`/gvt-dev:reconcile-mcp-pin` procedure (see
 [`tool-surface-reconciliation.md`](tool-surface-reconciliation.md)) guard against
 exactly this kind of silent drift.
