@@ -21,7 +21,7 @@ whole classes of design mistakes.
 
 ```bash
 cd "$(mktemp -d)"
-npm pack @genvid/construct3-chef@<pinned>
+npm pack @genvidtech/construct3-chef@<pinned>
 tar -xzf *.tgz
 # algorithms / semantics:
 ls package/dist/**          # e.g. dist/c3/navConvention.js, dist/c3/chefConfig.d.ts
@@ -29,7 +29,7 @@ ls package/dist/**          # e.g. dist/c3/navConvention.js, dist/c3/chefConfig.
 sed -n '1,80p' package/docs/cli.md
 ```
 
-Run the same `npm pack` / `tar` step for `@genvid/c3-domain-manager@<pinned>` when
+Run the same `npm pack` / `tar` step for `@genvidtech/c3-domain-manager@<pinned>` when
 the question touches that server.
 
 ## Worked example: `author-navigation-patterns`

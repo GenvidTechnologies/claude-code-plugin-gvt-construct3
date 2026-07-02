@@ -277,7 +277,7 @@ async function evaluateMcp(component, entry) {
   const required = entry.required !== false;
   const server = entry.server;
   const minVersion = entry.minVersion;
-  const pkg = entry.package; // npm package name backing the bin (e.g. @genvid/construct3-chef)
+  const pkg = entry.package; // npm package name backing the bin (e.g. @genvidtech/construct3-chef)
 
   const fail = (detail) => ({
     kind: 'mcp',
@@ -292,7 +292,7 @@ async function evaluateMcp(component, entry) {
   // 1. Reachability — confirm the package actually runs via npx (the same way
   //    the plugin's plugin.json launches it: `npx -y <package> server`). npx
   //    resolves by *package* name, so we probe the scoped `package` (e.g.
-  //    @genvid/construct3-chef), not the bare bin name — `npx construct3-chef`
+  //    @genvidtech/construct3-chef), not the bare bin name — `npx construct3-chef`
   //    would 404. Fall back to the bin name only when no package is declared.
   const probeTarget = pkg ?? server;
   let result;
