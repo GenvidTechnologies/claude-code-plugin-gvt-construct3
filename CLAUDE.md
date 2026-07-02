@@ -4,24 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-This repository develops the **`gvt-construct3` Claude Code plugin** — not application code. The plugin packages Construct 3 (C3) domain knowledge for Claude Code: two agents, one audit skill, the canonical C3 platform reference (`plugin/docs/c3/`), and its `plugin.json` `mcpServers` declaration for the `construct3-chef` and `c3-domain-manager` MCP servers. The plugin is **independent of the `genvid-dev` plugin** and installs on its own.
+This repository develops the **`gvt-construct3` Claude Code plugin** — not application code. The plugin packages Construct 3 (C3) domain knowledge for Claude Code: two agents, one audit skill, the canonical C3 platform reference (`plugin/docs/c3/`), and its `plugin.json` `mcpServers` declaration for the `construct3-chef` and `c3-domain-manager` MCP servers. The plugin is **independent of the `gvt-dev` plugin** and installs on its own.
 
 ### Repo layout — artifact vs. workspace
 
 The repo is split in two on purpose:
 
 - **`plugin/`** — the **shipped artifact**. `plugin/.claude-plugin/plugin.json` is the manifest; everything a consumer installs lives under here (`plugin/agents/`, `plugin/skills/`, `plugin/docs/c3/`, `plugin/CONVENTIONS.md`, `plugin/CHANGELOG.md`). The marketplace installs this subtree, so `${CLAUDE_PLUGIN_ROOT}` resolves to `plugin/`.
-- **repo root** — the **dev workspace**, which *consumes* the `genvid-dev` plugin. `.genvid-agent.json` (`commands.validate`, `repo.*`, `paths.plugin_root`) and `docs/TOC.md` exist so the genvid-dev workflow skills (audit, plan-task, rebase, release-plugin, etc.) work here. This `CLAUDE.md` is dev guidance for the workspace; it is **not** shipped.
+- **repo root** — the **dev workspace**, which *consumes* the `gvt-dev` plugin. `.gvt-agent.json` (`commands.validate`, `repo.*`, `paths.plugin_root`) and `docs/TOC.md` exist so the gvt-dev workflow skills (audit, plan-task, rebase, release-plugin, etc.) work here. This `CLAUDE.md` is dev guidance for the workspace; it is **not** shipped.
 
 The plugin is distributed through the [`claude-code-marketplace`](https://github.com/genvid-holdings/claude-code-marketplace) catalog (marketplace name `genvid-plugins`). Because the artifact is in a subfolder, the marketplace entry uses a `git-subdir` source with `path: "plugin"`.
 
-> **Why the split:** keeping the artifact in `plugin/` means the genvid-dev consumer files at the root (and any future CI/dev tooling) never collide with what ships, and the gvt-construct3 contract (`plugin/CONVENTIONS.md`) is unambiguously distinct from genvid-dev's root-level conventions. A `genvid-dev:audit-conventions --fix` at the root only touches workspace files, never the plugin.
+> **Why the split:** keeping the artifact in `plugin/` means the gvt-dev consumer files at the root (and any future CI/dev tooling) never collide with what ships, and the gvt-construct3 contract (`plugin/CONVENTIONS.md`) is unambiguously distinct from gvt-dev's root-level conventions. A `gvt-dev:audit-conventions --fix` at the root only touches workspace files, never the plugin.
 
-> **Note on `--fix`:** this repo is in genvid-dev **MIGRATED** state (it has `.genvid-agent.json`), so `genvid-dev:audit-conventions --fix` does **not** run the greenfield/legacy scaffolder here. Still, the `.genvid-agent.json` / `docs/TOC.md` were hand-tuned for this repo — if a future audit reports gaps, prefer editing them by hand over a blanket fixer run.
+<!-- -->
+
+> **Note on `--fix`:** this repo is in gvt-dev **MIGRATED** state (it has `.gvt-agent.json`), so `gvt-dev:audit-conventions --fix` does **not** run the greenfield/legacy scaffolder here. Still, the `.gvt-agent.json` / `docs/TOC.md` were hand-tuned for this repo — if a future audit reports gaps, prefer editing them by hand over a blanket fixer run.
 
 ## Commands
 
-All plugin checks run inside `plugin/` (that's what `commands.validate` in `.genvid-agent.json` does):
+All plugin checks run inside `plugin/` (that's what `commands.validate` in `.gvt-agent.json` does):
 
 ```bash
 # Validate the plugin manifest + structure (run before any release/PR)
@@ -81,6 +83,7 @@ The contract is **data-driven**: each skill/agent declares its needs under `meta
 `files`/`config` expects resolve against the **repo root** by default; an entry tagged **`base: project`** resolves against the **C3 project root** instead — derived from `.genvid-agent.json` `paths.c3project` (its `dirname`), falling back to the repo root when absent. This is how the audit checks a *non-rooted* project (C3 project in a subdirectory): e.g. `domain-config.json` and `construct3-chef.config.json` are `base: project` because they live alongside the `.c3proj`, while `.genvid-agent.json` itself stays repo-root-relative. Rooted repos (no `paths.c3project`) are unaffected — `base` is just another data-driven `expects` field, not a script-level check (see ADR `docs/decisions/0005-non-rooted-c3-project-support.md`).
 
 Supporting libs (`scripts/lib/`):
+
 - `frontmatter.mjs` — a *minimal* hand-rolled YAML parser scoped to the exact frontmatter shapes used (top-level scalars, one level of nesting for `metadata.expects`, arrays of objects). It does **not** handle multiline scalars, anchors, or deep nesting — keep frontmatter within those shapes or replace the parser.
 - `config-resolve.mjs` — resolves dotted keys (`features.c3`) against parsed JSON, reporting *where* a path broke.
 
@@ -94,6 +97,7 @@ Audit exit codes: `0` all required expectations met, `1` an error finding, `2` u
 - Keep agent bodies generic across C3 projects. Anything project-specific belongs in the consuming repo, not here (see knowledge boundaries above).
 - **Before slimming, moving, or deleting a doc section, grep for deep-links into its heading.** CLAUDE.md (and other docs) cross-reference *specific sections*, not just files — e.g. a callout once deep-linked `tool-surface-reconciliation.md → "Grounding skill/doc design in chef behavior"`. A naive "slim this doc" edit can silently break such a link by removing the target heading; check `grep -rn "<section title>"` and repoint the referrer in the same commit as the move.
 - **GitHub heading anchors don't collapse runs of `-`.** A heading with a *spaced* em-dash — e.g. `### JSON Plugin set-json Parses Async — Signal from on-parse-success` — slugs to `…async--signal…` (**double** hyphen): `github-slugger` strips the `—` but keeps both surrounding spaces, each becoming a `-`. When you deep-link such a heading, keep the `--`; a reviewer's "that should be a single hyphen" instinct is wrong (a code-reviewer flagged exactly this as "critical" in #36 — it wasn't). Verify an uncertain anchor against the real `github-slugger` (`npx`-install it and slug the heading), not by eye.
+- **ADRs (`docs/decisions/`) are historical records — don't retroactively rewrite them.** When a rename or refactor lands, sweep the *living* docs (README, this `CLAUDE.md`, `docs/*.md`) but leave the ADRs untouched; precedent is commit `2400b62` renaming the plugin `genvid-c3` → `gvt-construct3` without editing ADR 0004's `genvid-c3` references (and this session's `genvid-dev` → `gvt-dev` sweep likewise skipped `docs/decisions/`). If a decision is genuinely reversed, add a *superseding* ADR rather than editing the old one in place.
 - **Respect each agent's capability envelope (`model` + `tools`).** Don't instruct an agent to do what it can't observe. `c3-explorer` is `haiku` and reads layout/addon JSON, *not pixels* — so its swap-recon guidance reports observable geometry (size, origin/anchor, frame inventory) and hands visual-silhouette judgment back to a human, rather than claiming to compare shapes. When adding guidance, write the observable-data steps and explicitly flag anything that needs a capability the agent lacks.
 - Commit format observed in history: `{type}: short description` (e.g. `feat:`, `docs:`).
 - **Closing issues from PRs:** the repo's squash-title style appends bare `(#N)` references (e.g. `feat: … (#6) (#9)`), which only *cross-reference* — they do **not** auto-close. To close an issue on merge, put a closing keyword (`Closes #N` / `Fixes #N`) in the **PR body**; otherwise close it by hand after release (issue #6 stayed open through v1.2.0 for exactly this reason).
@@ -103,8 +107,8 @@ Audit exit codes: `0` all required expectations met, `1` an error finding, `2` u
 
 ## Release status
 
-Releasing a new version is a cross-repo workflow (bump `plugin/.claude-plugin/plugin.json`, move `plugin/CHANGELOG.md`'s Unreleased section, tag, bump the marketplace ref). Use the `genvid-dev:release-plugin` skill rather than doing it by hand.
+Releasing a new version is a cross-repo workflow (bump `plugin/.claude-plugin/plugin.json`, move `plugin/CHANGELOG.md`'s Unreleased section, tag, bump the marketplace ref). Use the `gvt-dev:release-plugin` skill rather than doing it by hand.
 
-**When a release bumps the pinned `construct3-chef` / `c3-domain-manager` versions in `mcpServers`, run `/genvid-dev:reconcile-mcp-pin`** before tagging — a server bump can add/rename/remove MCP tools, and the agents enumerate those by hand. See [`docs/tool-surface-reconciliation.md`](docs/tool-surface-reconciliation.md) for the C3-specific anchors (agent allow-lists, package names, surface counts). (`c3-explorer`'s `tools:` is a hard allow-list, so a missed read tool becomes uncallable — this is a functional check, not just docs.)
+**When a release bumps the pinned `construct3-chef` / `c3-domain-manager` versions in `mcpServers`, run `/gvt-dev:reconcile-mcp-pin`** before tagging — a server bump can add/rename/remove MCP tools, and the agents enumerate those by hand. See [`docs/tool-surface-reconciliation.md`](docs/tool-surface-reconciliation.md) for the C3-specific anchors (agent allow-lists, package names, surface counts). (`c3-explorer`'s `tools:` is a hard allow-list, so a missed read tool becomes uncallable — this is a functional check, not just docs.)
 
-`genvid-dev:release-plugin` (≥ 2.8.0) honors `paths.plugin_root`, so it operates on `plugin/.claude-plugin/plugin.json` and `plugin/CHANGELOG.md` and keeps the marketplace entry on its `git-subdir` source (`path: "plugin"`). The `url`→`git-subdir` migration already happened at v1.1.0; steady-state releases are a single-value `source.ref` bump (genvid-dev#28, resolved).
+`gvt-dev:release-plugin` (≥ 2.8.0) honors `paths.plugin_root`, so it operates on `plugin/.claude-plugin/plugin.json` and `plugin/CHANGELOG.md` and keeps the marketplace entry on its `git-subdir` source (`path: "plugin"`). The `url`→`git-subdir` migration already happened at v1.1.0; steady-state releases are a single-value `source.ref` bump (gvt-dev#28, resolved).
