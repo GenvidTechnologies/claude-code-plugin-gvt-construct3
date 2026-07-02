@@ -94,7 +94,7 @@ Precedence across config levels: **local > project > user > plugin-declared**. A
 
 ### Why `--project-dir` is not added to `plugin.json`
 
-`${CLAUDE_PROJECT_DIR}` is the repo root — adding `--project-dir ${CLAUDE_PROJECT_DIR}` would merely restate the cwd default and, worse, suppress auto-discovery for every consumer. The static manifest also cannot read a consumer's `.genvid-agent.json` `paths.c3project`. The plugin stays bare so that single-project-subdir auto-discovery and explicit overrides both work correctly.
+`${CLAUDE_PROJECT_DIR}` is the repo root — adding `--project-dir ${CLAUDE_PROJECT_DIR}` would merely restate the cwd default and, worse, suppress auto-discovery for every consumer. The static manifest also cannot read a consumer's `.gvt-agent.json` `paths.c3project`. The plugin stays bare so that single-project-subdir auto-discovery and explicit overrides both work correctly.
 
 ### The `extracted/` coupling under a non-rooted layout
 
