@@ -20,88 +20,21 @@ async function rmTmp(dir) {
   await fs.rm(dir, { recursive: true, force: true });
 }
 
-// Inline the checkC3Marker logic so we can test it without spawning a child
-// process. We import from the helpers directly rather than the full audit.mjs
-// to avoid triggering main().
-
-import { resolveKey } from '../lib/config-resolve.mjs';
-
-// Re-implement checkC3Marker inline for test purposes (mirrors audit.mjs exactly)
-async function checkC3Marker(repoRoot) {
-  const COMPONENT = 'gvt-construct3';
-  const KIND = 'marker';
-  const REASON =
-    'gvt-construct3 only applies to Construct 3 projects; this repo does not look like one.';
-
-  const { promises: fsLocal } = await import('node:fs');
-  const { join: joinLocal, resolve: resolveLocal } = await import('node:path');
-
-  async function fileExists(p) {
-    try {
-      const s = await fsLocal.stat(p);
-      return s.isFile();
-    } catch {
-      return false;
-    }
-  }
-
-  // Option A: project.c3proj
-  if (await fileExists(joinLocal(repoRoot, 'project.c3proj'))) {
-    return { kind: KIND, component: COMPONENT, target: 'project.c3proj', ok: true };
-  }
-
-  // Option B / C: .genvid-agent.json
-  let parsed = null;
-  try {
-    const raw = await fsLocal.readFile(joinLocal(repoRoot, '.genvid-agent.json'), 'utf8');
-    parsed = JSON.parse(raw);
-  } catch {
-    // missing or invalid
-  }
-
-  if (parsed !== null) {
-    const featuresResult = resolveKey(parsed, 'features.c3');
-    if (featuresResult.found && featuresResult.value === true) {
-      return {
-        kind: KIND,
-        component: COMPONENT,
-        target: '.genvid-agent.json features.c3',
-        ok: true,
-      };
-    }
-
-    const pathsResult = resolveKey(parsed, 'paths.c3project');
-    if (pathsResult.found && typeof pathsResult.value === 'string') {
-      const override = resolveLocal(repoRoot, pathsResult.value);
-      if (await fileExists(override)) {
-        return {
-          kind: KIND,
-          component: COMPONENT,
-          target: `paths.c3project → ${pathsResult.value}`,
-          ok: true,
-        };
-      }
-    }
-  }
-
-  return {
-    kind: KIND,
-    component: COMPONENT,
-    target: 'C3-project marker',
-    ok: false,
-    severity: 'error',
-    detail:
-      'No C3-project marker found (need `project.c3proj`, or `.genvid-agent.json` `features.c3: true`, or `paths.c3project`)',
-    reason: REASON,
-  };
-}
+import {
+  checkC3Marker,
+  resolveAgentConfig,
+  evaluateFile,
+  evaluateConfig,
+  resolveProjectRoot,
+} from '../audit.mjs';
 
 // ---- marker tests -----------------------------------------------------------
 
 test('marker: bare temp dir with no files → error finding', async () => {
   const dir = await mkTmp();
   try {
-    const finding = await checkC3Marker(dir);
+    const cfg = await resolveAgentConfig(dir);
+    const finding = await checkC3Marker(dir, cfg);
     assert.equal(finding.ok, false);
     assert.equal(finding.severity, 'error');
     assert.match(finding.detail, /No C3-project marker found/);
@@ -114,7 +47,8 @@ test('marker: project.c3proj present → ok', async () => {
   const dir = await mkTmp();
   try {
     await fs.writeFile(join(dir, 'project.c3proj'), '{}');
-    const finding = await checkC3Marker(dir);
+    const cfg = await resolveAgentConfig(dir);
+    const finding = await checkC3Marker(dir, cfg);
     assert.equal(finding.ok, true);
     assert.equal(finding.target, 'project.c3proj');
   } finally {
@@ -122,14 +56,15 @@ test('marker: project.c3proj present → ok', async () => {
   }
 });
 
-test('marker: .genvid-agent.json features.c3 = true → ok', async () => {
+test('marker: .gvt-agent.json features.c3 = true → ok', async () => {
   const dir = await mkTmp();
   try {
     await fs.writeFile(
-      join(dir, '.genvid-agent.json'),
+      join(dir, '.gvt-agent.json'),
       JSON.stringify({ features: { c3: true } }),
     );
-    const finding = await checkC3Marker(dir);
+    const cfg = await resolveAgentConfig(dir);
+    const finding = await checkC3Marker(dir, cfg);
     assert.equal(finding.ok, true);
     assert.match(finding.target, /features\.c3/);
   } finally {
@@ -137,14 +72,15 @@ test('marker: .genvid-agent.json features.c3 = true → ok', async () => {
   }
 });
 
-test('marker: .genvid-agent.json features.c3 = false → error', async () => {
+test('marker: .gvt-agent.json features.c3 = false → error', async () => {
   const dir = await mkTmp();
   try {
     await fs.writeFile(
-      join(dir, '.genvid-agent.json'),
+      join(dir, '.gvt-agent.json'),
       JSON.stringify({ features: { c3: false } }),
     );
-    const finding = await checkC3Marker(dir);
+    const cfg = await resolveAgentConfig(dir);
+    const finding = await checkC3Marker(dir, cfg);
     assert.equal(finding.ok, false);
     assert.equal(finding.severity, 'error');
   } finally {
@@ -158,10 +94,11 @@ test('marker: paths.c3project pointing at an existing file → ok', async () => 
     const projFile = join(dir, 'myproject.c3proj');
     await fs.writeFile(projFile, '{}');
     await fs.writeFile(
-      join(dir, '.genvid-agent.json'),
+      join(dir, '.gvt-agent.json'),
       JSON.stringify({ paths: { c3project: 'myproject.c3proj' } }),
     );
-    const finding = await checkC3Marker(dir);
+    const cfg = await resolveAgentConfig(dir);
+    const finding = await checkC3Marker(dir, cfg);
     assert.equal(finding.ok, true);
     assert.match(finding.target, /paths\.c3project/);
   } finally {
@@ -173,10 +110,71 @@ test('marker: paths.c3project pointing at non-existent file → error', async ()
   const dir = await mkTmp();
   try {
     await fs.writeFile(
-      join(dir, '.genvid-agent.json'),
+      join(dir, '.gvt-agent.json'),
       JSON.stringify({ paths: { c3project: 'missing.c3proj' } }),
     );
-    const finding = await checkC3Marker(dir);
+    const cfg = await resolveAgentConfig(dir);
+    const finding = await checkC3Marker(dir, cfg);
+    assert.equal(finding.ok, false);
+    assert.equal(finding.severity, 'error');
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+// ---- resolveAgentConfig fallback tests ---------------------------------------
+
+test('resolveAgentConfig: only legacy .genvid-agent.json present → usedLegacy true, marker ok', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.writeFile(
+      join(dir, '.genvid-agent.json'),
+      JSON.stringify({ features: { c3: true } }),
+    );
+    const cfg = await resolveAgentConfig(dir);
+    assert.equal(cfg.usedLegacy, true);
+    assert.equal(cfg.name, '.genvid-agent.json');
+    assert.deepEqual(cfg.parsed, { features: { c3: true } });
+
+    const finding = await checkC3Marker(dir, cfg);
+    assert.equal(finding.ok, true);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('resolveAgentConfig: both names present → prefers .gvt-agent.json, usedLegacy false', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.writeFile(
+      join(dir, '.gvt-agent.json'),
+      JSON.stringify({ features: { c3: true } }),
+    );
+    await fs.writeFile(
+      join(dir, '.genvid-agent.json'),
+      JSON.stringify({ features: { c3: false } }),
+    );
+    const cfg = await resolveAgentConfig(dir);
+    assert.equal(cfg.usedLegacy, false);
+    assert.equal(cfg.name, '.gvt-agent.json');
+    assert.deepEqual(cfg.parsed, { features: { c3: true } });
+
+    const finding = await checkC3Marker(dir, cfg);
+    assert.equal(finding.ok, true);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('resolveAgentConfig: neither name present → parsed null, name null, marker error', async () => {
+  const dir = await mkTmp();
+  try {
+    const cfg = await resolveAgentConfig(dir);
+    assert.equal(cfg.parsed, null);
+    assert.equal(cfg.name, null);
+    assert.equal(cfg.usedLegacy, false);
+
+    const finding = await checkC3Marker(dir, cfg);
     assert.equal(finding.ok, false);
     assert.equal(finding.severity, 'error');
   } finally {
@@ -264,8 +262,6 @@ description: No expects here
 });
 
 // ---- evaluateFile / evaluateConfig tests ------------------------------------
-
-import { evaluateFile, evaluateConfig, resolveProjectRoot } from '../audit.mjs';
 
 test('import side-effect guard: importing audit.mjs did not execute main', () => {
   assert.ok(true, 'importing audit.mjs did not execute main');

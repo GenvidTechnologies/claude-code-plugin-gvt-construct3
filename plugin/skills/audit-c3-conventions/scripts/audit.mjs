@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Validates the consuming repo against the gvt-construct3 plugin's convention
 // contract. Checks:
-//   1. C3-project marker (project.c3proj present, or .genvid-agent.json
+//   1. C3-project marker (project.c3proj present, or .gvt-agent.json
 //      features.c3 === true, or paths.c3project pointing at an existing file)
+//      — the legacy `.genvid-agent.json` name is still accepted as a fallback
 //   2. MCP servers reachable at minimum versions (construct3-chef >= 0.4.0,
 //      c3-domain-manager >= 0.1.1) — probed via `npx -y <package> --version`
 //   3. Walk plugin skills/agents metadata.expects (files, config, tools, mcp)
@@ -36,22 +37,47 @@ export function resolveProjectRoot(repoRoot, agentJson) {
   return repoRoot;
 }
 
+// Resolves the gvt-dev agent config once, preferring the current `.gvt-agent.json`
+// name and falling back to the legacy `.genvid-agent.json` when the new name isn't
+// present (or isn't valid JSON). "Success" means the file both reads and parses.
+export async function resolveAgentConfig(repoRoot) {
+  for (const [name, usedLegacy] of [
+    ['.gvt-agent.json', false],
+    ['.genvid-agent.json', true],
+  ]) {
+    try {
+      const raw = await fs.readFile(join(repoRoot, name), 'utf8');
+      const parsed = JSON.parse(raw);
+      return { parsed, name, usedLegacy };
+    } catch {
+      // Missing or invalid JSON — try the next candidate
+    }
+  }
+  return { parsed: null, name: null, usedLegacy: false };
+}
+
 async function main() {
   const components = await walkComponents(PLUGIN_ROOT);
   const findings = [];
 
-  // Parse .genvid-agent.json once for projectRoot resolution; tolerate missing/invalid
-  let parsedAgentJson = null;
-  try {
-    const raw = await fs.readFile(join(REPO_ROOT, '.genvid-agent.json'), 'utf8');
-    parsedAgentJson = JSON.parse(raw);
-  } catch {
-    // Missing or invalid JSON — projectRoot falls back to repoRoot
-  }
-  const projectRoot = resolveProjectRoot(REPO_ROOT, parsedAgentJson);
+  const agentConfig = await resolveAgentConfig(REPO_ROOT);
+  const projectRoot = resolveProjectRoot(REPO_ROOT, agentConfig.parsed);
 
   // 1. C3-project marker check (bespoke OR-check across three indicators)
-  findings.push(await checkC3Marker(REPO_ROOT));
+  findings.push(await checkC3Marker(REPO_ROOT, agentConfig));
+
+  if (agentConfig.usedLegacy) {
+    findings.push({
+      kind: 'config',
+      component: 'gvt-construct3',
+      target: '.genvid-agent.json',
+      ok: false,
+      severity: 'info',
+      detail: 'using deprecated `.genvid-agent.json` — rename to `.gvt-agent.json`',
+      reason:
+        'The gvt-dev config file was renamed `.genvid-agent.json` → `.gvt-agent.json`; the legacy name is still accepted during the transition.',
+    });
+  }
 
   // 2. Walk component expects: files, config, tools, mcp
   for (const component of components) {
@@ -81,7 +107,7 @@ async function main() {
 
 // ---- C3 marker check --------------------------------------------------------
 
-async function checkC3Marker(repoRoot) {
+export async function checkC3Marker(repoRoot, agentConfig) {
   const COMPONENT = 'gvt-construct3';
   const KIND = 'marker';
   const REASON =
@@ -93,15 +119,9 @@ async function checkC3Marker(repoRoot) {
     return { kind: KIND, component: COMPONENT, target: 'project.c3proj', ok: true };
   }
 
-  // Option B / C: .genvid-agent.json
-  const agentJsonPath = join(repoRoot, '.genvid-agent.json');
-  let parsed = null;
-  try {
-    const raw = await fs.readFile(agentJsonPath, 'utf8');
-    parsed = JSON.parse(raw);
-  } catch {
-    // Either file missing or invalid JSON — fall through to error
-  }
+  // Option B / C: .gvt-agent.json (or legacy .genvid-agent.json, already
+  // resolved by resolveAgentConfig)
+  const parsed = agentConfig?.parsed ?? null;
 
   if (parsed !== null) {
     // Option B: features.c3 === true
@@ -110,7 +130,7 @@ async function checkC3Marker(repoRoot) {
       return {
         kind: KIND,
         component: COMPONENT,
-        target: '.genvid-agent.json features.c3',
+        target: '.gvt-agent.json features.c3',
         ok: true,
       };
     }
@@ -137,7 +157,7 @@ async function checkC3Marker(repoRoot) {
     ok: false,
     severity: 'error',
     detail:
-      'No C3-project marker found (need `project.c3proj`, or `.genvid-agent.json` `features.c3: true`, or `paths.c3project`)',
+      'No C3-project marker found (need `project.c3proj`, or `.gvt-agent.json` `features.c3: true`, or `paths.c3project`)',
     reason: REASON,
   };
 }
@@ -208,7 +228,10 @@ export async function evaluateFile(component, entry, repoRoot = REPO_ROOT, proje
 
 export async function evaluateConfig(component, entry, repoRoot = REPO_ROOT, projectRoot = repoRoot) {
   const required = entry.required !== false;
-  const inFile = entry.in ?? '.genvid-agent.json';
+  // No component currently declares a `config` expect without an explicit `in:`,
+  // so this default is inert today. Unlike the marker check above, it does NOT
+  // fall back to the legacy `.genvid-agent.json` name.
+  const inFile = entry.in ?? '.gvt-agent.json';
   const root = entry.base === 'project' ? projectRoot : repoRoot;
   const filePath = join(root, inFile);
 
