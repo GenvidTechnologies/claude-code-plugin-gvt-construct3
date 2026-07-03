@@ -44,7 +44,7 @@ node "${CLAUDE_PLUGIN_ROOT}/skills/audit-c3-conventions/scripts/audit.mjs"
 
 The script:
 
-1. **Checks the C3-project marker** — passes if any of: `project.c3proj` exists; `.genvid-agent.json` has `features.c3: true`; or `paths.c3project` points at an existing file.
+1. **Checks the C3-project marker** — passes if any of: `project.c3proj` exists; `.gvt-agent.json` has `features.c3: true`; or `paths.c3project` points at an existing file.
 2. **Walks the plugin's installed skills and agents** at `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` and `${CLAUDE_PLUGIN_ROOT}/agents/*.md`.
 3. **Parses each component's frontmatter** to collect `metadata.expects.{files,config,tools,mcp}`.
 4. **Evaluates each expectation** against the current working directory, including MCP version probes via `npx -y <package> --version` (the scoped package, e.g. `@genvidtech/construct3-chef`).
@@ -64,7 +64,8 @@ When a required check fails, take the reason seriously — it's what the compone
 
 ## Act on findings
 
-- **Missing C3-project marker** — either this is not a Construct 3 project (and `gvt-construct3` does not apply), or add the marker: create `project.c3proj`, or set `features.c3: true` in `.genvid-agent.json`, or set `paths.c3project` to the path of your `.c3proj` file.
+- **Missing C3-project marker** — either this is not a Construct 3 project (and `gvt-construct3` does not apply), or add the marker: create `project.c3proj`, or set `features.c3: true` in `.gvt-agent.json`, or set `paths.c3project` to the path of your `.c3proj` file.
+- **Deprecated config filename** — an info finding that the repo still uses the old gvt-dev config name `.genvid-agent.json`. Rename the file to `.gvt-agent.json`; the audit accepts either during the transition, preferring the new name.
 - **MCP server not reachable** — the audit probes each server by running `npx -y <package> --version` (the scoped `@genvidtech/construct3-chef` / `@genvidtech/c3-domain-manager`). A failure means npx could not fetch or run that package — check network/registry access, or add the package as a project devDependency to pin it locally. The plugin itself launches the same packages via its `plugin.json` `mcpServers`.
 - **MCP server version too old** — bump the pinned version in the plugin's `plugin.json` `mcpServers` (and, for a local devDependency, update the package).
 - **Missing tool** — install `node` or `npx` (both ship with Node.js).
@@ -79,7 +80,7 @@ The script prints findings as Markdown so the report renders cleanly when Claude
 ## gvt-construct3 Audit Results
 
 ### Errors (must fix)
-- **gvt-construct3** expects `C3-project marker` — No C3-project marker found (need `project.c3proj`, or `.genvid-agent.json` `features.c3: true`, or `paths.c3project`). Reason: gvt-construct3 only applies to Construct 3 projects; this repo does not look like one.
+- **gvt-construct3** expects `C3-project marker` — No C3-project marker found (need `project.c3proj`, or `.gvt-agent.json` `features.c3: true`, or `paths.c3project`). Reason: gvt-construct3 only applies to Construct 3 projects; this repo does not look like one.
 
 ### Summary
 - 3 of 4 required expectations satisfied.

@@ -2,13 +2,13 @@
 
 This document is the contract between the `gvt-construct3` Claude Code plugin and the repositories that install it. Unlike a generic workflow plugin, `gvt-construct3` is **domain-specific**: it only applies to repositories that contain a **Construct 3 project** and have the **construct3-chef** and **c3-domain-manager** MCP servers available.
 
-`gvt-construct3` is **independent of the `genvid-dev` plugin** — it ships its own convention contract and its own audit (`audit-c3-conventions`). It does not depend on genvid-dev being installed.
+`gvt-construct3` is **independent of the `gvt-dev` plugin** — it ships its own convention contract and its own audit (`audit-c3-conventions`). It does not depend on gvt-dev being installed.
 
 ## What a consuming repo must provide
 
 | Requirement | How it's satisfied | Checked by |
 |-------------|--------------------|------------|
-| **A C3-project marker** | `project.c3proj` at the repo root, **or** `.genvid-agent.json` with `features.c3: true`, **or** `.genvid-agent.json` `paths.c3project` pointing at the `.c3proj` file | `audit-c3-conventions` |
+| **A C3-project marker** | `project.c3proj` at the repo root, **or** `.gvt-agent.json` with `features.c3: true`, **or** `.gvt-agent.json` `paths.c3project` pointing at the `.c3proj` file (the legacy `.genvid-agent.json` is still accepted, with a deprecation warning, during the transition) | `audit-c3-conventions` |
 | **construct3-chef MCP server** | Launched as `npx -y @genvidtech/construct3-chef server`, version ≥ `0.11.2` | `audit-c3-conventions` |
 | **c3-domain-manager MCP server** | Launched as `npx -y @genvidtech/c3-domain-manager server`, version ≥ `0.6.1` | `audit-c3-conventions` |
 

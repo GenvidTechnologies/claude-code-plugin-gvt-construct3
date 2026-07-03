@@ -30,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`audit-c3-conventions`, `build-reference`, `author-navigation-patterns`,
   `create-c3-op`) now probe the `@genvidtech` packages the plugin actually
   launches. (#39, #40)
+- **`audit-c3-conventions` now reads a consuming repo's gvt-dev config as
+  `.gvt-agent.json`**, falling back to the legacy `.genvid-agent.json` (with an
+  info-severity deprecation finding) during the consumer transition, following
+  the `genvid-dev`→`gvt-dev` / `.genvid-agent.json`→`.gvt-agent.json` rename.
+  The C3-project marker check, project-root resolution, and `CONVENTIONS.md`
+  contract are updated; un-migrated consumers are not broken (#42).
 
 ## [2.0.0] - 2026-06-29
 
