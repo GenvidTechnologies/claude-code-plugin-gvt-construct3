@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-07-03
+
 ### Changed
 - **Both bundled MCP servers moved from the `@genvid` npm scope to `@genvidtech`,
   with a version bump each:** `construct3-chef` `@genvid/…@0.10.2` →
