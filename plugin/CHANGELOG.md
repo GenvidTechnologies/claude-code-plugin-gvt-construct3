@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **author-navigation-patterns preview helper now scans `--dsl` directories
+  recursively.** `collectDslFiles` used a non-recursive `fs.readdir`, so
+  pointing `--dsl` at a nested `extracted/` tree matched 0 files and
+  misreported "0 captures" as a bad pattern. It now recurses (`{ recursive:
+  true }`, building each path from the Dirent's `parentPath`) and warns to
+  stderr when a `--dsl` directory contains no DSL files, distinguishing
+  "scanned nothing" from "matched nothing". (#45)
+
 ## [2.1.0] - 2026-07-03
 
 ### Changed

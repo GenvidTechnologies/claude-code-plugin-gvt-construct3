@@ -17,10 +17,11 @@
 // Exit: 0 on success, 1 on usage error.
 
 import { promises as fs } from 'node:fs';
-import { join, extname, resolve, basename } from 'node:path';
+import { resolve, basename } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { classifyLines, renderReport } from './lib/nav-patterns.mjs';
+import { selectDslPaths } from './lib/dsl-files.mjs';
 
 // ---- arg parsing ------------------------------------------------------------
 
@@ -89,13 +90,6 @@ async function loadConfig(configPath) {
 
 // ---- DSL file collection ----------------------------------------------------
 
-function isDslFile(name) {
-  // Check for compound extension .dsl.txt first
-  if (name.endsWith('.dsl.txt')) return true;
-  const ext = extname(name);
-  return ext === '.txt' || ext === '.ts';
-}
-
 async function collectDslFiles(inputPath) {
   const absPath = resolve(inputPath);
   let stat;
@@ -110,10 +104,14 @@ async function collectDslFiles(inputPath) {
   }
 
   if (stat.isDirectory()) {
-    const entries = await fs.readdir(absPath, { withFileTypes: true });
-    return entries
-      .filter((e) => e.isFile() && isDslFile(e.name))
-      .map((e) => join(absPath, e.name));
+    const entries = await fs.readdir(absPath, { withFileTypes: true, recursive: true });
+    const files = selectDslPaths(entries);
+    if (files.length === 0) {
+      console.error(
+        `warning: --dsl directory '${inputPath}' contained no DSL files (.dsl.txt/.txt/.ts) — scanned nothing, not "matched nothing"`,
+      );
+    }
+    return files;
   }
 
   fatal(`--dsl path is neither a file nor a directory: ${inputPath}`);
@@ -173,3 +171,5 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     process.exit(1);
   });
 }
+
+export { collectDslFiles };
