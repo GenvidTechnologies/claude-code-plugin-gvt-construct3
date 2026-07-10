@@ -69,8 +69,25 @@ async function main() {
   // 1b. Discovery-ambiguity check (bespoke) — advisory `warning`; mirrors
   // c3-domain-manager's bare-args auto-discovery, which aborts (-32000) when
   // 2+ child dirs contain `project.c3proj`. Only pushes a finding when it fires.
-  const discovery = await checkDiscoveryAmbiguity(REPO_ROOT);
+  // `scan` and `mcpOverride` are computed once here and reused by the (later)
+  // root-divergence check — don't inline them into the call below.
+  const scan = await scanC3ProjectMarkers(REPO_ROOT);
+  const mcpOverride = await resolveMcpProjectDirOverride(REPO_ROOT);
+  const discovery = await checkDiscoveryAmbiguity(REPO_ROOT, process.env, mcpOverride, scan);
   if (discovery) findings.push(discovery);
+
+  // 1c. Root-divergence check (bespoke) — advisory `info`; fires when the
+  // paths.c3project-derived root the audit validated differs from the root
+  // bare-args discovery would pick, even though discovery itself is
+  // unambiguous. Reuses the SAME scan/mcpOverride computed above.
+  const divergence = checkRootDivergence({
+    repoRoot: REPO_ROOT,
+    projectRoot,
+    scan,
+    env: process.env,
+    explicitOverride: mcpOverride,
+  });
+  if (divergence) findings.push(divergence);
 
   if (agentConfig.usedLegacy) {
     findings.push({
@@ -425,11 +442,21 @@ function commandExists(cmd) {
 // server resolves its project root by scanning depth-1 child dirs of the repo
 // root for a `project.c3proj` marker, and aborts if 2+ candidates are found.
 // Precedence mirrors upstream `resolveRootFolder`'s explicit > env > discovery
-// order: an explicit `C3_PROJECT_DIR` override suppresses the check entirely
-// (checked first), then a root-level marker short-circuits discovery (the
-// server never even scans children), and only then does the child-dir count
-// decide.
-export function classifyDiscovery({ rootHasMarker, childDirsWithMarker, envOverride }) {
+// order, and there are now two distinct suppressors: `explicitOverride` (a
+// true `--project-dir` / `.mcp.json` pin — tier 1, checked first) and
+// `envOverride` (a live `C3_PROJECT_DIR` — tier 2, checked next). Either one
+// suppresses the check entirely. Only after both are absent does a root-level
+// marker short-circuit discovery (the server never even scans children), and
+// only then does the child-dir count decide.
+export function classifyDiscovery({
+  rootHasMarker,
+  childDirsWithMarker,
+  explicitOverride,
+  envOverride,
+}) {
+  if (typeof explicitOverride === 'string' && explicitOverride.trim() !== '') {
+    return { fires: false, reason: 'suppressed-mcp' };
+  }
   if (typeof envOverride === 'string' && envOverride.trim() !== '') {
     return { fires: false, reason: 'suppressed-env' };
   }
@@ -445,7 +472,7 @@ export function classifyDiscovery({ rootHasMarker, childDirsWithMarker, envOverr
 // NO name-based filtering — `node_modules` and dot-directories are scanned
 // like any other child dir — so this deliberately does not exclude them
 // either (see the regression-lock test in audit.test.mjs).
-export async function checkDiscoveryAmbiguity(repoRoot, env = process.env) {
+export async function scanC3ProjectMarkers(repoRoot) {
   const rootHasMarker = await fileExists(join(repoRoot, 'project.c3proj'));
   const childDirsWithMarker = [];
   let entries;
@@ -455,14 +482,72 @@ export async function checkDiscoveryAmbiguity(repoRoot, env = process.env) {
     entries = [];
   }
   for (const e of entries) {
-    if (!e.isDirectory()) continue; // no name filtering — matches upstream
+    if (!e.isDirectory()) continue; // no name filtering — matches upstream resolveRootFolder
     if (await fileExists(join(repoRoot, e.name, 'project.c3proj'))) {
       childDirsWithMarker.push(e.name);
     }
   }
+  return { rootHasMarker, childDirsWithMarker };
+}
+
+// Pure 4-branch mirror of `resolveRootFolder`'s pick, once discovery has
+// already determined it's unambiguous (2+ matches is handled as an ambiguity
+// finding elsewhere — this function deliberately returns null rather than
+// picking one, so it must never be treated as "the" answer when ambiguous).
+export function resolveDiscoveryPick({ repoRoot, rootHasMarker, childDirsWithMarker }) {
+  if (rootHasMarker) return repoRoot;
+  const matches = childDirsWithMarker ?? [];
+  if (matches.length >= 2) return null; // ambiguous — item 2 must NOT fire here (item 1's warning owns this)
+  if (matches.length === 1) return join(repoRoot, matches[0]);
+  return repoRoot; // 0 matches — cwd fallback
+}
+
+// Parses a workspace-root `.mcp.json` for a c3-domain-manager server entry that pins
+// the project root, so the discovery-ambiguity check can suppress a false-positive
+// warning when the consumer has overridden the plugin's bare-args launch. A same-named
+// .mcp.json entry fully replaces the plugin-declared server (Claude Code MCP config:
+// same-name entry wins, fields not merged), so a --project-dir / env.C3_PROJECT_DIR pin
+// there means the server never runs auto-discovery. Values may be literal ${...} tokens;
+// presence of a non-empty value is enough to know discovery is suppressed. Returns null
+// on any absence/parse failure (the common case — most repos have no .mcp.json).
+export async function resolveMcpProjectDirOverride(repoRoot) {
+  let parsed;
+  try {
+    parsed = JSON.parse(await fs.readFile(join(repoRoot, '.mcp.json'), 'utf8'));
+  } catch {
+    return null;
+  }
+  const entry = parsed?.mcpServers?.['c3-domain-manager'];
+  if (!entry || typeof entry !== 'object') return null;
+  // 1. --project-dir in args (flag+value as two separate elements is the documented
+  //    Claude Code form; also defensively accept a single `--project-dir=<val>` token).
+  const args = Array.isArray(entry.args) ? entry.args : [];
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === '--project-dir') {
+      const val = args[i + 1];
+      if (typeof val === 'string') return val;
+    } else if (typeof a === 'string' && a.startsWith('--project-dir=')) {
+      return a.slice('--project-dir='.length);
+    }
+  }
+  // 2. env.C3_PROJECT_DIR fallback
+  const envVal = entry.env?.C3_PROJECT_DIR;
+  if (typeof envVal === 'string') return envVal;
+  return null;
+}
+
+export async function checkDiscoveryAmbiguity(
+  repoRoot,
+  env = process.env,
+  explicitOverride = null,
+  scan = null,
+) {
+  const { rootHasMarker, childDirsWithMarker } = scan ?? (await scanC3ProjectMarkers(repoRoot));
   const verdict = classifyDiscovery({
     rootHasMarker,
     childDirsWithMarker,
+    explicitOverride,
     envOverride: env?.C3_PROJECT_DIR,
   });
   if (!verdict.fires) return null; // healthy repos add NOTHING to findings
@@ -480,6 +565,54 @@ export async function checkDiscoveryAmbiguity(repoRoot, env = process.env) {
       'The plugin launches c3-domain-manager with no --project-dir, so it resolves the project root by ' +
       'filesystem discovery; two or more candidate roots is a fatal ambiguity. Remove or relocate the extra ' +
       'project.c3proj, or pin the root with C3_PROJECT_DIR / --project-dir.',
+  };
+}
+
+// ---- root divergence ---------------------------------------------------------
+
+// Softer companion to the discovery-ambiguity check above: even when
+// discovery is unambiguous (a single pick, or the 0-match cwd fallback), the
+// root c3-domain-manager's bare-args launch would auto-discover can still
+// differ from the root the audit validated (`paths.c3project`-derived
+// `projectRoot`). That's not a guaranteed crash — the server still starts,
+// just possibly on a different (still-valid) project — so this is advisory
+// `info`, not `warning`. Suppressed by the same two overrides as discovery
+// ambiguity (an explicit --project-dir/.mcp.json pin, or a live
+// C3_PROJECT_DIR env var), since either one means the server ignores both
+// discovery and paths.c3project entirely.
+export function checkRootDivergence({ repoRoot, projectRoot, scan, env = process.env, explicitOverride = null }) {
+  // Suppressed when an override pins the root: the server ignores BOTH discovery and
+  // paths.c3project, so divergence is moot. Same trim-truthiness rule as classifyDiscovery.
+  // (Deliberate 2-line duplication rather than a shared predicate — flagged for review.)
+  if (typeof explicitOverride === 'string' && explicitOverride.trim() !== '') return null;
+  const envOverride = env?.C3_PROJECT_DIR;
+  if (typeof envOverride === 'string' && envOverride.trim() !== '') return null;
+
+  const pick = resolveDiscoveryPick({
+    repoRoot,
+    rootHasMarker: scan.rootHasMarker,
+    childDirsWithMarker: scan.childDirsWithMarker,
+  });
+  // pick === null → ≥2-match ambiguous; that's the discovery-ambiguity warning's job,
+  // divergence must NOT also fire there.
+  if (pick === null) return null;
+  if (resolve(pick) === resolve(projectRoot)) return null; // agree — no finding
+
+  return {
+    kind: 'discovery-divergence',
+    component: 'gvt-construct3',
+    target: 'C3 project root',
+    ok: false,
+    severity: 'info',
+    detail:
+      `resolved C3 root diverges — the audit validated \`${projectRoot}\` (from ` +
+      `.gvt-agent.json paths.c3project) but c3-domain-manager's bare-args auto-discovery ` +
+      `would pick \`${pick}\`, so the server may operate on a different project than the audit checked`,
+    reason:
+      'The plugin launches c3-domain-manager with no --project-dir; it auto-discovers its ' +
+      'root from the filesystem, which can differ from the paths.c3project root the audit ' +
+      'validates. Align paths.c3project with the discoverable project, or pin the root with ' +
+      'C3_PROJECT_DIR / --project-dir.',
   };
 }
 

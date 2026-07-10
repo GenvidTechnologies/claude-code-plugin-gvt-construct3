@@ -22,6 +22,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   A `C3_PROJECT_DIR` env override (or `--project-dir`) suppresses discovery,
   so the check does not fire when one is set, and a repo-root
   `project.c3proj` short-circuits discovery entirely. (#47)
+- **Two refinements to the discovery-ambiguity check.** First, the
+  discovery-ambiguity `warning` is now also suppressed when a workspace-root
+  `.mcp.json` overrides the `c3-domain-manager` server entry with a
+  `--project-dir` arg or `env.C3_PROJECT_DIR` — previously only the live
+  `C3_PROJECT_DIR` env var suppressed it, so a repo pinning the root purely
+  via `.mcp.json` saw a false-positive warning. Second, a new advisory
+  **`info`**-severity finding (`discovery-divergence`) fires when
+  `.gvt-agent.json` `paths.c3project` resolves to a different root than bare
+  auto-discovery would pick — the server may operate on a different (but
+  valid) project than the audit validated, which is not a guaranteed
+  `-32000` crash and so is `info`, not `warning`. Neither refinement changes
+  the exit code. (#49)
 
 ## [2.1.1] - 2026-07-07
 
