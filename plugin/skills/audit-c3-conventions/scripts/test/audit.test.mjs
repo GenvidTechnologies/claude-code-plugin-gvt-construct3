@@ -31,6 +31,7 @@ import {
   scanC3ProjectMarkers,
   resolveDiscoveryPick,
   resolveMcpProjectDirOverride,
+  checkRootDivergence,
   formatReport,
 } from '../audit.mjs';
 
@@ -1105,6 +1106,174 @@ test('resolveMcpProjectDirOverride: entry present with neither args-flag nor env
     );
     const result = await resolveMcpProjectDirOverride(dir);
     assert.equal(result, null);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+// ---- checkRootDivergence tests ------------------------------------------------
+
+test('checkRootDivergence: paths.c3project ≠ single-discovered child → fires, detail names both roots', async () => {
+  const dir = await mkTmp();
+  try {
+    const a = join(dir, 'a');
+    const b = join(dir, 'b');
+    await fs.mkdir(a);
+    await fs.mkdir(b);
+    await fs.writeFile(join(a, 'project.c3proj'), '{}'); // single discoverable child (scan-matched name)
+    // b's marker is a differently-named file so the discovery scan (which only looks
+    // for a literal `project.c3proj`) does NOT pick it up as a second candidate —
+    // otherwise this would be the ≥2-match ambiguous case, not a clean divergence.
+    await fs.writeFile(join(b, 'x.c3proj'), '{}'); // paths.c3project points here instead
+
+    const scan = await scanC3ProjectMarkers(dir);
+    const projectRoot = resolveProjectRoot(dir, { paths: { c3project: 'b/x.c3proj' } });
+
+    const finding = checkRootDivergence({ repoRoot: dir, projectRoot, scan, env: {} });
+    assert.ok(finding, 'expected a divergence finding');
+    assert.equal(finding.severity, 'info');
+    assert.equal(finding.ok, false);
+    assert.ok(finding.detail.includes(projectRoot), 'detail should name the validated (paths.c3project) root');
+    assert.ok(finding.detail.includes(a), 'detail should name the discovered-pick root');
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('checkRootDivergence: paths.c3project == discovery pick → null', async () => {
+  const dir = await mkTmp();
+  try {
+    const a = join(dir, 'a');
+    await fs.mkdir(a);
+    await fs.writeFile(join(a, 'project.c3proj'), '{}');
+
+    const scan = await scanC3ProjectMarkers(dir);
+    const projectRoot = resolveProjectRoot(dir, { paths: { c3project: 'a/project.c3proj' } });
+
+    const finding = checkRootDivergence({ repoRoot: dir, projectRoot, scan, env: {} });
+    assert.equal(finding, null);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('checkRootDivergence: ≥2-child ambiguous discovery → null (discovery-ambiguity warning owns this)', async () => {
+  const dir = await mkTmp();
+  try {
+    const a = join(dir, 'a');
+    const b = join(dir, 'b');
+    await fs.mkdir(a);
+    await fs.mkdir(b);
+    await fs.writeFile(join(a, 'project.c3proj'), '{}');
+    await fs.writeFile(join(b, 'project.c3proj'), '{}');
+
+    const scan = await scanC3ProjectMarkers(dir);
+    const projectRoot = resolveProjectRoot(dir, { paths: { c3project: 'a/project.c3proj' } });
+
+    const finding = checkRootDivergence({ repoRoot: dir, projectRoot, scan, env: {} });
+    assert.equal(finding, null);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('checkRootDivergence: rooted (root has marker) but paths.c3project elsewhere → fires', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.writeFile(join(dir, 'project.c3proj'), '{}'); // root marker → pick = repoRoot
+    const sub = join(dir, 'sub');
+    await fs.mkdir(sub);
+    await fs.writeFile(join(sub, 'x.c3proj'), '{}');
+
+    const scan = await scanC3ProjectMarkers(dir);
+    const projectRoot = resolveProjectRoot(dir, { paths: { c3project: 'sub/x.c3proj' } });
+
+    const finding = checkRootDivergence({ repoRoot: dir, projectRoot, scan, env: {} });
+    assert.ok(finding, 'expected a divergence finding');
+    assert.equal(finding.severity, 'info');
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('checkRootDivergence: explicit override pinned → suppressed (null) despite divergence', async () => {
+  const dir = await mkTmp();
+  try {
+    const a = join(dir, 'a');
+    const b = join(dir, 'b');
+    await fs.mkdir(a);
+    await fs.mkdir(b);
+    await fs.writeFile(join(a, 'project.c3proj'), '{}');
+    await fs.writeFile(join(b, 'project.c3proj'), '{}');
+
+    const scan = await scanC3ProjectMarkers(dir);
+    const projectRoot = resolveProjectRoot(dir, { paths: { c3project: 'b/project.c3proj' } });
+
+    const finding = checkRootDivergence({
+      repoRoot: dir,
+      projectRoot,
+      scan,
+      env: {},
+      explicitOverride: 'somewhere',
+    });
+    assert.equal(finding, null);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('checkRootDivergence: env C3_PROJECT_DIR set → suppressed (null) despite divergence', async () => {
+  const dir = await mkTmp();
+  try {
+    const a = join(dir, 'a');
+    await fs.mkdir(a);
+    await fs.writeFile(join(a, 'project.c3proj'), '{}');
+    const sub = join(dir, 'sub');
+    await fs.mkdir(sub);
+    await fs.writeFile(join(sub, 'x.c3proj'), '{}');
+
+    const scan = await scanC3ProjectMarkers(dir);
+    const projectRoot = resolveProjectRoot(dir, { paths: { c3project: 'sub/x.c3proj' } });
+
+    const finding = checkRootDivergence({
+      repoRoot: dir,
+      projectRoot,
+      scan,
+      env: { C3_PROJECT_DIR: '/pinned' },
+    });
+    assert.equal(finding, null);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('checkRootDivergence: 0-children cwd-fallback pick but paths.c3project elsewhere → fires', async () => {
+  const dir = await mkTmp();
+  try {
+    // no markers anywhere at repoRoot or any child → pick = repoRoot (cwd fallback)
+    const sub = join(dir, 'sub');
+    await fs.mkdir(sub);
+    await fs.writeFile(join(sub, 'x.c3proj'), '{}');
+
+    const scan = await scanC3ProjectMarkers(dir);
+    const projectRoot = resolveProjectRoot(dir, { paths: { c3project: 'sub/x.c3proj' } });
+
+    const finding = checkRootDivergence({ repoRoot: dir, projectRoot, scan, env: {} });
+    assert.ok(finding, 'expected a divergence finding');
+    assert.equal(finding.severity, 'info');
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('checkRootDivergence: no paths.c3project + 0 children → null (agree, both repoRoot)', async () => {
+  const dir = await mkTmp();
+  try {
+    const scan = await scanC3ProjectMarkers(dir);
+    const projectRoot = resolveProjectRoot(dir, {});
+
+    const finding = checkRootDivergence({ repoRoot: dir, projectRoot, scan, env: {} });
+    assert.equal(finding, null);
   } finally {
     await rmTmp(dir);
   }

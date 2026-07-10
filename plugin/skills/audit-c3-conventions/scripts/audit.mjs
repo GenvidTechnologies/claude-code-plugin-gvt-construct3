@@ -76,6 +76,19 @@ async function main() {
   const discovery = await checkDiscoveryAmbiguity(REPO_ROOT, process.env, mcpOverride, scan);
   if (discovery) findings.push(discovery);
 
+  // 1c. Root-divergence check (bespoke) — advisory `info`; fires when the
+  // paths.c3project-derived root the audit validated differs from the root
+  // bare-args discovery would pick, even though discovery itself is
+  // unambiguous. Reuses the SAME scan/mcpOverride computed above.
+  const divergence = checkRootDivergence({
+    repoRoot: REPO_ROOT,
+    projectRoot,
+    scan,
+    env: process.env,
+    explicitOverride: mcpOverride,
+  });
+  if (divergence) findings.push(divergence);
+
   if (agentConfig.usedLegacy) {
     findings.push({
       kind: 'config',
@@ -552,6 +565,54 @@ export async function checkDiscoveryAmbiguity(
       'The plugin launches c3-domain-manager with no --project-dir, so it resolves the project root by ' +
       'filesystem discovery; two or more candidate roots is a fatal ambiguity. Remove or relocate the extra ' +
       'project.c3proj, or pin the root with C3_PROJECT_DIR / --project-dir.',
+  };
+}
+
+// ---- root divergence ---------------------------------------------------------
+
+// Softer companion to the discovery-ambiguity check above: even when
+// discovery is unambiguous (a single pick, or the 0-match cwd fallback), the
+// root c3-domain-manager's bare-args launch would auto-discover can still
+// differ from the root the audit validated (`paths.c3project`-derived
+// `projectRoot`). That's not a guaranteed crash — the server still starts,
+// just possibly on a different (still-valid) project — so this is advisory
+// `info`, not `warning`. Suppressed by the same two overrides as discovery
+// ambiguity (an explicit --project-dir/.mcp.json pin, or a live
+// C3_PROJECT_DIR env var), since either one means the server ignores both
+// discovery and paths.c3project entirely.
+export function checkRootDivergence({ repoRoot, projectRoot, scan, env = process.env, explicitOverride = null }) {
+  // Suppressed when an override pins the root: the server ignores BOTH discovery and
+  // paths.c3project, so divergence is moot. Same trim-truthiness rule as classifyDiscovery.
+  // (Deliberate 2-line duplication rather than a shared predicate — flagged for review.)
+  if (typeof explicitOverride === 'string' && explicitOverride.trim() !== '') return null;
+  const envOverride = env?.C3_PROJECT_DIR;
+  if (typeof envOverride === 'string' && envOverride.trim() !== '') return null;
+
+  const pick = resolveDiscoveryPick({
+    repoRoot,
+    rootHasMarker: scan.rootHasMarker,
+    childDirsWithMarker: scan.childDirsWithMarker,
+  });
+  // pick === null → ≥2-match ambiguous; that's the discovery-ambiguity warning's job,
+  // divergence must NOT also fire there.
+  if (pick === null) return null;
+  if (resolve(pick) === resolve(projectRoot)) return null; // agree — no finding
+
+  return {
+    kind: 'discovery-divergence',
+    component: 'gvt-construct3',
+    target: 'C3 project root',
+    ok: false,
+    severity: 'info',
+    detail:
+      `resolved C3 root diverges — the audit validated \`${projectRoot}\` (from ` +
+      `.gvt-agent.json paths.c3project) but c3-domain-manager's bare-args auto-discovery ` +
+      `would pick \`${pick}\`, so the server may operate on a different project than the audit checked`,
+    reason:
+      'The plugin launches c3-domain-manager with no --project-dir; it auto-discovers its ' +
+      'root from the filesystem, which can differ from the paths.c3project root the audit ' +
+      'validates. Align paths.c3project with the discoverable project, or pin the root with ' +
+      'C3_PROJECT_DIR / --project-dir.',
   };
 }
 
