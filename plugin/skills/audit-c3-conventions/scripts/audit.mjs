@@ -66,6 +66,12 @@ async function main() {
   // 1. C3-project marker check (bespoke OR-check across three indicators)
   findings.push(await checkC3Marker(REPO_ROOT, agentConfig));
 
+  // 1b. Discovery-ambiguity check (bespoke) — advisory `warning`; mirrors
+  // c3-domain-manager's bare-args auto-discovery, which aborts (-32000) when
+  // 2+ child dirs contain `project.c3proj`. Only pushes a finding when it fires.
+  const discovery = await checkDiscoveryAmbiguity(REPO_ROOT);
+  if (discovery) findings.push(discovery);
+
   if (agentConfig.usedLegacy) {
     findings.push({
       kind: 'config',
