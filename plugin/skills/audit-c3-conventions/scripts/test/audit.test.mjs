@@ -26,6 +26,9 @@ import {
   evaluateFile,
   evaluateConfig,
   resolveProjectRoot,
+  classifyDiscovery,
+  checkDiscoveryAmbiguity,
+  formatReport,
 } from '../audit.mjs';
 
 // ---- marker tests -----------------------------------------------------------
@@ -499,5 +502,224 @@ test('evaluateConfig base:project, key in projectRoot subdir file → ok', async
     assert.equal(finding.ok, true);
   } finally {
     await rmTmp(dir);
+  }
+});
+
+// ---- classifyDiscovery (pure) tests ------------------------------------------
+
+test('classifyDiscovery: envOverride set with 2 child matches → suppressed-env', () => {
+  const result = classifyDiscovery({
+    rootHasMarker: false,
+    childDirsWithMarker: ['a', 'b'],
+    envOverride: 'foo',
+  });
+  assert.deepEqual(result, { fires: false, reason: 'suppressed-env' });
+});
+
+test('classifyDiscovery: whitespace-only envOverride with 2 child matches → does NOT suppress, fires', () => {
+  const result = classifyDiscovery({
+    rootHasMarker: false,
+    childDirsWithMarker: ['a', 'b'],
+    envOverride: '   ',
+  });
+  assert.equal(result.fires, true);
+});
+
+test('classifyDiscovery: rootHasMarker true with 2 child matches, no env → root-short-circuit', () => {
+  const result = classifyDiscovery({
+    rootHasMarker: true,
+    childDirsWithMarker: ['a', 'b'],
+    envOverride: undefined,
+  });
+  assert.deepEqual(result, { fires: false, reason: 'root-short-circuit' });
+});
+
+test('classifyDiscovery: 2+ child matches, no root marker, no env → fires', () => {
+  const result = classifyDiscovery({
+    rootHasMarker: false,
+    childDirsWithMarker: ['a', 'b'],
+    envOverride: undefined,
+  });
+  assert.equal(result.fires, true);
+  assert.deepEqual(result.matches, ['a', 'b']);
+});
+
+test('classifyDiscovery: exactly 1 child match → single, does not fire', () => {
+  const result = classifyDiscovery({
+    rootHasMarker: false,
+    childDirsWithMarker: ['a'],
+    envOverride: undefined,
+  });
+  assert.deepEqual(result, { fires: false, reason: 'single' });
+});
+
+test('classifyDiscovery: 0 child matches → none, does not fire', () => {
+  const result = classifyDiscovery({
+    rootHasMarker: false,
+    childDirsWithMarker: [],
+    envOverride: undefined,
+  });
+  assert.deepEqual(result, { fires: false, reason: 'none' });
+});
+
+// ---- checkDiscoveryAmbiguity (I/O wrapper) tests -----------------------------
+
+test('checkDiscoveryAmbiguity: two child dirs with project.c3proj, no root marker → finding', async () => {
+  const dir = await mkTmp();
+  try {
+    const a = join(dir, 'a');
+    const b = join(dir, 'b');
+    await fs.mkdir(a);
+    await fs.mkdir(b);
+    await fs.writeFile(join(a, 'project.c3proj'), '{}');
+    await fs.writeFile(join(b, 'project.c3proj'), '{}');
+    const finding = await checkDiscoveryAmbiguity(dir, {});
+    assert.ok(finding, 'expected a finding');
+    assert.equal(finding.severity, 'warning');
+    assert.equal(finding.ok, false);
+    assert.match(finding.detail, /a/);
+    assert.match(finding.detail, /b/);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('checkDiscoveryAmbiguity: root has marker AND two children have it → null (short-circuit)', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.writeFile(join(dir, 'project.c3proj'), '{}');
+    const a = join(dir, 'a');
+    const b = join(dir, 'b');
+    await fs.mkdir(a);
+    await fs.mkdir(b);
+    await fs.writeFile(join(a, 'project.c3proj'), '{}');
+    await fs.writeFile(join(b, 'project.c3proj'), '{}');
+    const finding = await checkDiscoveryAmbiguity(dir, {});
+    assert.equal(finding, null);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('checkDiscoveryAmbiguity: single child with marker → null', async () => {
+  const dir = await mkTmp();
+  try {
+    const a = join(dir, 'a');
+    await fs.mkdir(a);
+    await fs.writeFile(join(a, 'project.c3proj'), '{}');
+    const finding = await checkDiscoveryAmbiguity(dir, {});
+    assert.equal(finding, null);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('checkDiscoveryAmbiguity: C3_PROJECT_DIR set with two child matches → null', async () => {
+  const dir = await mkTmp();
+  try {
+    const a = join(dir, 'a');
+    const b = join(dir, 'b');
+    await fs.mkdir(a);
+    await fs.mkdir(b);
+    await fs.writeFile(join(a, 'project.c3proj'), '{}');
+    await fs.writeFile(join(b, 'project.c3proj'), '{}');
+    const finding = await checkDiscoveryAmbiguity(dir, { C3_PROJECT_DIR: 'a' });
+    assert.equal(finding, null);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('checkDiscoveryAmbiguity: whitespace-only C3_PROJECT_DIR with two child matches → still fires', async () => {
+  const dir = await mkTmp();
+  try {
+    const a = join(dir, 'a');
+    const b = join(dir, 'b');
+    await fs.mkdir(a);
+    await fs.mkdir(b);
+    await fs.writeFile(join(a, 'project.c3proj'), '{}');
+    await fs.writeFile(join(b, 'project.c3proj'), '{}');
+    const finding = await checkDiscoveryAmbiguity(dir, { C3_PROJECT_DIR: '   ' });
+    assert.ok(finding, 'expected a finding — whitespace-only env is not a real override');
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('checkDiscoveryAmbiguity: bare temp dir, zero markers → null', async () => {
+  const dir = await mkTmp();
+  try {
+    const finding = await checkDiscoveryAmbiguity(dir, {});
+    assert.equal(finding, null);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+// Regression lock: upstream's (@genvidtech/mcp-utils resolveRootFolder) depth-1
+// child scan does NOT filter by directory name — node_modules and dotfiles are
+// scanned like any other child dir. This pins that fact so a future "let's
+// skip node_modules" edit here is caught by CI instead of silently diverging
+// from the real server's behavior.
+test('checkDiscoveryAmbiguity: node_modules with marker + ordinary sibling with marker → fires (no name filtering)', async () => {
+  const dir = await mkTmp();
+  try {
+    const nm = join(dir, 'node_modules');
+    const a = join(dir, 'a');
+    await fs.mkdir(nm);
+    await fs.mkdir(a);
+    await fs.writeFile(join(nm, 'project.c3proj'), '{}');
+    await fs.writeFile(join(a, 'project.c3proj'), '{}');
+    const finding = await checkDiscoveryAmbiguity(dir, {});
+    assert.ok(finding, 'expected a finding — node_modules is not excluded, matching upstream');
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+// ---- formatReport tests ------------------------------------------------------
+
+test('formatReport: golden — only ok/error/info findings, no warnings → no Warnings section, correct denominator', () => {
+  const findings = [
+    { kind: 'file', component: 'x', target: 'a', ok: true },
+    { kind: 'file', component: 'x', target: 'b', ok: true },
+    {
+      kind: 'file',
+      component: 'x',
+      target: 'c',
+      ok: false,
+      severity: 'error',
+      detail: 'missing',
+      reason: 'r',
+    },
+  ];
+  const report = formatReport(findings);
+  assert.ok(!report.includes('### Warnings'), 'no Warnings section expected');
+  assert.match(report, /2 of 3 required expectations satisfied\./);
+});
+
+test('formatReport: warning rendering — Warnings section present, excluded from Errors, excluded from denominator', () => {
+  const findings = [
+    { kind: 'file', component: 'x', target: 'a', ok: true },
+    {
+      kind: 'discovery',
+      component: 'gvt-construct3',
+      target: 'project.c3proj auto-discovery',
+      ok: false,
+      severity: 'warning',
+      detail: 'ambiguous C3 root',
+      reason: 'because reasons',
+    },
+  ];
+  const report = formatReport(findings);
+  assert.match(report, /### Warnings \(advisory — will break at runtime\)/);
+  assert.match(report, /1 of 1 required expectations satisfied\./);
+
+  const errorsSectionMatch = report.match(/### Errors[\s\S]*?(?=\n###|\n?$)/);
+  if (errorsSectionMatch) {
+    assert.ok(
+      !errorsSectionMatch[0].includes('auto-discovery'),
+      'warning finding must not appear under Errors',
+    );
   }
 });
