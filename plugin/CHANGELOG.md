@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`audit-c3-conventions` gains a second bespoke check, discovery ambiguity,**
+  mirroring how `c3-domain-manager` auto-discovers its project root when the
+  plugin launches it with bare args (no `--project-dir`): scanning the repo
+  root's immediate child directories (depth 1) for `project.c3proj`. If the
+  repo root itself has no `project.c3proj` but 2+ child directories each
+  contain one, that server-side `resolveRootFolder` discovery aborts and the
+  server fails to start with `-32000` — previously a failure the audit was
+  green on. The check now surfaces it as a new advisory **`warning`**-severity
+  finding (a tier between `error` and `info`) naming the colliding
+  directories; warnings do not change the exit code (only errors → exit 1).
+  A `C3_PROJECT_DIR` env override (or `--project-dir`) suppresses discovery,
+  so the check does not fire when one is set, and a repo-root
+  `project.c3proj` short-circuits discovery entirely. (#47)
+
 ## [2.1.1] - 2026-07-07
 
 ### Fixed

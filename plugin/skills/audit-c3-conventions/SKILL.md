@@ -45,11 +45,12 @@ node "${CLAUDE_PLUGIN_ROOT}/skills/audit-c3-conventions/scripts/audit.mjs"
 The script:
 
 1. **Checks the C3-project marker** — passes if any of: `project.c3proj` exists; `.gvt-agent.json` has `features.c3: true`; or `paths.c3project` points at an existing file.
-2. **Walks the plugin's installed skills and agents** at `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` and `${CLAUDE_PLUGIN_ROOT}/agents/*.md`.
-3. **Parses each component's frontmatter** to collect `metadata.expects.{files,config,tools,mcp}`.
-4. **Evaluates each expectation** against the current working directory, including MCP version probes via `npx -y <package> --version` (the scoped package, e.g. `@genvidtech/construct3-chef`).
-5. **Prints a structured report** grouped by severity (errors for required-but-missing; info for optional-but-missing).
-6. **Exits non-zero** if any required expectation is unmet.
+2. **Checks c3-domain-manager discovery ambiguity** — mirrors the server's bare-args auto-discovery (repo root + immediate children, depth 1). If the repo root lacks `project.c3proj` but 2+ child directories contain one (and no `C3_PROJECT_DIR`/`--project-dir` override pins the root), reports an advisory warning — this layout makes the server abort at startup with `-32000`.
+3. **Walks the plugin's installed skills and agents** at `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` and `${CLAUDE_PLUGIN_ROOT}/agents/*.md`.
+4. **Parses each component's frontmatter** to collect `metadata.expects.{files,config,tools,mcp}`.
+5. **Evaluates each expectation** against the current working directory, including MCP version probes via `npx -y <package> --version` (the scoped package, e.g. `@genvidtech/construct3-chef`).
+6. **Prints a structured report** grouped by severity (errors for required-but-missing; warnings for advisory runtime-breakers; info for optional-but-missing).
+7. **Exits non-zero** if any required expectation is unmet — warnings do not change the exit code.
 
 ## Read the report
 
@@ -65,6 +66,7 @@ When a required check fails, take the reason seriously — it's what the compone
 ## Act on findings
 
 - **Missing C3-project marker** — either this is not a Construct 3 project (and `gvt-construct3` does not apply), or add the marker: create `project.c3proj`, or set `features.c3: true` in `.gvt-agent.json`, or set `paths.c3project` to the path of your `.c3proj` file.
+- **Ambiguous C3 root (discovery-ambiguity warning)** — 2+ directories contain `project.c3proj` within the server's depth-1 discovery scope, so `c3-domain-manager` will abort at startup (`-32000`) even though other checks are green. Remediation: remove or relocate the extra `project.c3proj` (gitignoring it does **not** help — discovery scans the filesystem, not git), or pin the root with `C3_PROJECT_DIR` (env) or a `--project-dir` arg via a workspace `.mcp.json` server override. If you already pin `--project-dir`/`C3_PROJECT_DIR`, the advisory does not apply.
 - **Deprecated config filename** — an info finding that the repo still uses the old gvt-dev config name `.genvid-agent.json`. Rename the file to `.gvt-agent.json`; the audit accepts either during the transition, preferring the new name.
 - **MCP server not reachable** — the audit probes each server by running `npx -y <package> --version` (the scoped `@genvidtech/construct3-chef` / `@genvidtech/c3-domain-manager`). A failure means npx could not fetch or run that package — check network/registry access, or add the package as a project devDependency to pin it locally. The plugin itself launches the same packages via its `plugin.json` `mcpServers`.
 - **MCP server version too old** — bump the pinned version in the plugin's `plugin.json` `mcpServers` (and, for a local devDependency, update the package).
@@ -74,7 +76,7 @@ When a required check fails, take the reason seriously — it's what the compone
 
 ## Output format
 
-The script prints findings as Markdown so the report renders cleanly when Claude surfaces it back to the user. Example:
+The script prints findings as Markdown so the report renders cleanly when Claude surfaces it back to the user. A report can contain Errors, Warnings, and Info sections. Example (an errors-only run):
 
 ```markdown
 ## gvt-construct3 Audit Results
@@ -87,4 +89,17 @@ The script prints findings as Markdown so the report renders cleanly when Claude
 - 1 required expectation unmet.
 ```
 
-Exit code: 0 if no errors; 1 if any required expectation is unmet; 2 on unexpected script error.
+Example (an advisory-warning run — discovery ambiguity):
+
+```markdown
+## gvt-construct3 Audit Results
+
+### Warnings (advisory — will break at runtime)
+- **gvt-construct3** expects `project.c3proj auto-discovery` — ambiguous C3 root — 2 sibling directories contain `project.c3proj` (official-youtube-sample, sample); c3-domain-manager auto-discovery aborts and the server fails to start (-32000). Reason: The plugin launches c3-domain-manager with no --project-dir, so it resolves the project root by filesystem discovery; two or more candidate roots is a fatal ambiguity. Remove or relocate the extra project.c3proj, or pin the root with C3_PROJECT_DIR / --project-dir.
+
+### Summary
+- 14 of 14 required expectations satisfied.
+- 1 advisory warning (runtime-breaking).
+```
+
+Exit code: 0 if no errors (warnings do **not** affect the exit code); 1 if any required expectation is unmet; 2 on unexpected script error.
