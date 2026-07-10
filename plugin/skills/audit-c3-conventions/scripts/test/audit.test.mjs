@@ -783,6 +783,126 @@ test('checkDiscoveryAmbiguity: node_modules with marker + ordinary sibling with 
   }
 });
 
+// ---- checkDiscoveryAmbiguity: .mcp.json override suppression -----------------
+// Drives the true parse→classify path — resolveMcpProjectDirOverride parses a
+// real written `.mcp.json`, and its result is passed straight into
+// checkDiscoveryAmbiguity exactly as main() wires it (scan / override computed
+// once, then handed to the check).
+
+async function mkAmbiguousFixture(dir) {
+  const a = join(dir, 'a');
+  const b = join(dir, 'b');
+  await fs.mkdir(a);
+  await fs.mkdir(b);
+  await fs.writeFile(join(a, 'project.c3proj'), '{}');
+  await fs.writeFile(join(b, 'project.c3proj'), '{}');
+}
+
+test('checkDiscoveryAmbiguity: .mcp.json pins --project-dir → suppressed (null)', async () => {
+  const dir = await mkTmp();
+  try {
+    await mkAmbiguousFixture(dir);
+    await fs.writeFile(
+      join(dir, '.mcp.json'),
+      JSON.stringify({
+        mcpServers: {
+          'c3-domain-manager': { args: ['server', '--project-dir', 'a'] },
+        },
+      }),
+    );
+    const override = await resolveMcpProjectDirOverride(dir);
+    const finding = await checkDiscoveryAmbiguity(dir, {}, override, null);
+    assert.equal(finding, null);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('checkDiscoveryAmbiguity: .mcp.json pins env.C3_PROJECT_DIR → suppressed (null)', async () => {
+  const dir = await mkTmp();
+  try {
+    await mkAmbiguousFixture(dir);
+    await fs.writeFile(
+      join(dir, '.mcp.json'),
+      JSON.stringify({
+        mcpServers: {
+          'c3-domain-manager': { env: { C3_PROJECT_DIR: 'a' } },
+        },
+      }),
+    );
+    const override = await resolveMcpProjectDirOverride(dir);
+    const finding = await checkDiscoveryAmbiguity(dir, {}, override, null);
+    assert.equal(finding, null);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('checkDiscoveryAmbiguity: no .mcp.json + ambiguity → still fires', async () => {
+  const dir = await mkTmp();
+  try {
+    await mkAmbiguousFixture(dir);
+    const override = await resolveMcpProjectDirOverride(dir);
+    assert.equal(override, null);
+    const finding = await checkDiscoveryAmbiguity(dir, {}, override, null);
+    assert.ok(finding, 'expected a finding — no .mcp.json to suppress it');
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('checkDiscoveryAmbiguity: .mcp.json present but no c3-domain-manager entry + ambiguity → still fires', async () => {
+  const dir = await mkTmp();
+  try {
+    await mkAmbiguousFixture(dir);
+    await fs.writeFile(
+      join(dir, '.mcp.json'),
+      JSON.stringify({ mcpServers: { 'construct3-chef': { args: ['server'] } } }),
+    );
+    const override = await resolveMcpProjectDirOverride(dir);
+    assert.equal(override, null);
+    const finding = await checkDiscoveryAmbiguity(dir, {}, override, null);
+    assert.ok(finding, 'expected a finding — no c3-domain-manager entry to suppress it');
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('checkDiscoveryAmbiguity: malformed .mcp.json + ambiguity → no crash, still fires', async () => {
+  const dir = await mkTmp();
+  try {
+    await mkAmbiguousFixture(dir);
+    await fs.writeFile(join(dir, '.mcp.json'), '{ bad json');
+    const override = await resolveMcpProjectDirOverride(dir);
+    assert.equal(override, null);
+    const finding = await checkDiscoveryAmbiguity(dir, {}, override, null);
+    assert.ok(finding, 'expected a finding — malformed .mcp.json must not crash the audit');
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('checkDiscoveryAmbiguity: .mcp.json --project-dir is whitespace-only + ambiguity → does NOT suppress', async () => {
+  const dir = await mkTmp();
+  try {
+    await mkAmbiguousFixture(dir);
+    await fs.writeFile(
+      join(dir, '.mcp.json'),
+      JSON.stringify({
+        mcpServers: {
+          'c3-domain-manager': { args: ['server', '--project-dir', '   '] },
+        },
+      }),
+    );
+    const override = await resolveMcpProjectDirOverride(dir);
+    assert.equal(override, '   ');
+    const finding = await checkDiscoveryAmbiguity(dir, {}, override, null);
+    assert.ok(finding, 'expected a finding — whitespace-only --project-dir is not a real override');
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
 // ---- formatReport tests ------------------------------------------------------
 
 test('formatReport: golden — only ok/error/info findings, no warnings → no Warnings section, correct denominator', () => {

@@ -69,7 +69,11 @@ async function main() {
   // 1b. Discovery-ambiguity check (bespoke) — advisory `warning`; mirrors
   // c3-domain-manager's bare-args auto-discovery, which aborts (-32000) when
   // 2+ child dirs contain `project.c3proj`. Only pushes a finding when it fires.
-  const discovery = await checkDiscoveryAmbiguity(REPO_ROOT);
+  // `scan` and `mcpOverride` are computed once here and reused by the (later)
+  // root-divergence check — don't inline them into the call below.
+  const scan = await scanC3ProjectMarkers(REPO_ROOT);
+  const mcpOverride = await resolveMcpProjectDirOverride(REPO_ROOT);
+  const discovery = await checkDiscoveryAmbiguity(REPO_ROOT, process.env, mcpOverride, scan);
   if (discovery) findings.push(discovery);
 
   if (agentConfig.usedLegacy) {
@@ -520,12 +524,17 @@ export async function resolveMcpProjectDirOverride(repoRoot) {
   return null;
 }
 
-export async function checkDiscoveryAmbiguity(repoRoot, env = process.env) {
-  const { rootHasMarker, childDirsWithMarker } = await scanC3ProjectMarkers(repoRoot);
+export async function checkDiscoveryAmbiguity(
+  repoRoot,
+  env = process.env,
+  explicitOverride = null,
+  scan = null,
+) {
+  const { rootHasMarker, childDirsWithMarker } = scan ?? (await scanC3ProjectMarkers(repoRoot));
   const verdict = classifyDiscovery({
     rootHasMarker,
     childDirsWithMarker,
-    explicitOverride: undefined,
+    explicitOverride,
     envOverride: env?.C3_PROJECT_DIR,
   });
   if (!verdict.fires) return null; // healthy repos add NOTHING to findings
