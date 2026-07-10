@@ -28,6 +28,9 @@ import {
   resolveProjectRoot,
   classifyDiscovery,
   checkDiscoveryAmbiguity,
+  scanC3ProjectMarkers,
+  resolveDiscoveryPick,
+  resolveMcpProjectDirOverride,
   formatReport,
 } from '../audit.mjs';
 
@@ -562,6 +565,109 @@ test('classifyDiscovery: 0 child matches → none, does not fire', () => {
   assert.deepEqual(result, { fires: false, reason: 'none' });
 });
 
+test('classifyDiscovery: explicitOverride set with 2 child matches AND envOverride also set → suppressed-mcp (explicit beats env)', () => {
+  const result = classifyDiscovery({
+    rootHasMarker: false,
+    childDirsWithMarker: ['a', 'b'],
+    explicitOverride: 'x',
+    envOverride: 'y',
+  });
+  assert.deepEqual(result, { fires: false, reason: 'suppressed-mcp' });
+});
+
+test('classifyDiscovery: whitespace-only explicitOverride + envOverride set → falls through to suppressed-env', () => {
+  const result = classifyDiscovery({
+    rootHasMarker: false,
+    childDirsWithMarker: ['a', 'b'],
+    explicitOverride: '   ',
+    envOverride: 'y',
+  });
+  assert.deepEqual(result, { fires: false, reason: 'suppressed-env' });
+});
+
+test('classifyDiscovery: explicitOverride alone with 2 child matches, no env → suppressed-mcp', () => {
+  const result = classifyDiscovery({
+    rootHasMarker: false,
+    childDirsWithMarker: ['a', 'b'],
+    explicitOverride: 'x',
+    envOverride: undefined,
+  });
+  assert.deepEqual(result, { fires: false, reason: 'suppressed-mcp' });
+});
+
+// ---- scanC3ProjectMarkers tests -----------------------------------------------
+
+test('scanC3ProjectMarkers: two child dirs with marker, no root marker → both collected, rootHasMarker false', async () => {
+  const dir = await mkTmp();
+  try {
+    const a = join(dir, 'a');
+    const b = join(dir, 'b');
+    await fs.mkdir(a);
+    await fs.mkdir(b);
+    await fs.writeFile(join(a, 'project.c3proj'), '{}');
+    await fs.writeFile(join(b, 'project.c3proj'), '{}');
+    const result = await scanC3ProjectMarkers(dir);
+    assert.equal(result.rootHasMarker, false);
+    assert.deepEqual(result.childDirsWithMarker.sort(), ['a', 'b']);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('scanC3ProjectMarkers: root has marker → rootHasMarker true', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.writeFile(join(dir, 'project.c3proj'), '{}');
+    const result = await scanC3ProjectMarkers(dir);
+    assert.equal(result.rootHasMarker, true);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('scanC3ProjectMarkers: single child with marker → one entry', async () => {
+  const dir = await mkTmp();
+  try {
+    const a = join(dir, 'a');
+    await fs.mkdir(a);
+    await fs.writeFile(join(a, 'project.c3proj'), '{}');
+    const result = await scanC3ProjectMarkers(dir);
+    assert.deepEqual(result.childDirsWithMarker, ['a']);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('scanC3ProjectMarkers: bare temp dir, zero markers → empty', async () => {
+  const dir = await mkTmp();
+  try {
+    const result = await scanC3ProjectMarkers(dir);
+    assert.equal(result.rootHasMarker, false);
+    assert.deepEqual(result.childDirsWithMarker, []);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+// Pins the upstream-parity fact: no name-based filtering — node_modules is
+// scanned like any other child dir (see checkDiscoveryAmbiguity's own
+// regression-lock test for the same fact at the I/O-wrapper layer).
+test('scanC3ProjectMarkers: node_modules with marker + sibling a/ with marker → both collected (no name filtering)', async () => {
+  const dir = await mkTmp();
+  try {
+    const nm = join(dir, 'node_modules');
+    const a = join(dir, 'a');
+    await fs.mkdir(nm);
+    await fs.mkdir(a);
+    await fs.writeFile(join(nm, 'project.c3proj'), '{}');
+    await fs.writeFile(join(a, 'project.c3proj'), '{}');
+    const result = await scanC3ProjectMarkers(dir);
+    assert.deepEqual(result.childDirsWithMarker.sort(), ['a', 'node_modules']);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
 // ---- checkDiscoveryAmbiguity (I/O wrapper) tests -----------------------------
 
 test('checkDiscoveryAmbiguity: two child dirs with project.c3proj, no root marker → finding', async () => {
@@ -721,5 +827,165 @@ test('formatReport: warning rendering — Warnings section present, excluded fro
       !errorsSectionMatch[0].includes('auto-discovery'),
       'warning finding must not appear under Errors',
     );
+  }
+});
+
+// ---- resolveDiscoveryPick (pure) tests ----------------------------------------
+
+test('resolveDiscoveryPick: rootHasMarker true → repoRoot', () => {
+  const result = resolveDiscoveryPick({
+    repoRoot: '/tmp/x',
+    rootHasMarker: true,
+    childDirsWithMarker: ['a', 'b'],
+  });
+  assert.equal(result, '/tmp/x');
+});
+
+test('resolveDiscoveryPick: 1 child match, no root marker → join(repoRoot, child)', () => {
+  const result = resolveDiscoveryPick({
+    repoRoot: '/tmp/x',
+    rootHasMarker: false,
+    childDirsWithMarker: ['a'],
+  });
+  assert.equal(result, join('/tmp/x', 'a'));
+});
+
+test('resolveDiscoveryPick: 0 matches, no root marker → repoRoot (cwd fallback)', () => {
+  const result = resolveDiscoveryPick({
+    repoRoot: '/tmp/x',
+    rootHasMarker: false,
+    childDirsWithMarker: [],
+  });
+  assert.equal(result, '/tmp/x');
+});
+
+test('resolveDiscoveryPick: 2+ matches, no root marker → null (ambiguous)', () => {
+  const result = resolveDiscoveryPick({
+    repoRoot: '/tmp/x',
+    rootHasMarker: false,
+    childDirsWithMarker: ['a', 'b'],
+  });
+  assert.equal(result, null);
+});
+
+// ---- resolveMcpProjectDirOverride tests ---------------------------------------
+
+test('resolveMcpProjectDirOverride: two-token --project-dir in args → returns value', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.writeFile(
+      join(dir, '.mcp.json'),
+      JSON.stringify({
+        mcpServers: {
+          'c3-domain-manager': {
+            command: 'npx',
+            args: ['-y', '@genvidtech/c3-domain-manager', 'server', '--project-dir', '/p'],
+          },
+        },
+      }),
+    );
+    const result = await resolveMcpProjectDirOverride(dir);
+    assert.equal(result, '/p');
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('resolveMcpProjectDirOverride: single-token --project-dir=/q → returns value', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.writeFile(
+      join(dir, '.mcp.json'),
+      JSON.stringify({
+        mcpServers: {
+          'c3-domain-manager': {
+            command: 'npx',
+            args: ['-y', '@genvidtech/c3-domain-manager', 'server', '--project-dir=/q'],
+          },
+        },
+      }),
+    );
+    const result = await resolveMcpProjectDirOverride(dir);
+    assert.equal(result, '/q');
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('resolveMcpProjectDirOverride: env.C3_PROJECT_DIR only → returns its value', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.writeFile(
+      join(dir, '.mcp.json'),
+      JSON.stringify({
+        mcpServers: {
+          'c3-domain-manager': {
+            command: 'npx',
+            args: ['-y', '@genvidtech/c3-domain-manager', 'server'],
+            env: { C3_PROJECT_DIR: '/env-p' },
+          },
+        },
+      }),
+    );
+    const result = await resolveMcpProjectDirOverride(dir);
+    assert.equal(result, '/env-p');
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('resolveMcpProjectDirOverride: .mcp.json absent → null', async () => {
+  const dir = await mkTmp();
+  try {
+    const result = await resolveMcpProjectDirOverride(dir);
+    assert.equal(result, null);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('resolveMcpProjectDirOverride: .mcp.json present but no c3-domain-manager entry → null', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.writeFile(
+      join(dir, '.mcp.json'),
+      JSON.stringify({ mcpServers: { 'some-other-server': { command: 'npx' } } }),
+    );
+    const result = await resolveMcpProjectDirOverride(dir);
+    assert.equal(result, null);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('resolveMcpProjectDirOverride: malformed JSON → null (no throw)', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.writeFile(join(dir, '.mcp.json'), '{ not json');
+    const result = await resolveMcpProjectDirOverride(dir);
+    assert.equal(result, null);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('resolveMcpProjectDirOverride: entry present with neither args-flag nor env → null', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.writeFile(
+      join(dir, '.mcp.json'),
+      JSON.stringify({
+        mcpServers: {
+          'c3-domain-manager': {
+            command: 'npx',
+            args: ['-y', '@genvidtech/c3-domain-manager', 'server'],
+          },
+        },
+      }),
+    );
+    const result = await resolveMcpProjectDirOverride(dir);
+    assert.equal(result, null);
+  } finally {
+    await rmTmp(dir);
   }
 });
