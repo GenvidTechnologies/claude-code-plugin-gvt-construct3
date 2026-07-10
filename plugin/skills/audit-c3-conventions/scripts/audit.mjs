@@ -66,6 +66,12 @@ async function main() {
   // 1. C3-project marker check (bespoke OR-check across three indicators)
   findings.push(await checkC3Marker(REPO_ROOT, agentConfig));
 
+  // 1b. Discovery-ambiguity check (bespoke) — advisory `warning`; mirrors
+  // c3-domain-manager's bare-args auto-discovery, which aborts (-32000) when
+  // 2+ child dirs contain `project.c3proj`. Only pushes a finding when it fires.
+  const discovery = await checkDiscoveryAmbiguity(REPO_ROOT);
+  if (discovery) findings.push(discovery);
+
   if (agentConfig.usedLegacy) {
     findings.push({
       kind: 'config',
@@ -413,14 +419,82 @@ function commandExists(cmd) {
   return result.status === 0;
 }
 
+// ---- discovery ambiguity ----------------------------------------------------
+
+// Pure classifier for the c3-domain-manager auto-discovery ambiguity: the
+// server resolves its project root by scanning depth-1 child dirs of the repo
+// root for a `project.c3proj` marker, and aborts if 2+ candidates are found.
+// Precedence mirrors upstream `resolveRootFolder`'s explicit > env > discovery
+// order: an explicit `C3_PROJECT_DIR` override suppresses the check entirely
+// (checked first), then a root-level marker short-circuits discovery (the
+// server never even scans children), and only then does the child-dir count
+// decide.
+export function classifyDiscovery({ rootHasMarker, childDirsWithMarker, envOverride }) {
+  if (typeof envOverride === 'string' && envOverride.trim() !== '') {
+    return { fires: false, reason: 'suppressed-env' };
+  }
+  if (rootHasMarker) return { fires: false, reason: 'root-short-circuit' };
+  const matches = childDirsWithMarker ?? [];
+  if (matches.length >= 2) return { fires: true, matches };
+  return { fires: false, reason: matches.length === 1 ? 'single' : 'none' };
+}
+
+// Mirrors c3-domain-manager's (@genvidtech/mcp-utils@0.5.1) resolveRootFolder
+// discovery: a depth-1 scan of repoRoot's child directories for a
+// `project.c3proj` marker. Ground-truthed fidelity fact: upstream's scan does
+// NO name-based filtering — `node_modules` and dot-directories are scanned
+// like any other child dir — so this deliberately does not exclude them
+// either (see the regression-lock test in audit.test.mjs).
+export async function checkDiscoveryAmbiguity(repoRoot, env = process.env) {
+  const rootHasMarker = await fileExists(join(repoRoot, 'project.c3proj'));
+  const childDirsWithMarker = [];
+  let entries;
+  try {
+    entries = await fs.readdir(repoRoot, { withFileTypes: true });
+  } catch {
+    entries = [];
+  }
+  for (const e of entries) {
+    if (!e.isDirectory()) continue; // no name filtering — matches upstream
+    if (await fileExists(join(repoRoot, e.name, 'project.c3proj'))) {
+      childDirsWithMarker.push(e.name);
+    }
+  }
+  const verdict = classifyDiscovery({
+    rootHasMarker,
+    childDirsWithMarker,
+    envOverride: env?.C3_PROJECT_DIR,
+  });
+  if (!verdict.fires) return null; // healthy repos add NOTHING to findings
+  const dirs = verdict.matches.join(', ');
+  return {
+    kind: 'discovery',
+    component: 'gvt-construct3',
+    target: 'project.c3proj auto-discovery',
+    ok: false,
+    severity: 'warning',
+    detail:
+      `ambiguous C3 root — ${verdict.matches.length} sibling directories contain \`project.c3proj\` (${dirs}); ` +
+      `c3-domain-manager auto-discovery aborts and the server fails to start (-32000)`,
+    reason:
+      'The plugin launches c3-domain-manager with no --project-dir, so it resolves the project root by ' +
+      'filesystem discovery; two or more candidate roots is a fatal ambiguity. Remove or relocate the extra ' +
+      'project.c3proj, or pin the root with C3_PROJECT_DIR / --project-dir.',
+  };
+}
+
 // ---- report -----------------------------------------------------------------
 
-function formatReport(findings) {
+export function formatReport(findings) {
   const errors = findings.filter((f) => f.severity === 'error');
+  const warnings = findings.filter((f) => f.severity === 'warning');
   const infos = findings.filter((f) => f.severity === 'info');
   const oks = findings.filter((f) => f.ok);
-  // Required = all findings that aren't 'info'-severity (includes oks, which have no severity)
-  const requiredTotal = findings.filter((f) => f.severity !== 'info').length;
+  // Required = findings that are either satisfied (ok) or a hard error;
+  // 'warning' findings are advisory and excluded from the denominator, same
+  // as 'info'. (Numerically identical to the old "severity !== 'info'"
+  // formula whenever no 'warning' findings exist.)
+  const requiredTotal = findings.filter((f) => f.ok || f.severity === 'error').length;
 
   const lines = [];
   lines.push('## gvt-construct3 Audit Results');
@@ -429,6 +503,11 @@ function formatReport(findings) {
   if (errors.length > 0) {
     lines.push('### Errors (must fix)');
     for (const f of errors) lines.push(formatFinding(f));
+    lines.push('');
+  }
+  if (warnings.length > 0) {
+    lines.push('### Warnings (advisory — will break at runtime)');
+    for (const f of warnings) lines.push(formatFinding(f));
     lines.push('');
   }
   if (infos.length > 0) {
@@ -442,6 +521,11 @@ function formatReport(findings) {
   if (errors.length > 0) {
     lines.push(
       `- ${errors.length} required expectation${errors.length === 1 ? '' : 's'} unmet.`,
+    );
+  }
+  if (warnings.length > 0) {
+    lines.push(
+      `- ${warnings.length} advisory warning${warnings.length === 1 ? '' : 's'} (runtime-breaking).`,
     );
   }
   if (infos.length > 0) {
