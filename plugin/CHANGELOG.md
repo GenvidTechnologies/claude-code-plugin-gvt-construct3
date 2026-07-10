@@ -34,6 +34,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   valid) project than the audit validated, which is not a guaranteed
   `-32000` crash and so is `info`, not `warning`. Neither refinement changes
   the exit code. (#49)
+- **`docs/c3/addon-package-reference.md`**: new platform-reference doc, the
+  companion to `ace-reference.md`, covering the addon package's on-disk
+  layout — where properties are declared (the editor ROOT `plugin.js`, not
+  `c3runtime/plugin.js`), the `lang/*.json` localization structure keyed by
+  the addon `id`, and the opaque load-time error a missing language string
+  produces. The Construct Addon SDK
+  (`https://github.com/Scirra/Construct-Addon-SDK.git`, published by Scirra)
+  is the canonical source. (#51)
 
 ## [2.1.1] - 2026-07-07
 

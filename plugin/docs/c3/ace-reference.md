@@ -8,6 +8,10 @@ it. The gvt-construct3 `build-reference` skill reads these files to produce
 construct3-chef's `c3-reference` cache; the cache's own schema is owned by chef
 (see `construct3-chef://docs`), not restated here.
 
+This doc covers the ACE metadata model only; for the rest of the addon
+package — property declaration and `lang/*.json` localization structure —
+see the companion doc [addon-package-reference.md](addon-package-reference.md).
+
 ## What an ACE is
 
 Every object type in a C3 project is an instance of a **plugin** (e.g. `Sprite`,
@@ -28,7 +32,8 @@ reliable.
 A custom or third-party addon ships an `aces.json` in its addon folder
 (`addons/<addon>/aces.json`). It is the **authoritative, machine-readable** ACE
 declaration for that addon. Its shape (per the Construct Addon SDK's
-`plugin-sdk/aces.schema.json` and `behavior-sdk/aces.schema.json`) has several
+`plugin-sdk/aces.schema.json` and `behavior-sdk/aces.schema.json` —
+`https://github.com/Scirra/Construct-Addon-SDK.git`) has several
 traps worth pinning down, because they differ from how the data is often *spoken
 about*:
 
