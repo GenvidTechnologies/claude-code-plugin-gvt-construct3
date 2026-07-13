@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-07-13
+
 ### Added
 - **`audit-c3-conventions` gains a second bespoke check, discovery ambiguity,**
   mirroring how `c3-domain-manager` auto-discovers its project root when the
