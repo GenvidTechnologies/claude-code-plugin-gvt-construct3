@@ -147,9 +147,11 @@ CI check (or, worse, silently lands noise if that check is lax).
 **Rule (in a consuming repo):** finalize `extracted/` regeneration with the
 **consumer's repo-pinned generation command**, not the MCP `regenerate` tool. The
 exact command is project-specific — read the consuming repo's `CLAUDE.md` (e.g.
-Burbank's is `npm run generate-c3`). MCP `regenerate`/`apply-recipe` auto-regen is
-fine for *previewing* the mutation, but the committed `extracted/` output must come
-from the repo-pinned command so it matches CI and the pre-push hook.
+Burbank's is `npm run generate-c3`). If the consuming repo documents no such
+command, **stop and hand back to the orchestrator** rather than committing bundled-
+chef output. MCP `regenerate`/`apply-recipe` auto-regen is fine for *previewing* the
+mutation, but the committed `extracted/` output must come from the repo-pinned
+command so it matches CI and the pre-push hook.
 
 **Before staging**, verify `git status` shows no skew-only drift: annotation-only
 changes (e.g. `(≠)` added on `comparison=` lines) in sheets your recipe didn't
