@@ -41,7 +41,7 @@ accuracy, not capability gating.)
 **Mutation**:
 - `validate-recipe` — dry-run validation, returns txId
 - `apply-recipe` — apply recipe with optional regeneration
-- `regenerate` — run all C3 generators
+- `regenerate` — run all C3 generators (runs the **plugin-bundled** chef — in a consuming repo, finalize with the consumer's repo-pinned generation command instead; see [Finalizing regeneration](#finalizing-regeneration--the-version-skew-dsl-drift-trap))
 - `scaffold-layout` / `scaffold-sprite` — clone a layout / objectType with UID/SID remapping
 - `sync-project` — sync project.c3proj after file changes
 
@@ -125,12 +125,42 @@ If making the change pass requires editing TypeScript files under the project's 
 4. **Design recipe** — use builder shorthand, SID-based targeting
 5. **Validate** — `validate-recipe` with the recipe JSON string
 6. **Fix and re-validate** — iterate until clean
-7. **Apply** — `apply-recipe` with txId from validation (regenerates automatically)
+7. **Apply** — `apply-recipe` with txId from validation (auto-regenerates via the **bundled** chef — in a consuming repo, treat this as a *dry run* of the mutation and re-finalize `extracted/` with the repo-pinned command; see [Finalizing regeneration](#finalizing-regeneration--the-version-skew-dsl-drift-trap))
 8. **Verify** — `read-dsl` again to confirm changes
+
+## Finalizing regeneration — the version-skew DSL-drift trap
+
+The MCP `regenerate` tool (and `apply-recipe`'s automatic regeneration) runs the
+**plugin-bundled** `construct3-chef`, which can differ from the version a consuming
+repo pins in its own `@genvidtech/construct3-chef` dependency. When the two versions
+differ, the bundled chef re-renders `extracted/` DSL with annotations the consumer's
+CI-validated baseline predates — e.g. a comparison enum gains a symbol annotation:
+
+```
+comparison=1        ->  comparison=1 (≠)
+```
+
+The result is **spurious DSL drift across event sheets your change never touched** —
+potentially hundreds of files — that fails the consuming repo's `extracted-fresh` /
+CI check (or, worse, silently lands noise if that check is lax).
+
+**Rule (in a consuming repo):** finalize `extracted/` regeneration with the
+**consumer's repo-pinned generation command**, not the MCP `regenerate` tool. The
+exact command is project-specific — read the consuming repo's `CLAUDE.md` (e.g.
+Burbank's is `npm run generate-c3`). If the consuming repo documents no such
+command, **stop and hand back to the orchestrator** rather than committing bundled-
+chef output. MCP `regenerate`/`apply-recipe` auto-regen is fine for *previewing* the
+mutation, but the committed `extracted/` output must come from the repo-pinned
+command so it matches CI and the pre-push hook.
+
+**Before staging**, verify `git status` shows no skew-only drift: annotation-only
+changes (e.g. `(≠)` added on `comparison=` lines) in sheets your recipe didn't
+target are version-skew noise, not your change — revert them.
 
 ## Commit Protocol
 
 - Use the commit format from the consuming repo's `CLAUDE.md`; generic fallback: `{type}: Description`.
 - One task = one commit.
+- **Finalize `extracted/` with the consumer's repo-pinned generation command, not MCP `regenerate`, and confirm `git status` shows no version-skew-only DSL drift before staging** (see [Finalizing regeneration](#finalizing-regeneration--the-version-skew-dsl-drift-trap)).
 - Stage eventSheet JSON, layout JSON, AND extracted files together.
 - Use `git commit -n` if the orchestrator runs validation separately.

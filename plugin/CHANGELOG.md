@@ -43,6 +43,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`https://github.com/Scirra/Construct-Addon-SDK.git`, published by Scirra)
   is the canonical source. (#51)
 
+### Changed
+- **`c3-implementer` now guides finalizing `extracted/` regeneration with the
+  consuming repo's repo-pinned generation command, not the MCP `regenerate`
+  tool.** MCP `regenerate` / `apply-recipe` auto-regen runs the *plugin-bundled*
+  `construct3-chef`, which can differ from a consumer's pinned
+  `@genvidtech/construct3-chef`; a version skew re-renders DSL with annotations
+  the consumer's CI baseline predates (e.g. `comparison=1` → `comparison=1 (≠)`),
+  producing spurious drift across untouched event sheets that fails
+  `extracted-fresh` / CI. A new "Finalizing regeneration" section (with
+  cross-pointers at Recipe Workflow step 7, Commit Protocol, and the `regenerate`
+  tool listing) tells the agent to finalize with the repo-pinned command (read
+  from the consumer's `CLAUDE.md`; hand back if none is documented) and to revert
+  any skew-only DSL drift before staging. Guidance stays generic. (#48)
+
 ## [2.1.1] - 2026-07-07
 
 ### Fixed
