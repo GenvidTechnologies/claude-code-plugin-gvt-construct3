@@ -188,6 +188,29 @@ When the custom action is **defined on a family** but called on one of its **mem
 
 `customActionObjectClass` is **required** when calling a family-defined custom action on a member, and omitted when the ACE is defined directly on the object type. **Missing it fails silently at runtime:** C3 imports the project fine and the DSL renders byte-identically (renderers that format from `objectClass`/`customAction`/`parameters` never read `customActionObjectClass`), so the defect escapes editor import, visual review, and DSL diffs -- the action simply no-ops. Editor-import success does **not** mean the action resolves.
 
+### Behavior attachment and ACE targeting
+
+**A host (object type or family) carries a behavior via `behaviorTypes[]`** -- the same shape in both `objectTypes/*.json` and `families/*.json`:
+
+```json
+"behaviorTypes": [
+  { "behaviorId": "MyCompany_MyBehavior", "name": "MyCustomBehavior", "sid": 246339555325721 },
+  { "behaviorId": "Timer", "name": "Timer", "sid": 941140762763444 }
+]
+```
+
+`behaviorId` is the **addon id** (matches the behavior's `addon.json` `"id"`) -- the stable join key from a project to a behavior addon. `name` is the behavior **instance name**, and it is **renameable** (above, `MyCompany_MyBehavior` is instanced as `MyCustomBehavior`). A single host may carry **two instances of the same behavior** -- two entries, same `behaviorId`, different `name`. `sid` is the usual stable node id.
+
+**An event-sheet condition/action targets a behavior instance via `behaviorType`** -- the **instance name**, not the addon id:
+
+```json
+{ "id": "stop", "objectClass": "Sprite2", "behaviorType": "MyCustomBehavior", "sid": 444777231675422 }
+```
+
+**Family-member call subtlety (the non-obvious one):** when a behavior is attached to a *family* and the ACE is called on a *family member*, the call's `objectClass` is the **member's** name, not the family's -- while the behavior lives in the *family's* `behaviorTypes[]`. For example, `TextFamily` (members `Text`, `Text2`) carries `Timer`; an action `{ "id": "stop-timer", "objectClass": "Text", "behaviorType": "Timer" }` is a call on member `Text` of a behavior attached to `TextFamily`. Any resolver that maps a behavior call back to its host must expand family members -> family. This parallels the `customActionObjectClass` family case above, though here there is no separate "objectClass = family" field -- the host relationship is implicit via the family's `behaviorTypes[]`.
+
+Third-party behaviors bundle a `.c3addon` under `addons/behavior/` (when `project.c3proj` `bundleAddons: true`); built-ins (Timer, Persist, ...) are `bundled: false` with no package, and `usedAddons` entries carry `type: "behavior"` -- see [addon-package-reference.md](addon-package-reference.md) for the addon package's internal layout.
+
 **Comment action** -- inline documentation inside a block's actions array:
 
 ```json
