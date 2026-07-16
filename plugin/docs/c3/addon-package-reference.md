@@ -23,7 +23,9 @@ The relevant files inside an addon folder (`addons/<addon>/`):
 - **editor-side ROOT `plugin.js`** — the editor SDK entry point. Declares the
   addon's info **and its properties** (see below). For behaviors, the
   analogous editor entry point is `behavior.js`; the `properties`/`lang`
-  mechanics are the same.
+  mechanics are the same. For how a project attaches a behavior instance
+  (`behaviorTypes[]`) and how an event-sheet ACE targets it (`behaviorType`),
+  see [event-sheet-architecture.md](event-sheet-architecture.md#behavior-attachment-and-ace-targeting).
 - **`c3runtime/plugin.js`** — the **runtime** file. It carries **no property
   declarations.** This "looks like the obvious place" for properties because
   it shares the `plugin.js` name and sits deeper in the tree — but that
