@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.1] - 2026-07-16
+
+### Added
+- **Documented the behavior-attachment serialization shape in the C3 platform
+  reference** (`plugin/docs/c3/event-sheet-architecture.md`, new "Behavior
+  attachment and ACE targeting" section): how a host (object type / family)
+  carries a behavior via `behaviorTypes[]` (`behaviorId` addon-id join key vs.
+  the renameable instance `name`), how an event-sheet condition/action targets a
+  behavior instance via `behaviorType` (the instance name, not the addon id), the
+  family-member `objectClass` subtlety (member name in the call while the behavior
+  lives in the family's `behaviorTypes[]`), and the built-in-vs-third-party
+  (`.c3addon` under `addons/behavior/`) packaging distinction. Cross-linked from
+  `addon-package-reference.md`; the docs README table and `docs/TOC.md` coverage
+  summaries updated to match. Facts verified against a real r-series export. (#56)
+
 ### Changed
 - **Bumped the pinned `c3-domain-manager` MCP server `0.6.1` → `0.6.2`**
   (`@genvidtech/c3-domain-manager@0.6.2` in `plugin.json` `mcpServers`, plus the
