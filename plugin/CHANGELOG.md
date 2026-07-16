@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Bumped the pinned `c3-domain-manager` MCP server `0.6.1` → `0.6.2`**
+  (`@genvidtech/c3-domain-manager@0.6.2` in `plugin.json` `mcpServers`, plus the
+  version citations in `c3-explorer.md`, `c3-implementer.md`, and
+  `toolchain-config.md`). The patch is an internal file-discovery fix:
+  `generate` / `domain-health` / `context-map` no longer crash with `ENOENT`
+  on a C3 project that has no `scripts/` directory. **No MCP tool was added,
+  renamed, or removed**, so the `c3-explorer` `tools:` allow-list needs no
+  reconciliation and the audit's `resolveRootFolder` discovery mirror is
+  unaffected. The `minVersion` floors stay at `0.6.1` (a plain pin bump does
+  not raise the contract floor). (#55)
+
 ## [2.2.0] - 2026-07-13
 
 ### Added
