@@ -96,7 +96,7 @@ Adding an effect (e.g., Grayscale) to an instance that lives on a global layer r
 3. **Originating global layout instance** — add an `effects` block on the specific instance in the originating layout (not in overriding layouts):
 
    ```json
-   "effects": [{ "name": "Grayscale", "isEnabled": true, "parameters": { ... } }]
+   "effects": { "Grayscale": { "isEnabled": true, "parameters": { ... } } }
    ```
 
 All consuming layouts that inherit the global layer pick up the effect automatically without any per-layout changes.
