@@ -27,6 +27,7 @@ Architecture and compromise decisions for the dev workspace and plugin design. S
 - [docs/decisions/0004-plugin-subfolder-split-and-git-subdir.md](decisions/0004-plugin-subfolder-split-and-git-subdir.md) — `plugin/` shipped-artifact vs. repo-root dev-workspace split, and the `git-subdir` marketplace source it forced. *(backfilled, decided 2026-06-04)*
 - [docs/decisions/0005-non-rooted-c3-project-support.md](decisions/0005-non-rooted-c3-project-support.md) — Why `plugin.json` stays bare (no `--project-dir`); why `metadata.expects.files` gains a per-entry `base: project|repo` field for project-root vs. repo-root resolution. (#26)
 - [docs/decisions/0006-detect-discovery-ambiguity.md](decisions/0006-detect-discovery-ambiguity.md) — A second bespoke audit check mirrors `resolveRootFolder`'s ambiguous-root discovery and reports it as a new advisory `warning` severity (exit code unchanged). (#47)
+- [docs/decisions/0007-verifying-the-resolverootfolder-mirror.md](decisions/0007-verifying-the-resolverootfolder-mirror.md) — How to discharge the ADR 0006 mirror obligation on a `c3-domain-manager` bump: diff the adapter *and* prove the `@genvidtech/mcp-utils` range can't move, rather than trusting release notes. (#60)
 
 ## C3 platform reference (`plugin/docs/c3/`)
 
