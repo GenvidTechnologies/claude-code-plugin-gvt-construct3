@@ -32,6 +32,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `c3-domain-manager` bump: diff `dist/adapters/locations.js` *and* prove the
   `@genvidtech/mcp-utils` range cannot resolve to an unreviewed version, rather
   than trusting release notes.
+- **An `## Effects` section in `plugin/docs/c3/layout-reference.md`** (#59),
+  promoted out of the global-layer section because the rules are general, not
+  global-layer-specific. Documents the declare-vs-apply split (`usedAddons` entry,
+  the `effectTypes[]` declaration on an object type / family / layer / layout, and
+  the applied data), the differing applied shapes per host, and the
+  `effectId` → renameable `name` → `effects` map-key join — cross-linked to its
+  structural twin, the behavior chain in `event-sheet-architecture.md`. Carries the
+  completeness gotcha it was filed for: a declaration without its applied data is
+  *half-applied* and can **null-pointer the whole project on editor load**, while
+  the addon stays valid, the JSON parses, and `validateForEditor` passes.
+
+### Fixed
+- **The documented instance-level `effects` shape was wrong** (#59). It showed an
+  array of objects carrying a `name` field; an applied effect is a **map keyed by
+  the effect's name**, with `{ isEnabled, parameters }` values. Verified against
+  the editor-validated `GenvidTechnologies/construct3-sample@v0.1.0`. Anything
+  authored from the old snippet produced a half-applied effect — see the gotcha
+  above.
 
 ### Notes
 - **Both `minVersion` floors are unchanged** — `construct3-chef` stays `≥ 0.11.2`

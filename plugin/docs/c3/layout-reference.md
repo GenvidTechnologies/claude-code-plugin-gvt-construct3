@@ -79,27 +79,9 @@ This constraint matters: if instances leak into an overridden layer (e.g., after
 
 ### Adding an effect to a global layer instance
 
-Adding an effect (e.g., Grayscale) to an instance that lives on a global layer requires changes at three levels:
+Effects on a global layer follow the same declare-then-apply rules as anywhere else — see [Effects](#effects) for the shapes. The one global-layer-specific rule is **where** the applied data goes: author it on the instance in the **originating** layout, never in an overriding layout (whose `instances` must stay empty, per the constraint above).
 
-1. **`project.c3proj`** — add the effect as a dependency:
-
-   ```json
-   { "type": "effect", "id": "grayscale", "name": "Grayscale", "author": "Scirra", "bundled": false }
-   ```
-
-2. **`objectTypes/.../ObjectName.json`** — add an `effectTypes` entry on the object type:
-
-   ```json
-   { "effectId": "grayscale", "name": "Grayscale" }
-   ```
-
-3. **Originating global layout instance** — add an `effects` block on the specific instance in the originating layout (not in overriding layouts):
-
-   ```json
-   "effects": [{ "name": "Grayscale", "isEnabled": true, "parameters": { ... } }]
-   ```
-
-All consuming layouts that inherit the global layer pick up the effect automatically without any per-layout changes.
+All consuming layouts that inherit the global layer then pick up the effect automatically, with no per-layout changes.
 
 ### Initialization trap
 
@@ -114,6 +96,72 @@ global layer: source="Second Layout", overridingLayouts=[Main Layout], instanceC
 ```
 
 (Closed the former tooling gap, issue [#20](https://github.com/genvid-holdings/construct3-chef/issues/20).)
+
+## Effects
+
+An effect reaches a project through **two** separate pieces of data: a **declaration** naming the effect on a host, and the **applied data** that actually enables it. Both are required — a declaration alone is a broken project, not a disabled effect.
+
+### Declaring an effect
+
+The effect addon is listed once in `project.c3proj`'s `usedAddons` array:
+
+```json
+{ "type": "effect", "id": "MyCompany_MyEffect", "name": "My custom effect", "author": "Scirra", "bundled": true, "version": "1.0.0.0" }
+```
+
+`bundled` is `true` for an effect shipped as a `.c3addon` inside the project (see [addon-package-reference.md](addon-package-reference.md)) and `false` for one installed into the editor.
+
+A host then **declares** the effect in its `effectTypes[]` array. Object types (`objectTypes/*.json`), families (`families/*.json`), layers, and layouts all carry one:
+
+```json
+"effectTypes": [
+  { "effectId": "burn", "name": "Burn" },
+  { "effectId": "MyCompany_MyEffect", "name": "MyCustomEffect" }
+]
+```
+
+`effectId` is the **addon id** — the stable join key back to the `usedAddons` entry. `name` is the effect **instance name**, and it is **renameable**: above, addon `MyCompany_MyEffect` is instanced as `MyCustomEffect`.
+
+### Applying an effect
+
+`effectTypes[]` only *declares*. The applied effect needs per-instance data, whose shape depends on the host.
+
+**Object instances** carry an `effects` map, **keyed by the effect's `name`** — not its `effectId`:
+
+```json
+"effects": {
+  "Burn": { "isEnabled": true, "parameters": {} },
+  "MyCustomEffect": { "isEnabled": true, "parameters": { "color": [1, 0, 0, 1] } }
+}
+```
+
+**Layers and layouts** instead carry the applied data **inline on the `effectTypes[]` entry**, under `instance`:
+
+```json
+"effectTypes": [
+  {
+    "effectId": "MyCompany_MyEffect",
+    "name": "MyCustomEffect",
+    "instance": { "isEnabled": false, "parameters": { "color": [0.5019607843137255, 0, 0, 1] } }
+  }
+]
+```
+
+So the join to follow is `effectId` → renameable `name` → the `effects` map key. **Keying the map by `effectId` yields an effect that is declared but never applied** — the failure below. This mirrors the behavior chain (`behaviorId` → renameable `name` → `behaviorType`) in [event-sheet-architecture.md → Behavior attachment and ACE targeting](event-sheet-architecture.md#behavior-attachment-and-ace-targeting); an instance's `behaviors` and `effects` are both name-keyed maps and sit side by side.
+
+### A project must apply an effect completely
+
+A host that declares an effect in `effectTypes[]` without its applied data is **half-applied**, and can **null-pointer the whole project when the C3 editor loads it**.
+
+Nothing catches this before the editor does:
+
+- the effect addon itself is a valid, loadable package;
+- the project JSON parses cleanly;
+- it passes `validateForEditor`, which inspects **event-sheet structure**, not effect application.
+
+**Author effect application in the editor, not by hand.** A real editor save writes the complete, consistent set — the `usedAddons` entry, the declaration, and the applied data together.
+
+> Surfaced while building canonical fixtures for `construct3-chef` ([#130](https://github.com/GenvidTechnologies/construct3-chef/issues/130), [#132](https://github.com/GenvidTechnologies/construct3-chef/issues/132)): a fixture referenced a custom effect in `effectTypes[]` without the rest of the application data, and importing the project null-pointered the editor — while the addon was perfectly valid ([#125](https://github.com/GenvidTechnologies/construct3-chef/issues/125)).
 
 ## Localization in Layouts
 
