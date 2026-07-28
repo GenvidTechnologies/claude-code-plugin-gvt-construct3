@@ -8,6 +8,10 @@ Index of the docs in this repo. genvid plugin agents and skills consult this to 
 - [CLAUDE.md](../CLAUDE.md) — guidance for Claude Code working in this repo: commands, architecture, and the three knowledge boundaries.
 - [plugin/CONVENTIONS.md](../plugin/CONVENTIONS.md) — the gvt-construct3 plugin's own convention contract (what a *consuming* repo must provide). Distinct from gvt-dev's conventions.
 
+## Process
+
+- [docs/issue-triage.md](issue-triage.md) — issue triage conventions (flat label set, required fields, upstream-deferral / `blocked-upstream` policy, mutation recipes) consumed by `/gvt-dev:triage-issues`.
+
 ## Maintainer procedures (dev workspace, not shipped)
 
 - [docs/tool-surface-reconciliation.md](tool-surface-reconciliation.md) — C3-specific reconciliation anchors (agent allow-lists, package names, surface counts) + burbank cross-check; defers the procedure to the `/gvt-dev:reconcile-mcp-pin` skill. Run on every chef/dm pin bump.
