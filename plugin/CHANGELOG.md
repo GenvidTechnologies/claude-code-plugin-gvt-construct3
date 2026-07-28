@@ -8,6 +8,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Bumped the pinned `construct3-chef` MCP server `0.11.2` → `1.0.0`** (#61) and
+  the pinned `c3-domain-manager` MCP server `0.6.2` → `0.7.0` (#60), in
+  `plugin.json` `mcpServers` plus the version prose in both agents and
+  `plugin/docs/c3/toolchain-config.md`.
+
+### Added
+- **Five new read-only tools on `c3-explorer`'s hard `tools:` allow-list**
+  (30 → 35 entries). From chef `1.0.0`, a bundled-`.c3addon` inspection surface:
+  `list-addons` (inventory of bundled packages + `project.c3proj` entries +
+  editor-only addons), `validate-addons` (cross-checks each package's internal
+  `addon.json` against its `usedAddons` entry; reports orphan / missing /
+  duplicate packages — the version-drift check `validate-project` does not do),
+  `diff-addon-aces` (ACE-contract diff between two addon versions), and
+  `scan-addon-usage` (every call site of an addon's ACEs — the upgrade blast
+  radius when paired with a diff). From dm `0.7.0`, `addon-inventory`
+  (project-wide addon attribution: which addons are used, by which object types
+  and domains). The existing `read-addon` also now decodes the bundled package's
+  version/metadata directly, with no manual unzip.
+- **ADR 0007** (`docs/decisions/0007-verifying-the-resolverootfolder-mirror.md`)
+  — how to discharge the ADR 0006 `resolveRootFolder` hand-mirror obligation on a
+  `c3-domain-manager` bump: diff `dist/adapters/locations.js` *and* prove the
+  `@genvidtech/mcp-utils` range cannot resolve to an unreviewed version, rather
+  than trusting release notes.
+
+### Notes
+- **Both `minVersion` floors are unchanged** — `construct3-chef` stays `≥ 0.11.2`
+  and `c3-domain-manager` stays `≥ 0.6.1` in `audit-c3-conventions` and
+  `CONVENTIONS.md`. A floor tracks what a skill *needs*, not what is pinned; the
+  chef floor moves to `1.0.0` under #32, which this release unblocks.
+- **`audit.mjs` is untouched.** The ADR 0006 discovery mirror was verified
+  drift-free by the ADR 0007 method, not assumed so.
+
 ## [2.2.1] - 2026-07-16
 
 ### Added
