@@ -25,7 +25,7 @@ Placed at the **C3 project root** (which is the workspace root for the standard 
 The plugin declares both servers in `plugin.json` as bare `server` invocations:
 
 ```json
-"construct3-chef": { "command": "npx", "args": ["-y", "@genvidtech/construct3-chef@0.11.2", "server"] }
+"construct3-chef": { "command": "npx", "args": ["-y", "@genvidtech/construct3-chef@1.0.0", "server"] }
 "c3-domain-manager": { "command": "npx", "args": ["-y", "@genvidtech/c3-domain-manager@0.6.2", "server"] }
 ```
 
@@ -84,7 +84,7 @@ Resolve ambiguity with an explicit `--project-dir` or `C3_PROJECT_DIR`.
   "mcpServers": {
     "construct3-chef": {
       "command": "npx",
-      "args": ["-y", "@genvidtech/construct3-chef@0.11.2", "server", "--project-dir", "game"]
+      "args": ["-y", "@genvidtech/construct3-chef@1.0.0", "server", "--project-dir", "game"]
     }
   }
 }
