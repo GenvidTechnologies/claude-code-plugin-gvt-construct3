@@ -39,7 +39,7 @@ This is your full read-only surface across both pinned servers (`construct3-chef
 - `diff-addon-aces` — diffs the ACE contract between two addon versions (added / removed / changed ACEs and parameter signatures). Reach for it *before* an addon upgrade, to learn the breaking surface
 - `scan-addon-usage` — every event-sheet and layout call site of a given addon's ACEs. Paired with a `diff-addon-aces` result, this is the upgrade blast radius: the exact call sites hitting an ACE whose signature changed
 
-  Report what these surface; deciding *how* to resolve a drift (downgrade `project.c3proj` vs. re-export the package) is a human call — surface both sides rather than recommending one.
+Report what these surface; deciding *how* to resolve a drift (downgrade `project.c3proj` vs. re-export the package) is a human call — surface both sides rather than recommending one.
 
 **c3-domain-manager — read & report:**
 - `read-domain-index` — find files by feature area (the project's domain taxonomy)
