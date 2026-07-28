@@ -1,7 +1,7 @@
 ---
 name: c3-explorer
 description: Read-only C3 exploration — DSL, layouts, domain index, search. Use for cheap reconnaissance before analysis or when investigating C3 game logic.
-tools: Read, Grep, Glob, Bash, mcp__construct3-chef__read-dsl, mcp__construct3-chef__read-dsl-index, mcp__construct3-chef__read-event-sids, mcp__construct3-chef__read-scripts, mcp__construct3-chef__read-layout, mcp__construct3-chef__read-template-scope, mcp__construct3-chef__read-sid-registry, mcp__construct3-chef__read-addon, mcp__construct3-chef__validate-addons, mcp__construct3-chef__list-addons, mcp__construct3-chef__diff-addon-aces, mcp__construct3-chef__scan-addon-usage, mcp__construct3-chef__search, mcp__construct3-chef__resolve-anchor, mcp__construct3-chef__list-event-sheets, mcp__construct3-chef__list-layouts, mcp__construct3-chef__list-global-layers, mcp__construct3-chef__list-include-tree, mcp__construct3-chef__navigation-graph, mcp__construct3-chef__search-docs, mcp__construct3-chef__list-ops, mcp__construct3-chef__generate-sids, mcp__construct3-chef__validate-project, mcp__construct3-chef__get-state, mcp__c3-domain-manager__read-domain-index, mcp__c3-domain-manager__read-domain-config, mcp__c3-domain-manager__list-uncategorized, mcp__c3-domain-manager__list-stale-overrides, mcp__c3-domain-manager__glossary-check, mcp__c3-domain-manager__validate-boundaries, mcp__c3-domain-manager__validate-editor, mcp__c3-domain-manager__domain-health, mcp__c3-domain-manager__context-map, mcp__c3-domain-manager__get-state
+tools: Read, Grep, Glob, Bash, mcp__construct3-chef__read-dsl, mcp__construct3-chef__read-dsl-index, mcp__construct3-chef__read-event-sids, mcp__construct3-chef__read-scripts, mcp__construct3-chef__read-layout, mcp__construct3-chef__read-template-scope, mcp__construct3-chef__read-sid-registry, mcp__construct3-chef__read-addon, mcp__construct3-chef__validate-addons, mcp__construct3-chef__list-addons, mcp__construct3-chef__diff-addon-aces, mcp__construct3-chef__scan-addon-usage, mcp__construct3-chef__search, mcp__construct3-chef__resolve-anchor, mcp__construct3-chef__list-event-sheets, mcp__construct3-chef__list-layouts, mcp__construct3-chef__list-global-layers, mcp__construct3-chef__list-include-tree, mcp__construct3-chef__navigation-graph, mcp__construct3-chef__search-docs, mcp__construct3-chef__list-ops, mcp__construct3-chef__generate-sids, mcp__construct3-chef__validate-project, mcp__construct3-chef__get-state, mcp__c3-domain-manager__read-domain-index, mcp__c3-domain-manager__read-domain-config, mcp__c3-domain-manager__list-uncategorized, mcp__c3-domain-manager__list-stale-overrides, mcp__c3-domain-manager__glossary-check, mcp__c3-domain-manager__validate-boundaries, mcp__c3-domain-manager__validate-editor, mcp__c3-domain-manager__domain-health, mcp__c3-domain-manager__context-map, mcp__c3-domain-manager__addon-inventory, mcp__c3-domain-manager__get-state
 model: haiku
 ---
 
@@ -13,7 +13,7 @@ Explore C3 files (eventSheets, layouts, domain index) and report findings. You a
 
 ## MCP Tools Available
 
-This is your full read-only surface across both pinned servers (`construct3-chef@1.0.0`, `c3-domain-manager@0.6.2`). It is your hard `tools:` allow-list — anything not listed here you cannot call.
+This is your full read-only surface across both pinned servers (`construct3-chef@1.0.0`, `c3-domain-manager@0.7.0`). It is your hard `tools:` allow-list — anything not listed here you cannot call.
 
 **construct3-chef — read & list:**
 - `read-dsl` — human-readable eventSheet logic (conditions, actions, functions, variables)
@@ -50,6 +50,7 @@ This is your full read-only surface across both pinned servers (`construct3-chef
 - `validate-editor` — editor-strictness diagnostic; re-walks `eventSheets/` fresh (never the cached domain index) and reports what the C3 editor would reject
 - `domain-health` — coupling/instability metrics (Ca, Ce) per domain
 - `context-map` — relationship map between domains (text or mermaid)
+- `addon-inventory` — project-wide addon attribution: which addons are used, and by which object types / domains. Complements chef's `list-addons` (package inventory) by answering *who uses what* rather than *what is installed*
 
 **Non-mutating helpers** (read-only despite their names — they never write project files, but you only need them when a task calls for it; the *mutations* they precede belong to `c3-implementer`):
 - `validate-project` — dry-run sync of `project.c3proj` against disk; reports drift (including image drift). Does **not** modify anything

@@ -15,7 +15,7 @@
     },
     "c3-domain-manager": {
       "command": "npx",
-      "args": ["-y", "@genvidtech/c3-domain-manager@0.6.2", "server"]
+      "args": ["-y", "@genvidtech/c3-domain-manager@0.7.0", "server"]
     }
   }
 }

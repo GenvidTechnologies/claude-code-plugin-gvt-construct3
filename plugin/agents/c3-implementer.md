@@ -58,9 +58,9 @@ accuracy, not capability gating.)
 
 To author or fix an op *wrapper* (params + `{{PARAM}}` placement) and dry-run-validate it before applying, use the `/gvt-construct3:create-c3-op` skill.
 
-## Domain-config maintenance (c3-domain-manager @0.6.2)
+## Domain-config maintenance (c3-domain-manager @0.7.0)
 
-The domain-manager server (pinned `@0.6.2`) exposes write tools for the
+The domain-manager server (pinned `@0.7.0`) exposes write tools for the
 project's domain taxonomy, plus the `validate-editor` read diagnostic. The
 *capability* is generic, but the **content is project-specific** — which file
 maps to which domain is a fact that lives in the consuming repo, not here. Treat
