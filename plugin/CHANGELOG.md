@@ -9,12 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Raised the baseline `construct3-chef` contract floor `0.11.2` → `1.0.0`** (#32),
+  in `audit-c3-conventions`' `metadata.expects.mcp` and the `CONVENTIONS.md` contract
+  table. Consuming repos on a chef older than `1.0.0` now fail the audit with an
+  error. The floor moves here rather than with the pin bump (#61) because the pin
+  alone required nothing new functionally — the `validate-addons` guidance added
+  below does. The `c3-domain-manager` floor stays at `0.6.1`.
 - **Bumped the pinned `construct3-chef` MCP server `0.11.2` → `1.0.0`** (#61) and
   the pinned `c3-domain-manager` MCP server `0.6.2` → `0.7.0` (#60), in
   `plugin.json` `mcpServers` plus the version prose in both agents and
   `plugin/docs/c3/toolchain-config.md`.
 
 ### Added
+- **A consuming-repo recommendation to run chef's `validate-addons`** (#32) in
+  `CONVENTIONS.md`. It is a CLI subcommand of the already-pinned package (no extra
+  dependency), read-only, and exits non-zero on findings, so it chains with `&&`
+  into `commands.validate`, a CI step, or an npm script. It covers package
+  integrity, metadata drift against `project.c3proj`'s `usedAddons`, orphan /
+  missing / duplicate packages, and each addon's `aces.json` / `properties` against
+  its `lang/*.json`. Safe to add unconditionally: on a project that does not bundle
+  addons it reports nothing and exits `0`, because the missing-package pass only
+  considers `usedAddons` entries marked `bundled: true`. The MCP-only recon tools
+  (`diff-addon-aces`, `scan-addon-usage`) are deliberately left to `c3-explorer` —
+  they have no CLI subcommand. The plugin recommends and runs this tooling; it does
+  not reimplement it, and `audit-c3-conventions` stays limited to contract
+  presence/reachability.
 - **Five new read-only tools on `c3-explorer`'s hard `tools:` allow-list**
   (30 → 35 entries). From chef `1.0.0`, a bundled-`.c3addon` inspection surface:
   `list-addons` (inventory of bundled packages + `project.c3proj` entries +
@@ -44,6 +63,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the addon stays valid, the JSON parses, and `validateForEditor` passes.
 
 ### Fixed
+- **`CONVENTIONS.md` cited a stale baseline chef floor of `≥ 0.4.0`** (#32) on the
+  `author-navigation-patterns` and `create-c3-op` skill rows, describing their own
+  floors as sitting *above* it. The baseline had long since moved past `0.4.0`, and
+  at `≥ 1.0.0` those per-skill floors are now **subsumed by** the baseline rather
+  than above it. Both rows corrected.
 - **The documented instance-level `effects` shape was wrong** (#59). It showed an
   array of objects carrying a `name` field; an applied effect is a **map keyed by
   the effect's name**, with `{ isEnabled, parameters }` values. Verified against
