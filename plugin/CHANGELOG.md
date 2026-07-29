@@ -76,10 +76,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   above.
 
 ### Notes
-- **Both `minVersion` floors are unchanged** — `construct3-chef` stays `≥ 0.11.2`
-  and `c3-domain-manager` stays `≥ 0.6.1` in `audit-c3-conventions` and
-  `CONVENTIONS.md`. A floor tracks what a skill *needs*, not what is pinned; the
-  chef floor moves to `1.0.0` under #32, which this release unblocks.
+- **A floor tracks what a skill *needs*, not what is pinned.** That is why the pin
+  bump (#61) left both `minVersion` floors alone and the chef floor moved only once
+  #32 added guidance that functionally requires chef `1.0.0` — see *Changed* above.
+  The `c3-domain-manager` floor stays at `≥ 0.6.1` in `audit-c3-conventions` and
+  `CONVENTIONS.md`: nothing in this release requires more of it.
 - **`audit.mjs` is untouched.** The ADR 0006 discovery mirror was verified
   drift-free by the ADR 0007 method, not assumed so.
 
