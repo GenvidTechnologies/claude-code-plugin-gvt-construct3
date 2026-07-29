@@ -14,6 +14,47 @@ This document is the contract between the `gvt-construct3` Claude Code plugin an
 
 The plugin **declares both servers in its `plugin.json`** (`mcpServers`), so they start automatically when `gvt-construct3` is enabled. Bundled plugin servers may install as **"Pending approval"** — approve them once in Claude Code. If the consuming repo also wires these servers in its own `.mcp.json`, that is redundant but harmless.
 
+## Recommended: validate bundled addons in your validation chain
+
+If your project bundles its addons (`.c3addon` packages committed under `addons/`,
+alongside `project.c3proj`'s `usedAddons` entries), add construct3-chef's
+`validate-addons` to whatever chain already runs your checks — `commands.validate`
+in `.gvt-agent.json`, a CI step, or an npm script:
+
+```bash
+npx -y @genvidtech/construct3-chef validate-addons
+```
+
+It is a subcommand of the **same package the plugin already pins**, so it needs no
+extra dependency. It is **read-only**, and it **exits non-zero when it reports
+findings**, so it chains with `&&` like any other check. It reports:
+
+- **Package integrity** — unreadable/malformed archives, LFS pointers committed in
+  place of the real file, missing required entries, id/filename mismatches.
+- **Metadata drift** against `project.c3proj`'s `usedAddons` — the version skew
+  `validate-project` does *not* catch, because that checks the file manifest rather
+  than addon-version consistency.
+- **Orphan / missing / duplicate** packages.
+- **`aces.json` and `properties` against each addon's `lang/*.json`** — the
+  ACE-vs-strings consistency check.
+
+Pass `--addon <id-or-path>` to scope it to a single addon.
+
+Adding it unconditionally is safe: on a project that does not bundle addons it
+finds nothing and exits `0` (the missing-package pass only considers `usedAddons`
+entries marked `bundled: true`). Requires `construct3-chef ≥ 1.0.0`.
+
+For the *interactive* side of this surface — inventory (`list-addons`), an addon
+upgrade's breaking surface (`diff-addon-aces`), and its call-site blast radius
+(`scan-addon-usage`) — reach for the `c3-explorer` agent, whose body documents when
+each applies. Those are recon tools, not gate checks, and `diff-addon-aces` /
+`scan-addon-usage` are MCP-only; they have no CLI subcommand.
+
+> The plugin **recommends and runs** this tooling; it never reimplements it. Addon
+> content validation lives in construct3-chef, the authoritative tool — the plugin's
+> own `audit-c3-conventions` deliberately stays limited to contract
+> presence/reachability. See [Knowledge boundaries](#knowledge-boundaries).
+
 ## Optional, project-owned context the plugin's agents read at runtime
 
 The genericized agents read project-specific conventions from the **consuming repo's `CLAUDE.md`** when present (they are not baked into the plugin):
@@ -36,9 +77,9 @@ The genericized agents read project-specific conventions from the **consuming re
 | Skill | Purpose |
 |-------|---------|
 | `audit-c3-conventions` | Read-only validator: checks the C3-project marker, that `domain-config.json` is present at the C3 project root, and that both MCP servers are reachable at their minimum versions. |
-| `author-navigation-patterns` | Authors and validates a construct3-chef `navigation.targetPatterns` / `definitionMarkers` convention for a project that navigates through a wrapper function: inspects the extracted DSL, proposes the capture-group regex, previews captures/skips, and validates against `navigation-graph`. Requires `construct3-chef ≥ 0.7.0` (declared in its own `metadata.expects`, above the baseline `≥ 0.4.0` floor). |
+| `author-navigation-patterns` | Authors and validates a construct3-chef `navigation.targetPatterns` / `definitionMarkers` convention for a project that navigates through a wrapper function: inspects the extracted DSL, proposes the capture-group regex, previews captures/skips, and validates against `navigation-graph`. Requires `construct3-chef ≥ 0.7.0` (declared in its own `metadata.expects`; now subsumed by the baseline `≥ 1.0.0` floor). |
 | `build-reference` | Produces construct3-chef's `c3-reference` cache (built-in plugin ACEs + layout/scripting/Expression concept chunks) so `search-docs` resolves built-ins, not just custom-addon ACEs. Requires `construct3-chef ≥ 0.9.0` (declared in its own `metadata.expects`). |
-| `create-c3-op` | Authors and dry-run-validates a construct3-chef user-defined op (a parameterized recipe template): elicits typed params, places `{{PARAM}}` tokens, writes the op-file wrapper, and validates via `list-ops` + `apply-op --dry-run`. Authors the op wrapper only (recipe body defers to chef's docs + `c3-implementer`) and never runs a writing `apply-op`. Requires `construct3-chef ≥ 0.10.0` (declared in its own `metadata.expects`, above the baseline `≥ 0.4.0` floor). |
+| `create-c3-op` | Authors and dry-run-validates a construct3-chef user-defined op (a parameterized recipe template): elicits typed params, places `{{PARAM}}` tokens, writes the op-file wrapper, and validates via `list-ops` + `apply-op --dry-run`. Authors the op wrapper only (recipe body defers to chef's docs + `c3-implementer`) and never runs a writing `apply-op`. Requires `construct3-chef ≥ 0.10.0` (declared in its own `metadata.expects`; now subsumed by the baseline `≥ 1.0.0` floor). |
 
 **Bundled docs** (`docs/c3/`): the canonical **C3 platform reference** — event-sheet architecture, layouts, scripting, TS integration, and `construct3-guide.md`. Agents reference these via `${CLAUDE_PLUGIN_ROOT}/docs/c3/*`.
 
