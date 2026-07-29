@@ -97,28 +97,42 @@ Layout summaries (`.layout.txt`) show template definitions with full hierarchy; 
 
 ### What global layers are
 
-A layer marked `"global": true` in one layout (the **originating layout**) is inherited by all other layouts. The originating layout defines the layer and all its instances. Consuming layouts get those instances automatically — no per-layout duplication needed. Consuming layouts can optionally **override** the layer to change instance-level properties (position, visibility, effects, etc.) without affecting the original.
+A layer marked `"global": true` in one layout (the **originating layout**) is inherited by all other layouts. The originating layout defines the layer and all its instances. Consuming layouts get those instances automatically — no per-layout duplication needed.
 
-### Inheritance and override mechanics
+### Shadowing: what `overriden` actually means
 
-When a global layer appears in multiple layouts, non-owning layouts set `"overriden": 1` to indicate they inherit the layer rather than defining it:
+**`overriden` is passive.** It marks a layer that *is being* shadowed by a same-named global layer defined in another layout — not a layer that is doing the overriding. The join is **by name**: when a layout holds a layer whose name matches a global layer elsewhere, that local layer is flagged `"overriden": 1` and carries `"global": false`. Only the originating layer carries `"global": true`, with `"overriden": 0`.
 
 ```json
 {
-  "name": "Header",
-  "global": true,
+  "name": "previously local",
   "overriden": 1,
-  "instances": []    // MUST be empty when overriden
+  "global": false,
+  "sid": 777789560330719,
+  "instances": [
+    {
+      "type": "Sprite2",
+      "uid": 17,
+      "sid": 939527566805562,
+      "behaviors": { "MyCustomBehavior": { "properties": { "test-property": 2 } },
+                     "Persist": { "properties": {} } },
+      "effects": { "Burn": { "isEnabled": true, "parameters": {} } }
+    }
+  ]
 }
 ```
 
-This constraint matters: if instances leak into an overridden layer (e.g., after C3 editor changes), the layer can render duplicated or stale content. A consuming layout can also override the layer **with** instances to change instance-level properties — position, visibility, effects, etc. — for that layout only. The override appears as a normal layer entry in the consuming layout's JSON with matching name and any changed properties on the instances. This does not affect the originating layout or other consumers.
+**A shadowed layer keeps its content.** It is a full, independent layer object — its own `sid`, its own property set, and its own instances, which may be entirely different objects from the global layer's. That content is **not** deleted; it stays on disk and is ignored at runtime in favour of the global layer's. Reverting the layer to non-global brings its own content back.
 
-**Recovery**: When a layer becomes global with `overriden: 1`, instances are cleared. Recover missing instances with `git show <commit>^:<path>`.
+This makes `overriden` primarily a **recovery and name-collision** mechanism rather than a per-layout customisation feature. It is what happens when a local layer's name collides with a global one, and it preserves the local content so the collision stays reversible.
+
+Two consequences for tooling that walks layout JSON. A shadowed layer with a non-empty `instances` array is **normal**, not corruption — do not "repair" it by emptying it, and do not count its instances as rendering. And because the join is by name, renaming either layer breaks the relationship.
+
+Both forms occur in `construct3-sample@v0.4.0`: one shadowed layer with empty `instances`, and one — the example above — retaining a fully populated instance. The empty case is incidental, not a rule.
 
 ### Adding an effect to a global layer instance
 
-Effects on a global layer follow the same declare-then-apply rules as anywhere else — see [Effects](#effects) for the shapes. The one global-layer-specific rule is **where** the applied data goes: author it on the instance in the **originating** layout, never in an overriding layout (whose `instances` must stay empty, per the constraint above).
+Effects on a global layer follow the same declare-then-apply rules as anywhere else — see [Effects](#effects) for the shapes. The one global-layer-specific rule is **where** the applied data goes: author it on the instance in the **originating** layout. Applying it to a shadowed copy of the layer has no effect — that layer's content is ignored at runtime (see above), so the edit is silently inert rather than rejected.
 
 All consuming layouts that inherit the global layer then pick up the effect automatically, with no per-layout changes.
 
@@ -128,7 +142,7 @@ Global layers persist their visibility and interactivity state across layout tra
 
 ### Global-layer tooling
 
-The `extracted/global-layers.txt` report (6th generator) lists every global layer with its originating (source) layout, the layouts that override it, and its instance count (counted deep, from the source layer's sublayers where the instances actually live). The `list-global-layers` MCP tool returns the same report on demand. A layer is treated as the source where `"global": true` appears without `"overriden": 1`; overriding layouts carry the same-named layer with `"overriden": 1` and empty instances. Format:
+The `extracted/global-layers.txt` report (6th generator) lists every global layer with its originating (source) layout, the layouts that shadow it, and its instance count — counted **deep**, summing the source layer's own `instances` and those of its sublayers at any depth. The `list-global-layers` MCP tool returns the same report on demand. A layer is treated as the source where `"global": true` appears with `"overriden": 0`; shadowing layouts carry the same-named layer with `"overriden": 1` and `"global": false`, and that layer **may hold instances of its own**, which are ignored at runtime and must not be counted. Format:
 
 ```
 global layer: source="Second Layout", overridingLayouts=[Main Layout], instanceCount=2
