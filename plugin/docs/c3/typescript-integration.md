@@ -4,7 +4,7 @@
 
 ## The Facade Pattern (imports-for-events)
 
-C3 event sheet script blocks can only access what a single barrel-export module re-exports. The C3 editor generates an `importsForEvents.ts` that imports the project's TypeScript modules and re-exports them for event sheet consumption. Adding a new module to script-block scope requires creating the module under `scripts/`, adding an import/export line to that barrel file, and registering the file with a unique SID in `project.c3proj`.
+C3 event sheet script blocks can only access what a single barrel module **imports**. The C3 editor generates an `importsForEvents.ts` for this; its own generated comment reads *"Put imports here that you wish to use for script blocks in event sheets"*, with `import * as myModule from "./mymodule.js";` as the example — importing a module there is what makes its binding usable by name inside script blocks. There is no re-export step. Adding a new module to script-block scope requires creating the module under `scripts/`, adding an import line to that barrel file, and registering the file with a unique SID in `project.c3proj`.
 
 ## Runtime Object Access
 
