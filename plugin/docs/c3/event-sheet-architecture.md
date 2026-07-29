@@ -2,7 +2,11 @@
 
 > Part of the [C3 platform reference](README.md). Describes how Construct 3 event sheets are structured on disk — the JSON that construct3-chef reads and mutates.
 
+> **Verification provenance.** The on-disk JSON shapes in this doc were swept against the editor-validated [`construct3-sample`](https://github.com/GenvidTechnologies/construct3-sample) (`construct3-sample@v0.4.0`, cross-checked against `v0.1.0`–`v0.3.0`) in [#63](https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/issues/63). Sections carrying an *unverified* callout are claims that sweep could not settle; everything else was confirmed against the sample or corrected to match it. Facts added after this sweep must be verified the same way.
+
 ## Composition via Includes
+
+> **Unverified — no example exists in the sample.** `construct3-sample` contains no `include` event and no `includeSheet` key at any tag (`v0.1.0`–`v0.4.0`), so the shape below has not been checked against an editor-validated project. It is the shape this reference has always documented; confirm against a real editor save before authoring it by hand.
 
 Event sheets build complex behavior through composition. A sheet can include other sheets:
 
@@ -93,20 +97,40 @@ The `events` array contains five types of entries:
 | `group` | Organizes events into collapsible sections |
 | `block` | Conditions + actions -- the core logic unit |
 
+**`variable` and `group` entries** carry more fields than their one-line purpose suggests. Verified against `construct3-sample@v0.4.0`:
+
+```json
+{ "eventType": "variable", "name": "score", "type": "number",
+  "initialValue": "0", "comment": "", "isStatic": false,
+  "isConstant": false, "sid": 100000000000020 }
+
+{ "eventType": "group", "disabled": false, "title": "GameLoop",
+  "description": "", "isActiveOnStart": true,
+  "children": [ /* … */ ], "sid": 100000000000022 }
+```
+
+Two traps here. A group's label key is **`title`**, not `name`. And `initialValue` is a **string** even for a `"type": "number"` variable — `"0"`, not `0`.
+
 **Block structure:**
 
 ```json
 {
   "eventType": "block",
   "conditions": [
-    { "id": "condition-id", "objectClass": "ObjectType", "parameters": { ... } }
+    { "id": "on-clicked", "objectClass": "NavButton", "sid": 718113556931833 },
+    { "id": "compare-eventvar", "objectClass": "System", "sid": 450713348459828,
+      "parameters": { "variable": "temp", "comparison": 0, "value": "0" } }
   ],
   "actions": [ /* see Action Types below */ ],
-  "children": [ /* nested sub-events */ ]
+  "sid": 573288374737163
 }
 ```
 
-Note the field name: nested events live under `children`, not `events`. Only the top-level event sheet object uses `events`. Hand-rolled JSON walkers that recurse on `events` will silently visit nothing past the root; recurse on `children`.
+**Every block, condition and action carries a mandatory `sid`** — a 15-digit integer, per the [SID range constraint](construct3-guide.md). The examples in this doc show them; omitting one produces JSON the editor will not round-trip cleanly.
+
+**A condition with no parameters omits `parameters` entirely** rather than emitting `{}` — see `on-clicked` above. The editor drops the empty object on re-serialization, so writing `"parameters": {}` produces spurious diff churn.
+
+Note the field name: nested events live under `children`, not `events`. Only the top-level event sheet object uses `events`. Hand-rolled JSON walkers that recurse on `events` will silently visit nothing past the root; recurse on `children`. (In the sample, `children` is demonstrated on a `group`; a `block` there carries none, so the key is optional and appears only where the event actually nests.)
 
 **Looking up SIDs in source JSON.** When you need the SID of a function or block from a `.json` source file (for a recipe's `in: "sid:X"`), don't parse the JSON yourself. Use `mcp__construct3-chef__read-event-sids` with a `grep` regex on the description — it returns a JSON-path-to-SID map for the matching events. Use this when SIDs from the latest mutation aren't yet in the extracted `.dsl.idx.txt`. Otherwise, prefer `read-dsl-index` for the §-prefixed SID column.
 
@@ -115,8 +139,13 @@ Note the field name: nested events live under `children`, not `events`. Only the
 **Standard action** (most common) -- C3 built-in or plugin action:
 
 ```json
-{ "id": "set-text", "objectClass": "ScoreText", "sid": 123, "parameters": { "text": "0" } }
+{ "id": "set-text", "objectClass": "ScoreText", "sid": 503974656149130,
+  "parameters": { "text": "0" } }
 ```
+
+(The object and property names above are illustrative; the **shape** is verified. Note the `sid` is a full 15-digit integer — a short placeholder like `123` would violate the [SID range constraint](construct3-guide.md) and is not something the editor ever writes.)
+
+An action targeting a *behavior* rather than the object itself carries an extra `behaviorType` key alongside `objectClass` — see [Behavior attachment and ACE targeting](#behavior-attachment-and-ace-targeting) below.
 
 ### Expression Parameters vs Enum Parameters
 
@@ -161,6 +190,8 @@ This is the standard order of C3's "Comparison" combo and is reused wherever a
 compare ACE exposes a `comparison` parameter. Misreading it is a real hazard: a
 guard like `X.Count comparison=4 second-value=1` means `X.Count > 1` (**not** `≥`
 or `==`), so it skips the block whenever the count is exactly `1`.
+
+> **Unverified — no example exists in the sample.** Of the five action shapes, only the **standard action** above (and its `behaviorType` variant) is confirmed against `construct3-sample`. The four that follow — script action, function call, custom action, and comment action — have **no instance at any tag** (`v0.1.0`–`v0.4.0`): the sample contains no `"type": "script"` action, no `callFunction`, no `customAction`, and no `function-block` or `custom-ace-block` for them to target. Their shapes are the ones this reference has always documented; confirm against a real editor save before authoring them by hand.
 
 **Script action** -- embedded TypeScript (what `extract-scripts` extracts):
 

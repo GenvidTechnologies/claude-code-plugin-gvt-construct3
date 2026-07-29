@@ -98,7 +98,7 @@ High-frequency rules for authoring recipes. The full numbered list with details 
 11. **Dead sibling actions after a script replacement** — when a replacement script assigns a variable, audit the block for sibling `System.add-to-eventvar` / `set-eventvar-value` on the same variable (double-apply trap).
 12. **Dead-code removal must sweep all references** — when a recipe removes a `when:` condition, block, or write site, `rg` the whole repo for every reference. Readers left on a dead value become doubly dead.
 13. **`add-function` shorthand ignores `category`** — emits `functionCategory: ""`; verify and patch the JSON after apply.
-14. **Never hand-pick SIDs** — use `generateUniqueSid()` from construct3-chef (`c3/sidUtils.js`). Hand-picked values over `Number.MAX_SAFE_INTEGER` lose precision and C3 rejects the layout. One instance's SID appears in multiple places (instance `sid`, `instanceFolderItem.sid`, scene-graph root) — replace all.
+14. **Never hand-pick SIDs** — use `generateUniqueSid()` from construct3-chef (`c3/sidUtils.js`). Hand-picked values over `Number.MAX_SAFE_INTEGER` lose precision and C3 rejects the layout. An instance has exactly **one** `sid`; `sceneGraphData` references relatives by `uid`, not SID, so do not propagate a SID change into it.
 15. **`template-name` on `Create object` must be a non-empty quoted name** (e.g. `"\"MyTemplate\""`). Empty values make C3 pick an arbitrary instance — non-deterministic (this is the recipe-param half; the runtime crash it causes is a *platform* gotcha, below).
 16. **Duplicate SID in a target file blocks `apply-recipe`** (`buildSidIndex` throws). `validate-recipe` does NOT catch it. Fix as a prep commit — reassign one occurrence to a fresh 15-digit SID, regenerate.
 

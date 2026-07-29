@@ -2,6 +2,8 @@
 
 Comprehensive reference for Construct 3 platform behavior: event sheets, layouts, runtime scoping, and TypeScript integration. This is vendor-neutral reference material for any Construct 3 project. Sibling deep-dive documents live alongside this file in `docs/c3/`. For tooling and recipe authoring (the construct3-chef toolchain), see `construct3-chef://docs`.
 
+> **Verification provenance.** The on-disk JSON shapes in this doc were swept against the editor-validated [`construct3-sample`](https://github.com/GenvidTechnologies/construct3-sample) (`construct3-sample@v0.4.0`, cross-checked against `v0.1.0`–`v0.3.0`) in [#63](https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/issues/63). Sections carrying an *unverified* callout are claims that sweep could not settle; everything else was confirmed against the sample or corrected to match it. Most of this doc entered in the founding import: only its concrete structural claims are sample-checkable, and the runtime-behaviour sections (§5, §7) are field knowledge no on-disk sample can observe. The prose past the last JSON fence was grepped for stray key names and confirmed to contain none. Facts added after this sweep must be verified the same way.
+
 ## Table of Contents
 
 - [1. Project Setup](#1-project-setup)
@@ -40,19 +42,48 @@ Comprehensive reference for Construct 3 platform behavior: event sheets, layouts
 
 ### project.c3proj
 
-All files under the C3-tracked directories (`scripts/`, `files/`, `objectTypes/`, `sounds/`, `music/`, `fonts/`, `icons/`, `layouts/`, `families/`, `timelines/`, `flowcharts/`, and `eventSheets/`) must be registered in `project.c3proj`. Omitting a script file means C3 will not compile it.
+C3-tracked content must be registered in `project.c3proj`. Omitting a script file means C3 will not compile it.
+
+**Registration is by kind, and the key names are not the directory names.** Verified against `construct3-sample@v0.4.0`, `project.c3proj` carries:
+
+| Where | Keys |
+| --- | --- |
+| Top-level | `objectTypes`, `families`, `layouts`, `eventSheets`, `timelines`, `flowcharts`, `models3d` |
+| `rootFileFolders` | `script`, `sound`, `music`, `video`, `font`, `icon`, `general` |
+
+Two traps follow from that table. First, the `rootFileFolders` keys are **singular** while the on-disk directories are plural — `scripts/` registers under `script`, `icons/` under `icon`, and general files (a `files/` directory) under `general`. Second, entries are individual **items** listed by filename (e.g. `script.items` holds `"importsForEvents.ts"`, `"main.ts"`), not a directory registration — so adding a file to an already-registered folder still requires its own entry.
+
+Only `script` and `icon` are populated in the sample; `sound`, `music`, `video`, `font`, `general` and `models3d` are present but empty, which confirms the keys are valid without establishing their populated item shape.
+
+**Not every directory in a project is registered.** `tilemapBrushes/` and `addons/` exist on disk in the sample with no `project.c3proj` entry of any kind — bundled addons are referenced through `usedAddons` by addon id, not by path. Treat the rule as "tracked *kinds* must be registered", not "every directory must be".
 
 **Never edit `project.c3proj` by hand.** Run your project's c3proj sync command after adding or removing files (construct3-chef provides `sync-project`) — it handles SID generation, MIME types, and folder structure automatically. A dry-run validate command checks for drift without modifying.
 
 Script entries require unique 15-digit `sid` values. The sync tool generates these automatically and preserves existing SIDs for unchanged files.
 
-**SID range constraint — never hand-pick SIDs.** Every `sid` in any C3 JSON (project, layout, eventSheet, sprite, instance, instanceFolderItem, scene-graphs entry) **must fit in `Number.MAX_SAFE_INTEGER` (2^53 − 1 ≈ 9.007 × 10¹⁵)**. SIDs above that lose trailing digits when JS parses them — the file value and in-memory value diverge, and C3 refuses to open the layout with `Error: invalid SID`. Existing project SIDs are 15-digit integers in `[1e14, 1e15)`. Use the **SID generator provided by construct3-chef (`generateUniqueSid()` from `c3/sidUtils.js`)** rather than picking numeric SIDs by hand. The utility:
+**SID range constraint — never hand-pick SIDs.** Every `sid` in any C3 JSON **must fit in `Number.MAX_SAFE_INTEGER` (2^53 − 1 ≈ 9.007 × 10¹⁵)**. SIDs above that lose trailing digits when JS parses them — the file value and in-memory value diverge, and C3 refuses to open the layout with `Error: invalid SID`. Existing project SIDs are 15-digit integers in `[1e14, 1e15)`. Use the **SID generator provided by construct3-chef (`generateUniqueSid()` from `c3/sidUtils.js`)** rather than picking numeric SIDs by hand. The utility:
 
 - Returns values in `[1e14, 1e15)` — guaranteed safe-int.
 - Reads a project-wide SID registry (init via `initSidContext(path)`) so collisions are deduped project-wide.
 - Is already used internally by the eventSheet, instVar, and layout mutators. Manual scaffolding paths may not auto-plug into it — call it explicitly.
 
-The same SID often appears in multiple places for one instance: the instance's own `sid`, its `instanceFolderItem.sid`, and (for templates) the layout's `scene-graphs-folder-root.items` array. Replace all of them.
+**Which JSON nodes carry a `sid`.** Verified against `construct3-sample@v0.4.0`: file roots (layout, eventSheet, objectType), `layers` and nested `subLayers` at any depth, layer `instances` and `nonworld-instances`, event nodes (`events`, their `children`, and each node's `conditions` and `actions`), `behaviorTypes`, `instanceVariables` declarations, animation folder `items`, and `project.c3proj`'s `rootFileFolders > {script,icon} > items`.
+
+**An instance has exactly one `sid`.** There is no `instanceFolderItem` and no `scene-graphs-folder-root` anywhere in C3's project JSON — neither key exists at `projectFormatVersion 1` / release 49500, so there is no second or third copy of an instance's SID to keep in step.
+
+Template and parent-child hierarchies are recorded in `sceneGraphData` **on the instance itself**, and reference relatives by **`uid`**, never by SID:
+
+```json
+"sceneGraphData": {
+  "parent-uid": null,
+  "uid": 8,
+  "children": [ { "uid": 9, "flags": { "x": true, "…": true } } ],
+  "flags": { "…": true },
+  "preview": { "…": 0 }
+}
+```
+
+A child entry carries only `uid` and its own `flags`; a leaf instance omits `children` entirely. The `uid` space is separate from the SID space — a `uid` is a small sequential integer, a `sid` is a 15-digit one — so changing an instance's SID means changing exactly one value, and must **not** be propagated into `sceneGraphData`.
 
 **SID = 0 sentinel**: C3 accepts `0` (or any duplicate) as a valid SID and overwrites it with a fresh unique value on next project save. Tooling that generates C3 JSON (eventSheets, layouts) should use `"sid": 0` to mark generated elements — this avoids collision risks and clearly distinguishes tooling output from C3 editor output.
 
@@ -77,6 +108,8 @@ See [./event-sheet-architecture.md](./event-sheet-architecture.md) for include c
 ## 4. Event Types & Actions
 
 ### Event Types That Contain Scripts
+
+> **Unverified — no example exists in the sample.** `block` and `group` are confirmed against `construct3-sample`, but `function-block` and `custom-ace-block` have **no instance at any tag** (`v0.1.0`–`v0.4.0`), and neither do the keys attributed to them here — `functionParameters`, `functionCopyPicked`, `aceType`, `aceName`. The same applies to the `"type": "script"` action and its `language` field described below. These are the shapes this reference has always documented; confirm against a real editor save before authoring them by hand.
 
 **`block`** — conditions + actions, with optional nested `children`. The most common event type; fires when all conditions are true.
 
@@ -134,6 +167,8 @@ items.some((h: any) => h.name === savedName);
 **`runtime.globalVars` is typed** — Global variables are available as `runtime.globalVars.variableName` with string/number types inferred from C3's variable definitions.
 
 **`localVars` type generation** — Local variables in C3 event blocks are available in script actions as `localVars.variableName`. Types are generated from the event sheet definitions by the extraction toolchain.
+
+> **Key confirmed; populated shape unverified.** `construct3-sample` (`v0.4.0`) ships a `scripts/ts-defs/localVars.d.ts`, which settles that the file is generated — but it is **empty**, consistent with the sample having no script action for a local variable to be in scope of. The generated declaration shape is therefore not established. The sibling `globalVars.d.ts` *is* populated and confirmed, but it is a different file for a different scope; do not read it as evidence for this one.
 
 ---
 
@@ -208,6 +243,8 @@ Empirical check: grep the project for `"value":\s*"Functions\.[A-Z][a-zA-Z]+\(\)
 This is invisible to lint, typecheck, and c3proj validation. The only validator is C3 itself at project load time. For any cross-cutting change that touches event-sheet `value` strings, load the project once before declaring the migration done.
 
 ### Boolean Event Variable Conditions
+
+> **Unverified — no example exists in the sample.** `construct3-sample` contains no `compare-boolean-eventvar` condition and no `isInverted` key at any tag (`v0.1.0`–`v0.4.0`). The sample *does* carry the sibling `compare-eventvar` with `{variable, comparison, value}`, which is structurally analogous — but an analogy is **not** a verified example, and it must not be promoted to one. Confirm this shape against a real editor save before authoring it by hand.
 
 Boolean event variables (static, var, or const) must use `System.compare-boolean-eventvar`, **not** `System.compare-two-values` against `0`. In eventSheet JSON:
 

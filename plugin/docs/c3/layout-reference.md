@@ -2,6 +2,8 @@
 
 > Part of the [C3 platform reference](README.md). Describes how Construct 3 layouts are structured on disk — the JSON that construct3-chef reads, mutates, and scaffolds.
 
+> **Verification provenance.** The on-disk JSON shapes in this doc were swept against the editor-validated [`construct3-sample`](https://github.com/GenvidTechnologies/construct3-sample) (`construct3-sample@v0.4.0`, cross-checked against `v0.1.0`–`v0.3.0`) in [#63](https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/issues/63). Sections carrying an *unverified* callout are claims that sweep could not settle; everything else was confirmed against the sample or corrected to match it. Facts added after this sweep must be verified the same way.
+
 ## Layout Organization
 
 Layouts define the visual screens of the project. When placing objects into a layout, verify the correct layer — layer ordering affects both rendering (visual depth) and event picking (which layer receives input events). Each layout JSON links to an event sheet:
@@ -33,6 +35,8 @@ Within a layout, layers render in array order -- **later layers render on top**:
 
 Layers support sub-layers for further nesting. Each layer has properties controlling visibility, interactivity, parallax, blend mode, and draw order. Instance `tags` are a comma-separated string (e.g., `"tags": "boss,flying"`) used in C3 conditions for filtering objects; layout summaries show them as `#tag1 #tag2`.
 
+> **Key confirmed; populated shape unverified.** Every instance in `construct3-sample` (`v0.1.0`–`v0.4.0`) carries `"tags": ""`, which settles that the key is valid on an instance and that its value is a **string** — and nothing about how multiple tags are encoded within it. The comma-separated convention above is the one this reference has always documented, not a separator observed in an editor-validated save.
+
 ## Template System
 
 A template master object is defined in one layout (often a dedicated "template holder" layout); template instances in other layouts reference that master. The `template` property on an instance controls which properties stay synchronized with the master:
@@ -41,16 +45,55 @@ A template master object is defined in one layout (often a dedicated "template h
 "template": {
   "mode": "template",
   "templateName": "default",
+  "sourceTemplateName": "",
+  "replicaHierarchyInSyncWithTemplate": false,
+  "templatePropagateHierarchyChanges": true,
+  "replicaIgnoreTemplateHierarchyChanges": false,
+  "replicasUIDs": null,
   "components": [
-    { "id": "plugin", "component": [...] },
-    { "id": "instance-variable", "component": [...] },
-    { "id": "behavior", "component": [...] },
-    { "id": "effect", "component": [...] }
+    { "id": "plugin",            "component": [ { "key": "plugin",            "state": [ ["initially-visible", true], … ] } ] },
+    { "id": "instance-variable", "component": [ { "key": "instance-variable", "state": [] } ] },
+    { "id": "behavior",          "component": [] },
+    { "id": "effect",            "component": [] },
+    { "id": "world-instance",    "component": [ { "key": "world-instance",    "state": [ ["x", false], … ] } ] }
   ]
 }
 ```
 
-The `"o"` boolean on child instances within templates enables per-instance property overrides. Set `"o": true` when game logic needs to change child properties (visibility, animation, text) at runtime on a per-instance basis.
+Three things the shorter form hides. There are **five** component ids, not four — `world-instance` is the fifth. Each `component` entry is `{ "key": …, "state": [[name, boolean], …] }`, a list of per-property sync flags, not an opaque blob. And the four sibling `template*` booleans plus `replicasUIDs` (observed as `null`, not an array) are always present.
+
+**`templateName` and `sourceTemplateName` swap roles between the two modes** — exactly one is populated:
+
+| | `mode` | `templateName` | `sourceTemplateName` | `replicaHierarchyInSyncWithTemplate` |
+| --- | --- | --- | --- | --- |
+| Master | `"template"` | `"default"` | `""` | `false` |
+| Replica | `"replica"` | `""` | `"default"` | `true` |
+
+Verified against `construct3-sample@v0.4.0` (master and replica of the same template, in different layouts).
+
+### The `"o"` short key — two unrelated meanings, neither an override
+
+Short-key flags named `"o"` appear in two different places in layout JSON. **Neither enables per-instance property overrides.** Verified against `construct3-sample@v0.4.0`.
+
+**1. `sceneGraphData.flags` — `"o"` is transform-*opacity*-with-parent.** A scene-graph child carries `flags` alongside its `parent-uid`/`uid`/`children`:
+
+```json
+"flags": { "x": true, "y": true, "z": true, "w": true, "h": true,
+           "d": true, "a": true, "o": false, "v": false, "sm": "normal" }
+```
+
+These map one-to-one onto the SDK's `SceneGraphHierarchyOpts` (`scripts/ts-defs/runtime/IWorldInstance.d.ts`) — `transformX`, `transformY`, `transformZ`, `transformWidth`, `transformHeight`, `transformDepth`, `transformAngle`, **`transformOpacity`**, `transformVisibility`. Each says whether that property is inherited from the parent, not whether it can be overridden. The sibling `sceneGraphData.preview` block spells the same field out in full as `transformO`, which confirms the expansion.
+
+Two loose ends, observed but **not** explained by the sample: `sm` (seen as `"normal"`) has no `SceneGraphHierarchyOpts` counterpart, and the interface's `destroyWithParent` does not appear in the `flags` object. Do not assume a meaning for either.
+
+**2. `template.components[].component[].state` — a template-sync flag list.** Under `"id": "world-instance"` the `state` array uses a *different, larger* short-key namespace recording which world properties a replica keeps synchronized with its template:
+
+```
+x, y, z, w, h, a, o, c, sx, sy, bm, sam, tgs,
+twpx, twpy, twpz, twpw, twph, twpa, twpd, dwp, ssm, d, sz
+```
+
+Entries are `[name, boolean]` pairs, e.g. `["o", true]`. This namespace is not the `flags` namespace above and the two must not be read as the same set.
 
 Layout summaries (`.layout.txt`) show template definitions with full hierarchy; replicas (`mode: "replica"`) skip the hierarchy. Template definitions show all child instances; replicas show only the top-level instance.
 
@@ -58,28 +101,44 @@ Layout summaries (`.layout.txt`) show template definitions with full hierarchy; 
 
 ### What global layers are
 
-A layer marked `"global": true` in one layout (the **originating layout**) is inherited by all other layouts. The originating layout defines the layer and all its instances. Consuming layouts get those instances automatically — no per-layout duplication needed. Consuming layouts can optionally **override** the layer to change instance-level properties (position, visibility, effects, etc.) without affecting the original.
+A layer marked `"global": true` in one layout (the **originating layout**) is inherited by all other layouts. The originating layout defines the layer and all its instances. Consuming layouts get those instances automatically — no per-layout duplication needed.
 
-### Inheritance and override mechanics
+### Shadowing: what `overriden` actually means
 
-When a global layer appears in multiple layouts, non-owning layouts set `"overriden": 1` to indicate they inherit the layer rather than defining it:
+**`overriden` is passive.** It marks a layer that *is being* shadowed by a same-named global layer defined in another layout — not a layer that is doing the overriding. The join is **by name**: when a layout holds a layer whose name matches a global layer elsewhere, that local layer is flagged `"overriden": 1` and carries `"global": false`. Only the originating layer carries `"global": true`, with `"overriden": 0`.
 
 ```json
 {
-  "name": "Header",
-  "global": true,
+  "name": "previously local",
   "overriden": 1,
-  "instances": []    // MUST be empty when overriden
+  "global": false,
+  "sid": 777789560330719,
+  "instances": [
+    {
+      "type": "Sprite2",
+      "uid": 17,
+      "sid": 939527566805562,
+      "behaviors": { "MyCustomBehavior": { "properties": { "test-property": 2 } },
+                     "Persist": { "properties": {} } },
+      "effects": { "Burn": { "isEnabled": true, "parameters": {} } }
+    }
+  ]
 }
 ```
 
-This constraint matters: if instances leak into an overridden layer (e.g., after C3 editor changes), the layer can render duplicated or stale content. A consuming layout can also override the layer **with** instances to change instance-level properties — position, visibility, effects, etc. — for that layout only. The override appears as a normal layer entry in the consuming layout's JSON with matching name and any changed properties on the instances. This does not affect the originating layout or other consumers.
+**A shadowed layer keeps its content.** It is a full, independent layer object — its own `sid`, its own property set, and its own instances, which may be entirely different objects from the global layer's. That content is **not** deleted; it stays on disk and is ignored at runtime in favour of the global layer's. Reverting the layer to non-global brings its own content back.
 
-**Recovery**: When a layer becomes global with `overriden: 1`, instances are cleared. Recover missing instances with `git show <commit>^:<path>`.
+This makes `overriden` primarily a **recovery and name-collision** mechanism rather than a per-layout customisation feature. It is what happens when a local layer's name collides with a global one, and it preserves the local content so the collision stays reversible.
+
+**`overriden` is an integer, not a boolean, and it is present on every layer.** Every layer and sub-layer object in the sample carries the key — value `0` for the ordinary case, `1` only when the layer is shadowed. Its absence is not the "not shadowed" encoding; `0` is. (Note the spelling: one `d`, `overriden`, not `overridden`.)
+
+Two consequences for tooling that walks layout JSON. A shadowed layer with a non-empty `instances` array is **normal**, not corruption — do not "repair" it by emptying it, and do not count its instances as rendering. And because the join is by name, renaming either layer breaks the relationship.
+
+Both forms occur in `construct3-sample@v0.4.0`: one shadowed layer with empty `instances`, and one — the example above — retaining a fully populated instance. The empty case is incidental, not a rule.
 
 ### Adding an effect to a global layer instance
 
-Effects on a global layer follow the same declare-then-apply rules as anywhere else — see [Effects](#effects) for the shapes. The one global-layer-specific rule is **where** the applied data goes: author it on the instance in the **originating** layout, never in an overriding layout (whose `instances` must stay empty, per the constraint above).
+Effects on a global layer follow the same declare-then-apply rules as anywhere else — see [Effects](#effects) for the shapes. The one global-layer-specific rule is **where** the applied data goes: author it on the instance in the **originating** layout. Applying it to a shadowed copy of the layer has no effect — that layer's content is ignored at runtime (see above), so the edit is silently inert rather than rejected.
 
 All consuming layouts that inherit the global layer then pick up the effect automatically, with no per-layout changes.
 
@@ -89,7 +148,7 @@ Global layers persist their visibility and interactivity state across layout tra
 
 ### Global-layer tooling
 
-The `extracted/global-layers.txt` report (6th generator) lists every global layer with its originating (source) layout, the layouts that override it, and its instance count (counted deep, from the source layer's sublayers where the instances actually live). The `list-global-layers` MCP tool returns the same report on demand. A layer is treated as the source where `"global": true` appears without `"overriden": 1`; overriding layouts carry the same-named layer with `"overriden": 1` and empty instances. Format:
+The `extracted/global-layers.txt` report (6th generator) lists every global layer with its originating (source) layout, the layouts that shadow it, and its instance count — counted **deep**, summing the source layer's own `instances` and those of its sublayers at any depth. The `list-global-layers` MCP tool returns the same report on demand. A layer is treated as the source where `"global": true` appears with `"overriden": 0`; shadowing layouts carry the same-named layer with `"overriden": 1` and `"global": false`, and that layer **may hold instances of its own**, which are ignored at runtime and must not be counted. Format:
 
 ```
 global layer: source="Second Layout", overridingLayouts=[Main Layout], instanceCount=2
@@ -176,17 +235,31 @@ Text instances commonly use a `[[key]]` syntax for localized strings, resolved a
 }
 ```
 
-## Sublayers Casing Mismatch
+**`instanceVariables` is two different shapes on two different hosts.** On an *instance* it is an **object** (a map), as above. On the **declaring** object type or family it is an **array** of descriptors:
 
-**Casing mismatch**: JSON uses `subLayers` (camelCase) but the `Layer` interface has `sublayers` (lowercase). Access sublayers via the index signature or an explicit cast -- `layer.sublayers` silently returns `undefined`:
+```json
+"instanceVariables": [
+  { "name": "BossArenaEdge", "type": "string", "desc": "", "show": true,
+    "sid": 274269985570573 }
+]
+```
+
+Confirmed on `families/LevelMaps.json` in `construct3-sample@v0.4.0`. Do not carry the array form onto an instance or the map form onto a declaration.
+
+> **Key confirmed; populated shape unverified.** Every instance in `construct3-sample` (`v0.1.0`–`v0.4.0`) carries `"instanceVariables": {}`, which settles that the key is valid on an instance and that its container is an object — and **nothing** about the populated form. The `{ "text": … }` example above shows the *convention* this reference has always documented, not a shape observed in an editor-validated save. The declaration side is a different shape and is confirmed; do not read it as evidence for the instance side.
+
+## Sublayers
+
+**The on-disk key is `subLayers` (camelCase)**, on every layer and sub-layer object that has one. Verified against `construct3-sample@v0.4.0`.
+
+C3's own runtime scripting API is camelCase too, and exposes sub-layers as **methods**, not a property — `subLayers()` (direct children) and `allSubLayers()` (recursive), both on `ILayer` in `scripts/ts-defs/runtime/ILayer.d.ts`, each returning a `Generator<IAnyProjectLayer>`:
 
 ```typescript
-// Correct
-const sublayers = (layer as Record<string, unknown>).subLayers;
-
-// Wrong -- silently returns undefined
-const sublayers = layer.sublayers;
+for (const sub of layer.subLayers()) { /* direct children */ }
+for (const sub of layer.allSubLayers()) { /* recursive */ }
 ```
+
+No lowercase `sublayers` form exists anywhere in C3 — not in the project JSON and not in the SDK type definitions. If a tool's own TypeScript model of the on-disk JSON declares a lowercase `sublayers` field, that is that tool's interface, not C3's, and reading it against real project JSON returns `undefined` for that reason alone.
 
 In the layout JSON, an instance's sublayer is determined by which `subLayers[].instances` array the instance object appears in — not by any explicit property on the instance itself.
 

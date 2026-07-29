@@ -8,6 +8,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **`"o"` is not a per-instance override flag** (#63) in `docs/c3/layout-reference.md`.
+  It was documented as enabling per-instance property overrides on template children,
+  with advice to set `"o": true` for runtime property changes. No such mechanism
+  exists. `"o"` is two unrelated short keys: `transformOpacity` within
+  `sceneGraphData.flags` (which maps 1:1 onto the SDK's `SceneGraphHierarchyOpts`),
+  and a template-sync flag in the separate `template.components[world-instance]`
+  namespace. **If you set `"o": true` expecting per-instance overrides, that edit did
+  something else.**
+- **Overridden layers do not have their content cleared** (#63) in
+  `docs/c3/layout-reference.md`. The doc claimed a shadowed layer's `instances` "MUST
+  be empty", that instances "are cleared" when a layer becomes overridden, and offered
+  `git show` recovery for the supposed loss. All wrong, and wrong in the dangerous
+  direction. `overriden` is **passive** — it marks the layer *being* shadowed by a
+  same-named global layer elsewhere, joined by name — and that layer carries
+  `"global": false`, keeps its own `sid`, and **retains its instances**, which are
+  ignored at runtime and restored if the layer reverts to non-global. **Tooling that
+  "repaired" shadowed layers by emptying them was destroying live data.**
+- **`instanceFolderItem` and `scene-graphs-folder-root` do not exist** (#63) in
+  `docs/c3/construct3-guide.md` and, more seriously, in the `c3-implementer` agent,
+  which instructed it to replace an instance's SID in all three places. Neither key
+  exists in C3 project JSON at any version. An instance has exactly one `sid`;
+  `sceneGraphData` references relatives by `uid`, never by SID.
+- **The `subLayers` "casing mismatch" was never a C3 fact** (#63) in
+  `docs/c3/layout-reference.md`. C3 uses camelCase `subLayers` in JSON *and*
+  camelCase `subLayers()` / `allSubLayers()` in the SDK — both methods. No lowercase
+  `sublayers` form exists anywhere in C3; the mismatch described a consumer tool's own
+  interface. The confirmed half (camelCase JSON key, positional sublayer membership)
+  is preserved.
+- **The `project.c3proj` registration rule listed directory names, not keys** (#63) in
+  `docs/c3/construct3-guide.md`. Registration is by kind under *singular*
+  `rootFileFolders` keys (`script`, `icon`, …), `models3d` and `video` were missing
+  entirely, and the blanket "all files under these directories" rule has a live
+  counterexample — `tilemapBrushes/` and `addons/` carry no manifest entry at all.
+- **`importsForEvents.ts` imports rather than re-exports** (#63) in
+  `docs/c3/typescript-integration.md`.
+
 ### Changed
 - **Raised the baseline `construct3-chef` contract floor `0.11.2` → `1.0.0`** (#32),
   in `audit-c3-conventions`' `metadata.expects.mcp` and the `CONVENTIONS.md` contract
@@ -21,6 +58,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `plugin/docs/c3/toolchain-config.md`.
 
 ### Added
+- **Verification provenance for the whole C3 platform reference** (#63). Each
+  `docs/c3/` doc swept in this pass now carries a provenance note naming the ground
+  truth (`construct3-sample@v0.4.0`, cross-checked against `v0.1.0`–`v0.3.0`), plus
+  per-section *unverified* callouts in three forms — construct absent from the sample,
+  key present but empty, and not observable from an on-disk project. The note states
+  the invariant that makes a marker's **absence** meaningful: an unmarked section was
+  confirmed against the sample or corrected to match it. `grep -rn construct3-sample
+  plugin/docs/c3/` returns the complete inventory.
+- **Completed JSON examples that previously omitted mandatory keys** (#63). Event-sheet
+  blocks, conditions and actions now show their mandatory 15-digit `sid` (one example
+  carried `"sid": 123`, which the SID range constraint forbids); a parameter-less
+  condition now shows `parameters` omitted entirely rather than `{}`; the `variable`
+  and `group` shapes are complete, including that a group's label key is `title` (not
+  `name`) and that `initialValue` is a string even for numeric variables. The template
+  block gains its five missing keys, its fifth `world-instance` component id, and the
+  `templateName` / `sourceTemplateName` master-vs-replica swap. `instanceVariables` is
+  documented as an array on a declaration but a map on an instance.
 - **A consuming-repo recommendation to run chef's `validate-addons`** (#32) in
   `CONVENTIONS.md`. It is a CLI subcommand of the already-pinned package (no extra
   dependency), read-only, and exits non-zero on findings, so it chains with `&&`
