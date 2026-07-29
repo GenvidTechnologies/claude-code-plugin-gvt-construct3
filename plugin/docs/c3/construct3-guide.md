@@ -40,7 +40,20 @@ Comprehensive reference for Construct 3 platform behavior: event sheets, layouts
 
 ### project.c3proj
 
-All files under the C3-tracked directories (`scripts/`, `files/`, `objectTypes/`, `sounds/`, `music/`, `fonts/`, `icons/`, `layouts/`, `families/`, `timelines/`, `flowcharts/`, and `eventSheets/`) must be registered in `project.c3proj`. Omitting a script file means C3 will not compile it.
+C3-tracked content must be registered in `project.c3proj`. Omitting a script file means C3 will not compile it.
+
+**Registration is by kind, and the key names are not the directory names.** Verified against `construct3-sample@v0.4.0`, `project.c3proj` carries:
+
+| Where | Keys |
+| --- | --- |
+| Top-level | `objectTypes`, `families`, `layouts`, `eventSheets`, `timelines`, `flowcharts`, `models3d` |
+| `rootFileFolders` | `script`, `sound`, `music`, `video`, `font`, `icon`, `general` |
+
+Two traps follow from that table. First, the `rootFileFolders` keys are **singular** while the on-disk directories are plural — `scripts/` registers under `script`, `icons/` under `icon`, and general files (a `files/` directory) under `general`. Second, entries are individual **items** listed by filename (e.g. `script.items` holds `"importsForEvents.ts"`, `"main.ts"`), not a directory registration — so adding a file to an already-registered folder still requires its own entry.
+
+Only `script` and `icon` are populated in the sample; `sound`, `music`, `video`, `font`, `general` and `models3d` are present but empty, which confirms the keys are valid without establishing their populated item shape.
+
+**Not every directory in a project is registered.** `tilemapBrushes/` and `addons/` exist on disk in the sample with no `project.c3proj` entry of any kind — bundled addons are referenced through `usedAddons` by addon id, not by path. Treat the rule as "tracked *kinds* must be registered", not "every directory must be".
 
 **Never edit `project.c3proj` by hand.** Run your project's c3proj sync command after adding or removing files (construct3-chef provides `sync-project`) — it handles SID generation, MIME types, and folder structure automatically. A dry-run validate command checks for drift without modifying.
 
