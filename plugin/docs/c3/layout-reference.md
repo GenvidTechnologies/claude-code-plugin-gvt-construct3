@@ -126,6 +126,8 @@ A layer marked `"global": true` in one layout (the **originating layout**) is in
 
 This makes `overriden` primarily a **recovery and name-collision** mechanism rather than a per-layout customisation feature. It is what happens when a local layer's name collides with a global one, and it preserves the local content so the collision stays reversible.
 
+**`overriden` is an integer, not a boolean, and it is present on every layer.** Every layer and sub-layer object in the sample carries the key — value `0` for the ordinary case, `1` only when the layer is shadowed. Its absence is not the "not shadowed" encoding; `0` is. (Note the spelling: one `d`, `overriden`, not `overridden`.)
+
 Two consequences for tooling that walks layout JSON. A shadowed layer with a non-empty `instances` array is **normal**, not corruption — do not "repair" it by emptying it, and do not count its instances as rendering. And because the join is by name, renaming either layer breaks the relationship.
 
 Both forms occur in `construct3-sample@v0.4.0`: one shadowed layer with empty `instances`, and one — the example above — retaining a fully populated instance. The empty case is incidental, not a rule.
