@@ -41,14 +41,31 @@ A template master object is defined in one layout (often a dedicated "template h
 "template": {
   "mode": "template",
   "templateName": "default",
+  "sourceTemplateName": "",
+  "replicaHierarchyInSyncWithTemplate": false,
+  "templatePropagateHierarchyChanges": true,
+  "replicaIgnoreTemplateHierarchyChanges": false,
+  "replicasUIDs": null,
   "components": [
-    { "id": "plugin", "component": [...] },
-    { "id": "instance-variable", "component": [...] },
-    { "id": "behavior", "component": [...] },
-    { "id": "effect", "component": [...] }
+    { "id": "plugin",            "component": [ { "key": "plugin",            "state": [ ["initially-visible", true], … ] } ] },
+    { "id": "instance-variable", "component": [ { "key": "instance-variable", "state": [] } ] },
+    { "id": "behavior",          "component": [] },
+    { "id": "effect",            "component": [] },
+    { "id": "world-instance",    "component": [ { "key": "world-instance",    "state": [ ["x", false], … ] } ] }
   ]
 }
 ```
+
+Three things the shorter form hides. There are **five** component ids, not four — `world-instance` is the fifth. Each `component` entry is `{ "key": …, "state": [[name, boolean], …] }`, a list of per-property sync flags, not an opaque blob. And the four sibling `template*` booleans plus `replicasUIDs` (observed as `null`, not an array) are always present.
+
+**`templateName` and `sourceTemplateName` swap roles between the two modes** — exactly one is populated:
+
+| | `mode` | `templateName` | `sourceTemplateName` | `replicaHierarchyInSyncWithTemplate` |
+| --- | --- | --- | --- | --- |
+| Master | `"template"` | `"default"` | `""` | `false` |
+| Replica | `"replica"` | `""` | `"default"` | `true` |
+
+Verified against `construct3-sample@v0.4.0` (master and replica of the same template, in different layouts).
 
 ### The `"o"` short key — two unrelated meanings, neither an override
 
@@ -197,6 +214,19 @@ Text instances commonly use a `[[key]]` syntax for localized strings, resolved a
   }
 }
 ```
+
+**`instanceVariables` is two different shapes on two different hosts.** On an *instance* it is an **object** (a map), as above. On the **declaring** object type or family it is an **array** of descriptors:
+
+```json
+"instanceVariables": [
+  { "name": "BossArenaEdge", "type": "string", "desc": "", "show": true,
+    "sid": 274269985570573 }
+]
+```
+
+Confirmed on `families/LevelMaps.json` in `construct3-sample@v0.4.0`. Do not carry the array form onto an instance or the map form onto a declaration.
+
+> **Key confirmed; populated shape unverified.** Every instance in `construct3-sample` (`v0.1.0`–`v0.4.0`) carries `"instanceVariables": {}`, which settles that the key is valid on an instance and that its container is an object — and **nothing** about the populated form. The `{ "text": … }` example above shows the *convention* this reference has always documented, not a shape observed in an editor-validated save. The declaration side is a different shape and is confirmed; do not read it as evidence for the instance side.
 
 ## Sublayers
 
