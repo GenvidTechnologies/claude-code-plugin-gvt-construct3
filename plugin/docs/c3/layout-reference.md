@@ -50,7 +50,29 @@ A template master object is defined in one layout (often a dedicated "template h
 }
 ```
 
-The `"o"` boolean on child instances within templates enables per-instance property overrides. Set `"o": true` when game logic needs to change child properties (visibility, animation, text) at runtime on a per-instance basis.
+### The `"o"` short key — two unrelated meanings, neither an override
+
+Short-key flags named `"o"` appear in two different places in layout JSON. **Neither enables per-instance property overrides.** Verified against `construct3-sample@v0.4.0`.
+
+**1. `sceneGraphData.flags` — `"o"` is transform-*opacity*-with-parent.** A scene-graph child carries `flags` alongside its `parent-uid`/`uid`/`children`:
+
+```json
+"flags": { "x": true, "y": true, "z": true, "w": true, "h": true,
+           "d": true, "a": true, "o": false, "v": false, "sm": "normal" }
+```
+
+These map one-to-one onto the SDK's `SceneGraphHierarchyOpts` (`scripts/ts-defs/runtime/IWorldInstance.d.ts`) — `transformX`, `transformY`, `transformZ`, `transformWidth`, `transformHeight`, `transformDepth`, `transformAngle`, **`transformOpacity`**, `transformVisibility`. Each says whether that property is inherited from the parent, not whether it can be overridden. The sibling `sceneGraphData.preview` block spells the same field out in full as `transformO`, which confirms the expansion.
+
+Two loose ends, observed but **not** explained by the sample: `sm` (seen as `"normal"`) has no `SceneGraphHierarchyOpts` counterpart, and the interface's `destroyWithParent` does not appear in the `flags` object. Do not assume a meaning for either.
+
+**2. `template.components[].component[].state` — a template-sync flag list.** Under `"id": "world-instance"` the `state` array uses a *different, larger* short-key namespace recording which world properties a replica keeps synchronized with its template:
+
+```
+x, y, z, w, h, a, o, c, sx, sy, bm, sam, tgs,
+twpx, twpy, twpz, twpw, twph, twpa, twpd, dwp, ssm, d, sz
+```
+
+Entries are `[name, boolean]` pairs, e.g. `["o", true]`. This namespace is not the `flags` namespace above and the two must not be read as the same set.
 
 Layout summaries (`.layout.txt`) show template definitions with full hierarchy; replicas (`mode: "replica"`) skip the hierarchy. Template definitions show all child instances; replicas show only the top-level instance.
 
