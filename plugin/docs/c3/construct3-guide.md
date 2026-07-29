@@ -46,13 +46,29 @@ All files under the C3-tracked directories (`scripts/`, `files/`, `objectTypes/`
 
 Script entries require unique 15-digit `sid` values. The sync tool generates these automatically and preserves existing SIDs for unchanged files.
 
-**SID range constraint — never hand-pick SIDs.** Every `sid` in any C3 JSON (project, layout, eventSheet, sprite, instance, instanceFolderItem, scene-graphs entry) **must fit in `Number.MAX_SAFE_INTEGER` (2^53 − 1 ≈ 9.007 × 10¹⁵)**. SIDs above that lose trailing digits when JS parses them — the file value and in-memory value diverge, and C3 refuses to open the layout with `Error: invalid SID`. Existing project SIDs are 15-digit integers in `[1e14, 1e15)`. Use the **SID generator provided by construct3-chef (`generateUniqueSid()` from `c3/sidUtils.js`)** rather than picking numeric SIDs by hand. The utility:
+**SID range constraint — never hand-pick SIDs.** Every `sid` in any C3 JSON **must fit in `Number.MAX_SAFE_INTEGER` (2^53 − 1 ≈ 9.007 × 10¹⁵)**. SIDs above that lose trailing digits when JS parses them — the file value and in-memory value diverge, and C3 refuses to open the layout with `Error: invalid SID`. Existing project SIDs are 15-digit integers in `[1e14, 1e15)`. Use the **SID generator provided by construct3-chef (`generateUniqueSid()` from `c3/sidUtils.js`)** rather than picking numeric SIDs by hand. The utility:
 
 - Returns values in `[1e14, 1e15)` — guaranteed safe-int.
 - Reads a project-wide SID registry (init via `initSidContext(path)`) so collisions are deduped project-wide.
 - Is already used internally by the eventSheet, instVar, and layout mutators. Manual scaffolding paths may not auto-plug into it — call it explicitly.
 
-The same SID often appears in multiple places for one instance: the instance's own `sid`, its `instanceFolderItem.sid`, and (for templates) the layout's `scene-graphs-folder-root.items` array. Replace all of them.
+**Which JSON nodes carry a `sid`.** Verified against `construct3-sample@v0.4.0`: file roots (layout, eventSheet, objectType), `layers` and nested `subLayers` at any depth, layer `instances` and `nonworld-instances`, event nodes (`events`, their `children`, and each node's `conditions` and `actions`), `behaviorTypes`, `instanceVariables` declarations, animation folder `items`, and `project.c3proj`'s `rootFileFolders > {script,icon} > items`.
+
+**An instance has exactly one `sid`.** There is no `instanceFolderItem` and no `scene-graphs-folder-root` anywhere in C3's project JSON — neither key exists at `projectFormatVersion 1` / release 49500, so there is no second or third copy of an instance's SID to keep in step.
+
+Template and parent-child hierarchies are recorded in `sceneGraphData` **on the instance itself**, and reference relatives by **`uid`**, never by SID:
+
+```json
+"sceneGraphData": {
+  "parent-uid": null,
+  "uid": 8,
+  "children": [ { "uid": 9, "flags": { "x": true, "…": true } } ],
+  "flags": { "…": true },
+  "preview": { "…": 0 }
+}
+```
+
+A child entry carries only `uid` and its own `flags`; a leaf instance omits `children` entirely. The `uid` space is separate from the SID space — a `uid` is a small sequential integer, a `sid` is a 15-digit one — so changing an instance's SID means changing exactly one value, and must **not** be propagated into `sceneGraphData`.
 
 **SID = 0 sentinel**: C3 accepts `0` (or any duplicate) as a valid SID and overwrites it with a fresh unique value on next project save. Tooling that generates C3 JSON (eventSheets, layouts) should use `"sid": 0` to mark generated elements — this avoids collision risks and clearly distinguishes tooling output from C3 editor output.
 
