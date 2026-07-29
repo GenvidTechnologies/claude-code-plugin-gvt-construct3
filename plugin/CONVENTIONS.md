@@ -9,7 +9,7 @@ This document is the contract between the `gvt-construct3` Claude Code plugin an
 | Requirement | How it's satisfied | Checked by |
 |-------------|--------------------|------------|
 | **A C3-project marker** | `project.c3proj` at the repo root, **or** `.gvt-agent.json` with `features.c3: true`, **or** `.gvt-agent.json` `paths.c3project` pointing at the `.c3proj` file (the legacy `.genvid-agent.json` is still accepted, with a deprecation warning, during the transition) | `audit-c3-conventions` |
-| **construct3-chef MCP server** | Launched as `npx -y @genvidtech/construct3-chef server`, version ≥ `0.11.2` | `audit-c3-conventions` |
+| **construct3-chef MCP server** | Launched as `npx -y @genvidtech/construct3-chef server`, version ≥ `1.0.0` | `audit-c3-conventions` |
 | **c3-domain-manager MCP server** | Launched as `npx -y @genvidtech/c3-domain-manager server`, version ≥ `0.6.1` | `audit-c3-conventions` |
 
 The plugin **declares both servers in its `plugin.json`** (`mcpServers`), so they start automatically when `gvt-construct3` is enabled. Bundled plugin servers may install as **"Pending approval"** — approve them once in Claude Code. If the consuming repo also wires these servers in its own `.mcp.json`, that is redundant but harmless.
