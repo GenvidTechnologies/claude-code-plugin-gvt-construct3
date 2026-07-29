@@ -15,8 +15,8 @@ metadata:
     mcp:
       - server: construct3-chef
         package: "@genvidtech/construct3-chef"
-        minVersion: "0.11.2"
-        reason: Recipe tools and construct3-chef://docs (the canonical tooling reference)
+        minVersion: "1.0.0"
+        reason: Recipe tools, construct3-chef://docs (the canonical tooling reference), and the bundled-.c3addon validation surface (validate-addons)
       - server: c3-domain-manager
         package: "@genvidtech/c3-domain-manager"
         minVersion: "0.6.1"
