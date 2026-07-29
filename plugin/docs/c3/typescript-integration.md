@@ -2,6 +2,8 @@
 
 > Part of the [C3 platform reference](README.md). Covers the C3 TypeScript scripting and async-execution semantics that construct3-chef's extracted `.ts` output reflects.
 
+> **Verification provenance.** The on-disk JSON shapes in this doc were swept against the editor-validated [`construct3-sample`](https://github.com/GenvidTechnologies/construct3-sample) (`construct3-sample@v0.4.0`, cross-checked against `v0.1.0`–`v0.3.0`) in [#63](https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/issues/63). Sections carrying an *unverified* callout are claims that sweep could not settle; everything else was confirmed against the sample or corrected to match it. This doc describes the **runtime scripting API**, which an on-disk project evidences only weakly — what the sample does confirm is the file layout: `importsForEvents.ts` registration in `project.c3proj`, and the `scripts/ts-defs/` tree. Facts added after this sweep must be verified the same way.
+
 ## The Facade Pattern (imports-for-events)
 
 C3 event sheet script blocks can only access what a single barrel module **imports**. The C3 editor generates an `importsForEvents.ts` for this; its own generated comment reads *"Put imports here that you wish to use for script blocks in event sheets"*, with `import * as myModule from "./mymodule.js";` as the example — importing a module there is what makes its binding usable by name inside script blocks. There is no re-export step. Adding a new module to script-block scope requires creating the module under `scripts/`, adding an import line to that barrel file, and registering the file with a unique SID in `project.c3proj`.
@@ -127,6 +129,8 @@ block
 
 ## `functionIsAsync` and Caller Waitability
 
+> **Partly unverified.** `construct3-sample` is an on-disk project and contains no `function-block` at any tag (`v0.1.0`–`v0.4.0`), so the `functionIsAsync` key itself is unconfirmed — and the caller-waitability behaviour it controls is runtime semantics that no on-disk sample can observe in any case. Retained as field knowledge, not as a verified shape.
+
 `functionIsAsync: true/false` on a C3 function block does **not** decide whether the
 body runs as a promise. Script blocks and most C3 actions always run inside an async
 context — both async-marked and non-async-marked function bodies execute as promises.
@@ -167,6 +171,8 @@ Without the `wait-for-previous-actions`, the trigger handler returns before `sen
 internal async work executes, silently dropping it.
 
 ## Function Return Types and Call Conventions
+
+> **Unverified — no example exists in the sample.** `construct3-sample` contains no `function-block` and no `callFunction` action at any tag (`v0.1.0`–`v0.4.0`); the only `callFunction` anywhere in it is the SDK type declaration on `IRuntime`. The calling conventions below are field knowledge, not shapes checked against an editor-validated project.
 
 C3 has two ways to invoke a function, and the return type determines which is valid:
 

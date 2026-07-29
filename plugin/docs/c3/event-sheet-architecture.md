@@ -2,7 +2,11 @@
 
 > Part of the [C3 platform reference](README.md). Describes how Construct 3 event sheets are structured on disk — the JSON that construct3-chef reads and mutates.
 
+> **Verification provenance.** The on-disk JSON shapes in this doc were swept against the editor-validated [`construct3-sample`](https://github.com/GenvidTechnologies/construct3-sample) (`construct3-sample@v0.4.0`, cross-checked against `v0.1.0`–`v0.3.0`) in [#63](https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/issues/63). Sections carrying an *unverified* callout are claims that sweep could not settle; everything else was confirmed against the sample or corrected to match it. Facts added after this sweep must be verified the same way.
+
 ## Composition via Includes
+
+> **Unverified — no example exists in the sample.** `construct3-sample` contains no `include` event and no `includeSheet` key at any tag (`v0.1.0`–`v0.4.0`), so the shape below has not been checked against an editor-validated project. It is the shape this reference has always documented; confirm against a real editor save before authoring it by hand.
 
 Event sheets build complex behavior through composition. A sheet can include other sheets:
 
@@ -186,6 +190,8 @@ This is the standard order of C3's "Comparison" combo and is reused wherever a
 compare ACE exposes a `comparison` parameter. Misreading it is a real hazard: a
 guard like `X.Count comparison=4 second-value=1` means `X.Count > 1` (**not** `≥`
 or `==`), so it skips the block whenever the count is exactly `1`.
+
+> **Unverified — no example exists in the sample.** Of the five action shapes, only the **standard action** above (and its `behaviorType` variant) is confirmed against `construct3-sample`. The four that follow — script action, function call, custom action, and comment action — have **no instance at any tag** (`v0.1.0`–`v0.4.0`): the sample contains no `"type": "script"` action, no `callFunction`, no `customAction`, and no `function-block` or `custom-ace-block` for them to target. Their shapes are the ones this reference has always documented; confirm against a real editor save before authoring them by hand.
 
 **Script action** -- embedded TypeScript (what `extract-scripts` extracts):
 

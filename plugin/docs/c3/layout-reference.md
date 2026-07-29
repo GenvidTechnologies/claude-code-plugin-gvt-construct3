@@ -2,6 +2,8 @@
 
 > Part of the [C3 platform reference](README.md). Describes how Construct 3 layouts are structured on disk — the JSON that construct3-chef reads, mutates, and scaffolds.
 
+> **Verification provenance.** The on-disk JSON shapes in this doc were swept against the editor-validated [`construct3-sample`](https://github.com/GenvidTechnologies/construct3-sample) (`construct3-sample@v0.4.0`, cross-checked against `v0.1.0`–`v0.3.0`) in [#63](https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/issues/63). Sections carrying an *unverified* callout are claims that sweep could not settle; everything else was confirmed against the sample or corrected to match it. Facts added after this sweep must be verified the same way.
+
 ## Layout Organization
 
 Layouts define the visual screens of the project. When placing objects into a layout, verify the correct layer — layer ordering affects both rendering (visual depth) and event picking (which layer receives input events). Each layout JSON links to an event sheet:
@@ -32,6 +34,8 @@ Within a layout, layers render in array order -- **later layers render on top**:
 ```
 
 Layers support sub-layers for further nesting. Each layer has properties controlling visibility, interactivity, parallax, blend mode, and draw order. Instance `tags` are a comma-separated string (e.g., `"tags": "boss,flying"`) used in C3 conditions for filtering objects; layout summaries show them as `#tag1 #tag2`.
+
+> **Key confirmed; populated shape unverified.** Every instance in `construct3-sample` (`v0.1.0`–`v0.4.0`) carries `"tags": ""`, which settles that the key is valid on an instance and that its value is a **string** — and nothing about how multiple tags are encoded within it. The comma-separated convention above is the one this reference has always documented, not a separator observed in an editor-validated save.
 
 ## Template System
 

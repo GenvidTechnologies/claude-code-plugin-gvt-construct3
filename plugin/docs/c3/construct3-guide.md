@@ -2,6 +2,8 @@
 
 Comprehensive reference for Construct 3 platform behavior: event sheets, layouts, runtime scoping, and TypeScript integration. This is vendor-neutral reference material for any Construct 3 project. Sibling deep-dive documents live alongside this file in `docs/c3/`. For tooling and recipe authoring (the construct3-chef toolchain), see `construct3-chef://docs`.
 
+> **Verification provenance.** The on-disk JSON shapes in this doc were swept against the editor-validated [`construct3-sample`](https://github.com/GenvidTechnologies/construct3-sample) (`construct3-sample@v0.4.0`, cross-checked against `v0.1.0`–`v0.3.0`) in [#63](https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/issues/63). Sections carrying an *unverified* callout are claims that sweep could not settle; everything else was confirmed against the sample or corrected to match it. Most of this doc entered in the founding import: only its concrete structural claims are sample-checkable, and the runtime-behaviour sections (§5, §7) are field knowledge no on-disk sample can observe. The prose past the last JSON fence was grepped for stray key names and confirmed to contain none. Facts added after this sweep must be verified the same way.
+
 ## Table of Contents
 
 - [1. Project Setup](#1-project-setup)
@@ -107,6 +109,8 @@ See [./event-sheet-architecture.md](./event-sheet-architecture.md) for include c
 
 ### Event Types That Contain Scripts
 
+> **Unverified — no example exists in the sample.** `block` and `group` are confirmed against `construct3-sample`, but `function-block` and `custom-ace-block` have **no instance at any tag** (`v0.1.0`–`v0.4.0`), and neither do the keys attributed to them here — `functionParameters`, `functionCopyPicked`, `aceType`, `aceName`. The same applies to the `"type": "script"` action and its `language` field described below. These are the shapes this reference has always documented; confirm against a real editor save before authoring them by hand.
+
 **`block`** — conditions + actions, with optional nested `children`. The most common event type; fires when all conditions are true.
 
 **`function-block`** — named function with `functionParameters`, conditions, actions, children. `functionCopyPicked` controls instance picking:
@@ -163,6 +167,8 @@ items.some((h: any) => h.name === savedName);
 **`runtime.globalVars` is typed** — Global variables are available as `runtime.globalVars.variableName` with string/number types inferred from C3's variable definitions.
 
 **`localVars` type generation** — Local variables in C3 event blocks are available in script actions as `localVars.variableName`. Types are generated from the event sheet definitions by the extraction toolchain.
+
+> **Key confirmed; populated shape unverified.** `construct3-sample` (`v0.4.0`) ships a `scripts/ts-defs/localVars.d.ts`, which settles that the file is generated — but it is **empty**, consistent with the sample having no script action for a local variable to be in scope of. The generated declaration shape is therefore not established. The sibling `globalVars.d.ts` *is* populated and confirmed, but it is a different file for a different scope; do not read it as evidence for this one.
 
 ---
 
@@ -237,6 +243,8 @@ Empirical check: grep the project for `"value":\s*"Functions\.[A-Z][a-zA-Z]+\(\)
 This is invisible to lint, typecheck, and c3proj validation. The only validator is C3 itself at project load time. For any cross-cutting change that touches event-sheet `value` strings, load the project once before declaring the migration done.
 
 ### Boolean Event Variable Conditions
+
+> **Unverified — no example exists in the sample.** `construct3-sample` contains no `compare-boolean-eventvar` condition and no `isInverted` key at any tag (`v0.1.0`–`v0.4.0`). The sample *does* carry the sibling `compare-eventvar` with `{variable, comparison, value}`, which is structurally analogous — but an analogy is **not** a verified example, and it must not be promoted to one. Confirm this shape against a real editor save before authoring it by hand.
 
 Boolean event variables (static, var, or const) must use `System.compare-boolean-eventvar`, **not** `System.compare-two-values` against `0`. In eventSheet JSON:
 

@@ -2,6 +2,8 @@
 
 Online docs: <https://www.construct.net/en/make-games/manuals/construct-3/scripting/scripting-reference>
 
+> **Verification provenance.** This doc was swept against the editor-validated [`construct3-sample`](https://github.com/GenvidTechnologies/construct3-sample) (`construct3-sample@v0.4.0`, cross-checked against `v0.1.0`–`v0.3.0`) in [#63](https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/issues/63). All nine documented `IRuntime` methods and every documented key property were confirmed against the SDK definitions the editor generates into `scripts/ts-defs/runtime/IRuntime.d.ts`. The event-name list is confirmed **in part** (12 of roughly 30 names). Expression and iteration semantics are runtime behaviour no on-disk sample can observe. Facts added after this sweep must be verified the same way.
+
 Use `WebFetch` to pull full details from any URL below when needed.
 
 ## Key Pages
