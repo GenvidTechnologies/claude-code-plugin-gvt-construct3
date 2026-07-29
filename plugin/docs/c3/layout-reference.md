@@ -198,17 +198,18 @@ Text instances commonly use a `[[key]]` syntax for localized strings, resolved a
 }
 ```
 
-## Sublayers Casing Mismatch
+## Sublayers
 
-**Casing mismatch**: JSON uses `subLayers` (camelCase) but the `Layer` interface has `sublayers` (lowercase). Access sublayers via the index signature or an explicit cast -- `layer.sublayers` silently returns `undefined`:
+**The on-disk key is `subLayers` (camelCase)**, on every layer and sub-layer object that has one. Verified against `construct3-sample@v0.4.0`.
+
+C3's own runtime scripting API is camelCase too, and exposes sub-layers as **methods**, not a property — `subLayers()` (direct children) and `allSubLayers()` (recursive), both on `ILayer` in `scripts/ts-defs/runtime/ILayer.d.ts`, each returning a `Generator<IAnyProjectLayer>`:
 
 ```typescript
-// Correct
-const sublayers = (layer as Record<string, unknown>).subLayers;
-
-// Wrong -- silently returns undefined
-const sublayers = layer.sublayers;
+for (const sub of layer.subLayers()) { /* direct children */ }
+for (const sub of layer.allSubLayers()) { /* recursive */ }
 ```
+
+No lowercase `sublayers` form exists anywhere in C3 — not in the project JSON and not in the SDK type definitions. If a tool's own TypeScript model of the on-disk JSON declares a lowercase `sublayers` field, that is that tool's interface, not C3's, and reading it against real project JSON returns `undefined` for that reason alone.
 
 In the layout JSON, an instance's sublayer is determined by which `subLayers[].instances` array the instance object appears in — not by any explicit property on the instance itself.
 
