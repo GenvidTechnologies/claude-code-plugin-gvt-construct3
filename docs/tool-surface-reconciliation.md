@@ -60,6 +60,29 @@ C3-specific anchors the generic skill needs to know for this repo:
   there). `list-ops` is `READ_ONLY` (→ `c3-explorer` allow-list); `op-<name>` is
   `MUTATE` and dynamic (→ `c3-implementer` docs only, documented as a class — the names
   are not fixed, enumerate via `list-ops`).
+- **`c3-explorer`'s allow-list is NOT chef's `READ_ONLY` set — do not reconcile them
+  by set-equality.** The obvious mechanical check ("diff chef's `READ_ONLY` tools
+  against the explorer's allow-list, add what's missing") is **wrong in both
+  directions**, and wrong in a way that changes a *capability*, not just a doc.
+  Measured at chef `1.1.0`: 24 `READ_ONLY` + 10 `MUTATE` + **2 unannotated**
+  (`generate-sids`, `regenerate`) = 36 `reg()`; the explorer's chef allow-list holds
+  **25**. The three deliberate divergences:
+  - **`validate-recipe` is `READ_ONLY` but deliberately excluded from the
+    allow-list.** It belongs to the *implementer's* recipe workflow
+    (`plugin/agents/c3-implementer.md`, "always `validate-recipe` before
+    `apply-recipe`"). Adding it "to fix the gap" silently widens a **haiku**
+    agent's envelope. **Leave it out.**
+  - **`list-ops` is in the allow-list but is not a `server.js` `reg()` tool** — it
+    comes from `opsRegistry.js` (see the bullet above).
+  - **`generate-sids` is in the allow-list but carries no annotation at all** — it
+    is one of only two unannotated `reg()` tools, so an annotation-driven filter
+    drops it. It is genuinely non-mutating (it mints SIDs without touching files).
+
+  So the allow-list = (annotated `READ_ONLY`) − `validate-recipe` + `list-ops` +
+  `generate-sids`. When a bump changes the counts, re-derive that relation rather
+  than asserting the two sets should match — and if a future bump *does* make
+  `validate-recipe` explorer-appropriate, that is a deliberate capability decision
+  worth its own rationale, not a reconciliation side-effect.
 - For grounding new skills or platform docs in chef's actual source (not just
   reconciling tool names), see [`docs/grounding-in-chef-behavior.md`](grounding-in-chef-behavior.md).
 
