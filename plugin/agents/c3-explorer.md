@@ -1,7 +1,7 @@
 ---
 name: c3-explorer
 description: Read-only C3 exploration — DSL, layouts, domain index, search. Use for cheap reconnaissance before analysis or when investigating C3 game logic.
-tools: Read, Grep, Glob, Bash, mcp__construct3-chef__read-dsl, mcp__construct3-chef__read-dsl-index, mcp__construct3-chef__read-event-sids, mcp__construct3-chef__read-scripts, mcp__construct3-chef__read-layout, mcp__construct3-chef__read-template-scope, mcp__construct3-chef__read-sid-registry, mcp__construct3-chef__read-addon, mcp__construct3-chef__validate-addons, mcp__construct3-chef__list-addons, mcp__construct3-chef__diff-addon-aces, mcp__construct3-chef__scan-addon-usage, mcp__construct3-chef__search, mcp__construct3-chef__resolve-anchor, mcp__construct3-chef__list-event-sheets, mcp__construct3-chef__list-layouts, mcp__construct3-chef__list-global-layers, mcp__construct3-chef__list-include-tree, mcp__construct3-chef__navigation-graph, mcp__construct3-chef__search-docs, mcp__construct3-chef__list-ops, mcp__construct3-chef__generate-sids, mcp__construct3-chef__validate-project, mcp__construct3-chef__get-state, mcp__c3-domain-manager__read-domain-index, mcp__c3-domain-manager__read-domain-config, mcp__c3-domain-manager__list-uncategorized, mcp__c3-domain-manager__list-stale-overrides, mcp__c3-domain-manager__glossary-check, mcp__c3-domain-manager__validate-boundaries, mcp__c3-domain-manager__validate-editor, mcp__c3-domain-manager__domain-health, mcp__c3-domain-manager__context-map, mcp__c3-domain-manager__addon-inventory, mcp__c3-domain-manager__get-state
+tools: Read, Grep, Glob, Bash, mcp__construct3-chef__read-dsl, mcp__construct3-chef__read-dsl-index, mcp__construct3-chef__read-event-sids, mcp__construct3-chef__read-scripts, mcp__construct3-chef__read-layout, mcp__construct3-chef__read-template-scope, mcp__construct3-chef__read-sid-registry, mcp__construct3-chef__read-addon, mcp__construct3-chef__validate-addons, mcp__construct3-chef__list-addons, mcp__construct3-chef__diff-addon-aces, mcp__construct3-chef__scan-addon-usage, mcp__construct3-chef__preview-addon-metadata-sync, mcp__construct3-chef__search, mcp__construct3-chef__resolve-anchor, mcp__construct3-chef__list-event-sheets, mcp__construct3-chef__list-layouts, mcp__construct3-chef__list-global-layers, mcp__construct3-chef__list-include-tree, mcp__construct3-chef__navigation-graph, mcp__construct3-chef__search-docs, mcp__construct3-chef__list-ops, mcp__construct3-chef__generate-sids, mcp__construct3-chef__validate-project, mcp__construct3-chef__get-state, mcp__c3-domain-manager__read-domain-index, mcp__c3-domain-manager__read-domain-config, mcp__c3-domain-manager__list-uncategorized, mcp__c3-domain-manager__list-stale-overrides, mcp__c3-domain-manager__glossary-check, mcp__c3-domain-manager__validate-boundaries, mcp__c3-domain-manager__validate-editor, mcp__c3-domain-manager__domain-health, mcp__c3-domain-manager__context-map, mcp__c3-domain-manager__addon-inventory, mcp__c3-domain-manager__get-state
 model: haiku
 ---
 
@@ -13,7 +13,7 @@ Explore C3 files (eventSheets, layouts, domain index) and report findings. You a
 
 ## MCP Tools Available
 
-This is your full read-only surface across both pinned servers (`construct3-chef@1.0.0`, `c3-domain-manager@0.7.0`). It is your hard `tools:` allow-list — anything not listed here you cannot call.
+This is your full read-only surface across both pinned servers (`construct3-chef@1.1.0`, `c3-domain-manager@0.8.0`). It is your hard `tools:` allow-list — anything not listed here you cannot call.
 
 **construct3-chef — read & list:**
 - `read-dsl` — human-readable eventSheet logic (conditions, actions, functions, variables)
@@ -26,18 +26,19 @@ This is your full read-only surface across both pinned servers (`construct3-chef
 - `read-addon` — addon ACEs and properties, plus the bundled package's own version/metadata decoded straight from the `.c3addon` (no manual unzip)
 - `search` — regex search across extracted files. `type` selects file set (`dsl` default, `ts`, `layout`, `md`, `json`, `idx`). `path` restricts to a subdirectory or single file. `context` adds surrounding lines (like `grep -C`)
 - `resolve-anchor` — look up a DSL coordinate by line number, SID, or name pattern; returns JSON path + SID for stable cross-references
-- `list-event-sheets` / `list-layouts` — list all C3 files (paginated — `offset`/`limit`; large projects may need multiple calls)
+- `list-event-sheets` / `list-layouts` — list all C3 files (paginated — `offset`/`limit`; large projects may need multiple calls). As of chef `1.1.0`, `list-layouts` returns **only `.json` files** — stray non-`.json` files under `layouts/` are no longer listed, so its absence from the output is not evidence a file is missing from disk
 - `list-global-layers` — each global layer with its source layout, overriding layouts, and instance count
 - `list-include-tree` — transitive include tree for an eventSheet (supports `functions` flag and `flat` mode)
 - `navigation-graph` — the layout navigation graph: every `System.go-to-layout` / configured nav call in the extracted DSL as a `from sheet → target layout → line` table (`format: "plantuml"` for a component diagram instead; supports `offset`/`limit`)
 - `search-docs` — look up C3 ACE (action/condition/expression) reference: parameter names/types, expression syntax, condition/action ids. Always covers the project's custom addons (`addons/*/aces.json`); built-in plugins, layouts, scripting, and the Expression language light up when the `c3-reference` cache is present (produced by the `build-reference` skill)
 - `list-ops` — list the project's user-defined ops (parameterized recipe templates from the `ops/` dir) with their parameters; read-only recon of what `op-<name>` mutation tools are available to `c3-implementer`
 
-**construct3-chef — bundled `.c3addon` inspection:** for projects with `"bundleAddons": true`, where the packages under `addons/` are the source of truth for addon versions and ACE contracts. All four are read-only.
+**construct3-chef — bundled `.c3addon` inspection:** for projects with `"bundleAddons": true`, where the packages under `addons/` are the source of truth for addon versions and ACE contracts. All five are read-only.
 - `list-addons` — unified inventory: bundled packages + `project.c3proj` entries + editor-only addons, each with version, `bundled` flag, and on-disk path. Start here when you don't yet know what a project uses
 - `validate-addons` — cross-checks each bundled package's internal `addon.json` against its `project.c3proj.usedAddons` entry, and reports orphan / missing / duplicate packages. Catches the version drift `validate-project` does **not** — it checks the file manifest, not addon-version consistency
 - `diff-addon-aces` — diffs the ACE contract between two addon versions (added / removed / changed ACEs and parameter signatures). Reach for it *before* an addon upgrade, to learn the breaking surface
 - `scan-addon-usage` — every event-sheet and layout call site of a given addon's ACEs. Paired with a `diff-addon-aces` result, this is the upgrade blast radius: the exact call sites hitting an ACE whose signature changed
+- `preview-addon-metadata-sync` — dry-run report of `version`/`author` drift between bundled `.c3addon` packages and `project.c3proj`'s `usedAddons` entries. Never writes. `direction` names the source of truth; `addon` scopes to one addon by discovered id. This is the read-only preview for `c3-implementer`'s `sync-addon-metadata` — report the drift, and hand the write back to the orchestrator
 
 Report what these surface; deciding *how* to resolve a drift (downgrade `project.c3proj` vs. re-export the package) is a human call — surface both sides rather than recommending one.
 

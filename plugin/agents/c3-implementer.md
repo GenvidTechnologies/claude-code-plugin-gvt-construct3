@@ -18,7 +18,7 @@ Read these as needed at runtime:
 
 ## MCP Tools
 
-These are the construct3-chef tools at the pinned `@1.0.0`. (Unlike `c3-explorer`,
+These are the construct3-chef tools at the pinned `@1.1.0`. (Unlike `c3-explorer`,
 this agent has no `tools:` allow-list — it can call anything, so this list is for
 accuracy, not capability gating.)
 
@@ -44,6 +44,7 @@ accuracy, not capability gating.)
 - `regenerate` — run all C3 generators (runs the **plugin-bundled** chef — in a consuming repo, finalize with the consumer's repo-pinned generation command instead; see [Finalizing regeneration](#finalizing-regeneration--the-version-skew-dsl-drift-trap))
 - `scaffold-layout` / `scaffold-sprite` — clone a layout / objectType with UID/SID remapping
 - `sync-project` — sync project.c3proj after file changes
+- `sync-addon-metadata` — sync `project.c3proj`'s `usedAddons` `version`/`author` fields against the bundled `.c3addon` packages. `direction` is mandatory and names the source of truth: **only `manifest-from-package` writes** — chef has no `.c3addon` writer, so `package-from-manifest` is a read-only report identical to `c3-explorer`'s `preview-addon-metadata-sync`. Pass `txId` from the preview for optimistic concurrency; the returned `txId` bumps only when the manifest was actually written. Preview first (that's the explorer's job), then apply here
 
 **Template & layer mutations** (the recipes that *execute* a `c3-explorer` swap/replica recon):
 - `extract-template` — extract an instance + its scene-graph children from a layout into a reusable master template
@@ -58,9 +59,9 @@ accuracy, not capability gating.)
 
 To author or fix an op *wrapper* (params + `{{PARAM}}` placement) and dry-run-validate it before applying, use the `/gvt-construct3:create-c3-op` skill.
 
-## Domain-config maintenance (c3-domain-manager @0.7.0)
+## Domain-config maintenance (c3-domain-manager @0.8.0)
 
-The domain-manager server (pinned `@0.7.0`) exposes write tools for the
+The domain-manager server (pinned `@0.8.0`) exposes write tools for the
 project's domain taxonomy, plus the `validate-editor` read diagnostic. The
 *capability* is generic, but the **content is project-specific** — which file
 maps to which domain is a fact that lives in the consuming repo, not here. Treat

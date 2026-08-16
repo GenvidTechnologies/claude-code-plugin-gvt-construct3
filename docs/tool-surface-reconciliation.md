@@ -37,14 +37,19 @@ C3-specific anchors the generic skill needs to know for this repo:
 - **Packages pinned:** `@genvidtech/construct3-chef` and `@genvidtech/c3-domain-manager`
   (in `plugin/.claude-plugin/plugin.json` `mcpServers`).
 - **Count sanity-check anchors:** chef registers its core tools in
-  `dist/mcp/server.js` via the **`reg("…")`** idiom — **34** of them at `1.0.0`
-  (was **30**, stable `0.9.0` → `0.11.2`) — plus `list-ops` from
-  `opsRegistry.js`, for **35 total** (was **31**). A bare `registerTool(` grep
-  barely matches chef (only `list-ops` + the dynamic `op-<name>` wrapper use that
-  idiom), so grep **`reg(`** in `server.js` for the authoritative list.
-  c3-domain-manager uses `registerTool` — **14** tools at `0.7.0` (was **13**).
+  `dist/mcp/server.js` via the **`reg("…")`** idiom — **36** of them at `1.1.0`
+  (was **34** at `1.0.0`, **30** stable `0.9.0` → `0.11.2`) — plus `list-ops`
+  from `opsRegistry.js`, for **37 total** (was **35**, **31**). A bare
+  `registerTool(` grep barely matches chef (only `list-ops` + the dynamic
+  `op-<name>` wrapper use that idiom), so grep **`reg(`** in `server.js` for the
+  authoritative list.
+  c3-domain-manager uses `registerTool` — **14** tools at `0.8.0` (unchanged from
+  `0.7.0`; was **13** before that).
   If a surface grep returns **0** or an implausibly small set, the registration
   idiom/file moved — don't trust a silent zero.
+  **Note the `1.0.0` file move:** chef relocated the registry to
+  `dist/mcp/server.js`, so a bare `dist/server.js` grep now silently finds
+  nothing — another silent-zero to distrust.
 - **Ops tools live outside `server.js` (since chef 0.10.0, #89).** The user-defined-ops
   surface — the static `list-ops` tool plus dynamically-registered `op-<name>` tools
   (one per file in the project's `ops/` dir, hot-reloaded) — is registered in
