@@ -29,6 +29,7 @@ Architecture and compromise decisions for the dev workspace and plugin design. S
 - [docs/decisions/0006-detect-discovery-ambiguity.md](decisions/0006-detect-discovery-ambiguity.md) — A second bespoke audit check mirrors `resolveRootFolder`'s ambiguous-root discovery and reports it as a new advisory `warning` severity (exit code unchanged). (#47)
 - [docs/decisions/0007-verifying-the-resolverootfolder-mirror.md](decisions/0007-verifying-the-resolverootfolder-mirror.md) — How to discharge the ADR 0006 mirror obligation on a `c3-domain-manager` bump: diff the adapter *and* prove the `@genvidtech/mcp-utils` range can't move, rather than trusting release notes. (#60)
 - [docs/decisions/0008-recording-verification-provenance-in-docs-c3.md](decisions/0008-recording-verification-provenance-in-docs-c3.md) — `docs/c3` docs declare their verification provenance so an *unmarked* section means "checked"; shipped docs cite the `construct3-sample` tag, never `path:line`, which drifts silently on a re-tag. (#63)
+- [docs/decisions/0009-discharging-the-mirror-check-when-the-range-moves.md](decisions/0009-discharging-the-mirror-check-when-the-range-moves.md) — What to do when ADR 0007's part 2 fails: diff `resolveRootFolder.js` *and its import closure* between the reviewed and newly-resolvable `@genvidtech/mcp-utils` versions, and record the reviewed baseline. (#74)
 
 ## C3 platform reference (`plugin/docs/c3/`)
 

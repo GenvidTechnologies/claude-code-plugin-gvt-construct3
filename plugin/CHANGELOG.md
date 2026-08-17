@@ -8,6 +8,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Bumped both pinned MCP servers** — `construct3-chef` `1.0.0` → **`1.1.0`** (#73)
+  and `c3-domain-manager` `0.7.0` → **`0.8.0`** (#74). Shipped together: both adopt
+  the same upstream generation (`@genvidtech/c3source ^2.0.0`, `@genvidtech/mcp-utils
+  ^0.7.0`), and running mismatched c3source majors against one `extracted/` tree is
+  the coupling `docs/c3/toolchain-config.md` warns about. `minVersion` floors are
+  unchanged — this is a pin bump, not a floor bump.
+- **`list-layouts` now returns only `.json` files.** As of chef `1.1.0`, stray
+  non-`.json` files under `layouts/` are no longer listed (fallout of c3source
+  2.0.0's `.json` item policy). A file's absence from the output is therefore not
+  evidence it is missing from disk. Noted in `c3-explorer`.
+
+### Added
+- **`preview-addon-metadata-sync`** (chef `1.1.0`, `READ_ONLY`) added to
+  `c3-explorer`'s `tools:` allow-list and tool inventory — a dry-run report of
+  `version`/`author` drift between bundled `.c3addon` packages and
+  `project.c3proj`'s `usedAddons` entries. Because that allow-list is a hard
+  capability gate, this is a functional addition, not a doc update.
+- **`sync-addon-metadata`** (chef `1.1.0`, `MUTATE`) documented in
+  `c3-implementer` — only `direction: manifest-from-package` writes; the opposite
+  direction is a read-only report. Documentation only: that agent has no `tools:`
+  allow-list.
+
 ### Fixed
 - **`"o"` is not a per-instance override flag** (#63) in `docs/c3/layout-reference.md`.
   It was documented as enabling per-instance property overrides on template children,

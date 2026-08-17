@@ -466,12 +466,16 @@ export function classifyDiscovery({
   return { fires: false, reason: matches.length === 1 ? 'single' : 'none' };
 }
 
-// Mirrors c3-domain-manager's (@genvidtech/mcp-utils@0.5.1) resolveRootFolder
+// Mirrors c3-domain-manager's (@genvidtech/mcp-utils@0.7.0) resolveRootFolder
 // discovery: a depth-1 scan of repoRoot's child directories for a
 // `project.c3proj` marker. Ground-truthed fidelity fact: upstream's scan does
 // NO name-based filtering — `node_modules` and dot-directories are scanned
 // like any other child dir — so this deliberately does not exclude them
 // either (see the regression-lock test in audit.test.mjs).
+// Reviewed baseline: {0.5.1, 0.7.0}. `resolveRootFolder.js` and its only import
+// `mcpError.js` are byte-identical across those two, so the dm 0.7.0 -> 0.8.0
+// bump (which moved the range ^0.5.1 -> ^0.7.0) required no change here. See
+// ADR 0009.
 export async function scanC3ProjectMarkers(repoRoot) {
   const rootHasMarker = await fileExists(join(repoRoot, 'project.c3proj'));
   const childDirsWithMarker = [];

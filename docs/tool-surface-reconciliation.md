@@ -37,14 +37,19 @@ C3-specific anchors the generic skill needs to know for this repo:
 - **Packages pinned:** `@genvidtech/construct3-chef` and `@genvidtech/c3-domain-manager`
   (in `plugin/.claude-plugin/plugin.json` `mcpServers`).
 - **Count sanity-check anchors:** chef registers its core tools in
-  `dist/mcp/server.js` via the **`reg("…")`** idiom — **34** of them at `1.0.0`
-  (was **30**, stable `0.9.0` → `0.11.2`) — plus `list-ops` from
-  `opsRegistry.js`, for **35 total** (was **31**). A bare `registerTool(` grep
-  barely matches chef (only `list-ops` + the dynamic `op-<name>` wrapper use that
-  idiom), so grep **`reg(`** in `server.js` for the authoritative list.
-  c3-domain-manager uses `registerTool` — **14** tools at `0.7.0` (was **13**).
+  `dist/mcp/server.js` via the **`reg("…")`** idiom — **36** of them at `1.1.0`
+  (was **34** at `1.0.0`, **30** stable `0.9.0` → `0.11.2`) — plus `list-ops`
+  from `opsRegistry.js`, for **37 total** (was **35**, **31**). A bare
+  `registerTool(` grep barely matches chef (only `list-ops` + the dynamic
+  `op-<name>` wrapper use that idiom), so grep **`reg(`** in `server.js` for the
+  authoritative list.
+  c3-domain-manager uses `registerTool` — **14** tools at `0.8.0` (unchanged from
+  `0.7.0`; was **13** before that).
   If a surface grep returns **0** or an implausibly small set, the registration
   idiom/file moved — don't trust a silent zero.
+  **Note the `1.0.0` file move:** chef relocated the registry to
+  `dist/mcp/server.js`, so a bare `dist/server.js` grep now silently finds
+  nothing — another silent-zero to distrust.
 - **Ops tools live outside `server.js` (since chef 0.10.0, #89).** The user-defined-ops
   surface — the static `list-ops` tool plus dynamically-registered `op-<name>` tools
   (one per file in the project's `ops/` dir, hot-reloaded) — is registered in
@@ -55,6 +60,29 @@ C3-specific anchors the generic skill needs to know for this repo:
   there). `list-ops` is `READ_ONLY` (→ `c3-explorer` allow-list); `op-<name>` is
   `MUTATE` and dynamic (→ `c3-implementer` docs only, documented as a class — the names
   are not fixed, enumerate via `list-ops`).
+- **`c3-explorer`'s allow-list is NOT chef's `READ_ONLY` set — do not reconcile them
+  by set-equality.** The obvious mechanical check ("diff chef's `READ_ONLY` tools
+  against the explorer's allow-list, add what's missing") is **wrong in both
+  directions**, and wrong in a way that changes a *capability*, not just a doc.
+  Measured at chef `1.1.0`: 24 `READ_ONLY` + 10 `MUTATE` + **2 unannotated**
+  (`generate-sids`, `regenerate`) = 36 `reg()`; the explorer's chef allow-list holds
+  **25**. The three deliberate divergences:
+  - **`validate-recipe` is `READ_ONLY` but deliberately excluded from the
+    allow-list.** It belongs to the *implementer's* recipe workflow
+    (`plugin/agents/c3-implementer.md`, "always `validate-recipe` before
+    `apply-recipe`"). Adding it "to fix the gap" silently widens a **haiku**
+    agent's envelope. **Leave it out.**
+  - **`list-ops` is in the allow-list but is not a `server.js` `reg()` tool** — it
+    comes from `opsRegistry.js` (see the bullet above).
+  - **`generate-sids` is in the allow-list but carries no annotation at all** — it
+    is one of only two unannotated `reg()` tools, so an annotation-driven filter
+    drops it. It is genuinely non-mutating (it mints SIDs without touching files).
+
+  So the allow-list = (annotated `READ_ONLY`) − `validate-recipe` + `list-ops` +
+  `generate-sids`. When a bump changes the counts, re-derive that relation rather
+  than asserting the two sets should match — and if a future bump *does* make
+  `validate-recipe` explorer-appropriate, that is a deliberate capability decision
+  worth its own rationale, not a reconciliation side-effect.
 - For grounding new skills or platform docs in chef's actual source (not just
   reconciling tool names), see [`docs/grounding-in-chef-behavior.md`](grounding-in-chef-behavior.md).
 
