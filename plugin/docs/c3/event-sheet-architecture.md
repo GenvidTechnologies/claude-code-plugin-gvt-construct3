@@ -193,7 +193,7 @@ or `==`), so it skips the block whenever the count is exactly `1`.
 
 > **Unverified — no example exists in the sample.** Of the five action shapes, only the **standard action** above (and its `behaviorType` variant) is confirmed against `construct3-sample`. The four that follow — script action, function call, custom action, and comment action — have **no instance at any tag** (`v0.1.0`–`v0.4.0`): the sample contains no `"type": "script"` action, no `callFunction`, no `customAction`, and no `function-block` or `custom-ace-block` for them to target. Their shapes are the ones this reference has always documented; confirm against a real editor save before authoring them by hand.
 
-**Script action** -- embedded TypeScript (what `extract-scripts` extracts):
+**Script action** -- embedded TypeScript:
 
 ```json
 { "type": "script", "language": "typescript", "script": ["const x = 1;", "console.log(x);"] }
@@ -247,8 +247,6 @@ Third-party behaviors bundle a `.c3addon` under `addons/behavior/` (when `projec
 ```json
 { "type": "comment", "text": "Setup player state" }
 ```
-
-Note: script extraction only handles script actions. The other shapes contain significant game logic that is not visible in extracted TypeScript files -- read the `.dsl.txt` files to see the full picture.
 
 ## Event Sheet Hierarchy
 

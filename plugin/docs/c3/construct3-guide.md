@@ -131,7 +131,7 @@ instance.callCustomAction("actionName", ...args)
 
 ### Script Action JSON: `language` Field Required
 
-When hand-writing `"type": "script"` actions in event sheet JSON, the `"language": "typescript"` field is **required**. Without it, the DSL generator outputs `[unknown action]` and C3 may not execute the script at runtime:
+When hand-writing `"type": "script"` actions in event sheet JSON, the `"language": "typescript"` field is **required**. Without it, C3 may not execute the script at runtime:
 
 ```json
 {
@@ -142,7 +142,7 @@ When hand-writing `"type": "script"` actions in event sheet JSON, the `"language
 }
 ```
 
-The `language` field has no default — omitting it produces a broken action that passes JSON validation but silently fails at the DSL and runtime levels.
+The `language` field has no default — omitting it produces a broken action that passes JSON validation but silently fails at runtime.
 
 ### Type Safety Caveat
 
@@ -190,7 +190,7 @@ items.some((h: any) => h.name === savedName);
 
 Static variables (`isStatic: true`) persist their values across layout transitions; non-static variables reset each transition — but both scoping rules apply equally. When extracting shared logic into included event sheets, audit all variable references: root-level globals are safe, but nested variables must be declared in the destination sheet.
 
-**Initialization order matters** — while variables are *visible* everywhere in their scope (the `extract-scripts` tool pre-collects all variables at each level before traversing blocks), initializer code runs in array order. A variable declared after events that set it will have its initializer run after those events, silently resetting the value to its default. Always declare variables before the events that reference them.
+**Initialization order matters** — while variables are *visible* everywhere in their scope, initializer code runs in array order. A variable declared after events that set it will have its initializer run after those events, silently resetting the value to its default. Always declare variables before the events that reference them.
 
 **Multiple `on-start-of-layout` blocks fire in array order** — when several `on-start-of-layout` blocks live in the same sheet (or across included sheets), they execute strictly in the order they appear in the `events` array, regardless of whether they're conditional or unconditional. A reset/initialization block placed after a conditional block that depends on clean state will run **too late**, and the conditional block will read stale state from the previous layout. When adding initialization, always verify the array position relative to other `on-start-of-layout` blocks (use the DSL index). If in doubt, create a dedicated unconditional block and insert it before all others.
 
