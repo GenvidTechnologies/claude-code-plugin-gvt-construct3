@@ -32,6 +32,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   allow-list.
 
 ### Fixed
+- **DSL-renderer behaviour is no longer stated as C3 platform behaviour** (#72) in
+  `docs/c3/construct3-guide.md` and `docs/c3/event-sheet-architecture.md`. Five
+  clauses described what an extraction/rendering tool does with event-sheet JSON as
+  though it were what Construct 3 itself does. The worst used a *tool* implementation
+  detail as the evidence for a *platform* scoping claim — variables being visible
+  throughout their scope was attributed to an extractor pre-collecting them — leaving
+  a reader unable to tell which was the platform rule. Two clauses named
+  **`extract-scripts`, a tool that does not exist**: verified against the pinned
+  `@genvidtech/construct3-chef@1.1.0` (`npm pack` + whole-tree grep, exit 1, with a
+  `read-scripts` control at exit 0); the only registered `extract-*` MCP tool is
+  `extract-template`. With no correct owner to point at, the clauses were **deleted
+  rather than re-attributed**; the renderer behaviours are recorded upstream as
+  [`c3source#81`](https://github.com/GenvidTechnologies/c3source/issues/81). Platform
+  halves are preserved throughout — the `"language": "typescript"` requirement and its
+  runtime consequence, and the visibility-vs-initializer-order rule. **No new ADR 0008
+  `unverified` callout accompanies the last of these, deliberately**: it sits in
+  `## 5. C3 Runtime Behavior`, which ADR 0008 §1 puts outside marker scope and the
+  doc's own provenance note already covers by name — a marker there would have implied
+  the rest of §5 was sample-verified. That corrects an acceptance criterion on #72
+  itself, which had asked for one.
 - **`"o"` is not a per-instance override flag** (#63) in `docs/c3/layout-reference.md`.
   It was documented as enabling per-instance property overrides on template children,
   with advice to set `"o": true` for runtime property changes. No such mechanism
