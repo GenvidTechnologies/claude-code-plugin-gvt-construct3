@@ -146,16 +146,32 @@ without editing ADR 0004's `genvid-c3` references, and the later `genvid-dev` �
 reversed, add a **superseding** ADR rather than editing the old one in place.
 
 > **This section's own `genvid-c3` mentions are deliberate — do not sweep them.**
-> `/gvt-dev:audit-conventions`'s retired-token scan flags this page on every run
-> (`info` severity; it never affects the exit code), because the rule has to
-> *name* the retired token to cite the precedent it rests on. Silencing that
-> finding by renaming the token here would leave the rule asserting a precedent
-> it can no longer show — the scanner goes quiet and the doc gets worse.
+> The rule has to *name* the retired token to cite the precedent it rests on;
+> renaming it here would leave the rule asserting a precedent it can no longer
+> show.
 >
-> The scan has no per-citation exemption either: only a global
-> `hygiene.retiredTokens` deny-list or a whole-file `excludePaths`, both of which
-> would suppress *real* drift elsewhere. The recurring `info` line is the
-> **intended steady state**.
+> **What changed when this rule moved into `wiki/`.** While it lived in
+> `CLAUDE.md`, `/gvt-dev:audit-conventions`'s retired-token scan flagged it on
+> every run (`info` severity, never affecting the exit code), and absorbing that
+> recurring finding was the accepted cost of citing the token. That is no longer
+> what happens: the hygiene scanners build their candidate set as
+> **`docs/**.md` + repo-root `CLAUDE.md`** (`listCandidateFiles` in
+> `audit-conventions/scripts/lib/hygiene.mjs`) — `wiki/` is not scanned at all.
+> So the finding is now silent, and the token survives here uncontested.
+>
+> **This is worth more than the correction.** The `CLAUDE.md` → `wiki/`
+> migration silenced a finding that the original bullet was deliberately
+> engineered to keep alive — by *moving the file*, not by touching the token,
+> which is the outcome that bullet existed to prevent. Nothing broke and no
+> check failed; the doc simply went on describing a world it had left. Treat
+> **"what tooling stops seeing this file"** as a required question whenever a
+> doc moves, alongside "what links to it" above. Filed upstream as
+> `GenvidTechnologies/claude-code-plugin-gvt-dev#366`.
+>
+> (The scan also has no per-citation exemption — only a global
+> `hygiene.retiredTokens` deny-list or a whole-file `excludePaths`, both of
+> which would suppress *real* drift elsewhere. That constraint is upstream
+> `#281`, and it still applies to any `docs/` or `CLAUDE.md` copy of this rule.)
 
 [^claude-md]: CLAUDE.md, "Conventions for editing this repo".
 

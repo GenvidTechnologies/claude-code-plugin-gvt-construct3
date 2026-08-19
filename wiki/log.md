@@ -15,6 +15,16 @@ before. If a past entry itself needs correcting, add a new entry that says
 so; never edit or remove the old one in place. See `docs/wiki-schema.md` for
 the full maintenance schema.
 
+## 2026-08-19
+
+* **Correction**: `doc-inventories.md` — the retired-token callout claimed the
+  hygiene scan flags this page on every run. It does not: the scanners enumerate
+  `docs/**.md` + repo-root `CLAUDE.md` only, so moving the rule into `wiki/`
+  silenced the very finding it was engineered to keep alive. Text corrected to
+  describe reality, and the general lesson (ask what tooling stops seeing a doc
+  when it moves) recorded beside the deep-link rule. Filed upstream as
+  gvt-dev#366.
+
 ## 2026-08-18
 
 * **Update**: `doc-inventories.md` — the deep-link rule now requires three
