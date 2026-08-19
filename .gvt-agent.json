@@ -9,6 +9,13 @@
   "paths": {
     "plugin_root": "plugin"
   },
+  "wiki": {
+    "wikiDir": "wiki",
+    "rawDir": "raw"
+  },
+  "hygiene": {
+    "excludePaths": ["raw/"]
+  },
   "bugTracker": {
     "kind": "github",
     "actionQuery": "gh issue list --state open -L 200 --json number,title,labels,body,assignees",

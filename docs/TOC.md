@@ -5,8 +5,13 @@ Index of the docs in this repo. genvid plugin agents and skills consult this to 
 ## Project overview
 
 - [README.md](../README.md) — what the `gvt-construct3` plugin provides, install steps, the agent/skill inventory, and knowledge boundaries.
-- [CLAUDE.md](../CLAUDE.md) — guidance for Claude Code working in this repo: commands, architecture, and the three knowledge boundaries.
+- [CLAUDE.md](../CLAUDE.md) — guidance for Claude Code working in this repo: what the repo is, the artifact/workspace layout, commands, components, and a "before you… → read" pointer table into [`wiki/`](../wiki/index.md), which is where the accumulated maintenance rules now live.
 - [plugin/CONVENTIONS.md](../plugin/CONVENTIONS.md) — the gvt-construct3 plugin's own convention contract (what a *consuming* repo must provide). Distinct from gvt-dev's conventions.
+
+## Knowledge Base
+
+- [docs/wiki-schema.md](wiki-schema.md) — the maintenance schema for this repo's three-tier LLM-wiki (`raw/` captures → `wiki/` pages → this schema), consumed by `/gvt-dev:maintain-wiki`. Also states why `plugin/docs/c3/` is a *second, separately maintained* OKF bundle.
+- [wiki/index.md](../wiki/index.md) — table of contents for the dev-workspace wiki (maintainer procedures and practice notes). The wiki's own pages are indexed there, not here.
 
 ## Process
 
@@ -37,7 +42,9 @@ The canonical reference for how Construct 3 itself behaves — owned by this plu
 
 Each doc swept in [#63](https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/issues/63) carries a **verification provenance** note naming its ground truth (`construct3-sample@v0.4.0`) plus per-section *unverified* callouts; in those docs an unmarked section was confirmed against the sample or corrected to match it. `grep -rn construct3-sample plugin/docs/c3/` lists the whole inventory.
 
-- [plugin/docs/c3/README.md](../plugin/docs/c3/README.md) — overview of the platform reference and why it lives here.
+This set is also an **OKF v0.2 bundle** — `index.md` is the bundle root, and every doc carries `type`/`title`/`description`/`tags` frontmatter (the five swept docs additionally carry a `sources` entry citing the sample tag). It is a *separate* bundle from the dev-workspace [`wiki/`](../wiki/index.md) and is maintained by hand, not by `maintain-wiki ingest` — see [docs/wiki-schema.md](wiki-schema.md).
+
+- [plugin/docs/c3/index.md](../plugin/docs/c3/index.md) — the bundle index and doc table: overview of the platform reference, why it lives here, and what each doc covers. (Renamed from `README.md` when the set became an OKF v0.2 bundle.)
 - [plugin/docs/c3/construct3-guide.md](../plugin/docs/c3/construct3-guide.md) — Construct 3 platform behavior; the *why* behind the platform gotchas.
 - [plugin/docs/c3/event-sheet-architecture.md](../plugin/docs/c3/event-sheet-architecture.md) — event sheet JSON structure, the five event/action types, include composition, trigger ordering, and how behaviors attach (`behaviorTypes[]`) and event-sheet ACEs target a behavior instance.
 - [plugin/docs/c3/layout-reference.md](../plugin/docs/c3/layout-reference.md) — layout/layer JSON, render order, the template/replica system and the two unrelated `"o"` short keys (scene-graph transform-opacity vs. template sync), global layers and the passive `overriden` shadowing mechanism, effect declaration and application, the `subLayers` key and the `subLayers()`/`allSubLayers()` runtime API, UID/SID constraints, and how navigation renders in the extracted DSL (the `navigation.targetPatterns` convention).

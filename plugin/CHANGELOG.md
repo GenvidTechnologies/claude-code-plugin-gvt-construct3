@@ -8,7 +8,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **The agents now read a consuming repo's LLM-wiki.** If the repo's
+  `.gvt-agent.json` declares a `wiki` block (`wikiDir` / `rawDir`, as written by
+  `/gvt-dev:maintain-wiki`), `c3-explorer` and `c3-implementer` look there for
+  project-specific facts in addition to `CLAUDE.md` — reading `<wikiDir>/index.md`
+  first and opening only the page whose `description` matches, and treating
+  `<rawDir>/` as provenance-only. Neither agent ever writes to either directory.
+  `audit-c3-conventions` reports the block at **`info`** severity when absent
+  (a discoverability note; it does not affect the exit code). Entirely optional —
+  `CLAUDE.md` remains the default home for project facts. See
+  `CONVENTIONS.md` → "If your repo keeps an LLM-wiki".
+- **`docs/c3/` is now an OKF v0.2 bundle.** Every doc opens with `type` / `title` /
+  `description` / `tags` frontmatter, and the five docs swept in #63 additionally
+  carry a machine-readable `sources` entry citing `construct3-sample@v0.4.0`. This
+  makes the platform reference routable by the same wiki tooling a consumer uses on
+  its own pages. **The prose content of the docs is unchanged.**
+
 ### Changed
+- **`docs/c3/README.md` is now `docs/c3/index.md`** — the file is unchanged apart
+  from the rename and the fixes below; it remains both the bundle index and the doc
+  table. If you deep-link `docs/c3/README.md` from your own docs, repoint it.
+  Links to the individual docs (`docs/c3/construct3-guide.md#anchor` and siblings)
+  are **unaffected** — no doc was moved, and no heading anchor changed.
+
+### Fixed
+- **Four dead links in the C3 platform reference index.** `docs/c3/README.md`
+  pointed at `../recipe-reference.md`, `../generators.md`, `../cli.md`, and
+  `../mcp-architecture.md` — paths inherited from the founding import out of
+  construct3-chef, which have never existed in this plugin, so all four 404'd for
+  every consumer since the reference first shipped. They now point at
+  `construct3-chef://docs`, the actual home of the tooling reference. If you
+  followed one of those links and concluded the tooling docs were missing, they
+  were simply never here — see `construct3-chef://docs`.
 - **Bumped both pinned MCP servers** — `construct3-chef` `1.0.0` → **`1.1.0`** (#73)
   and `c3-domain-manager` `0.7.0` → **`0.8.0`** (#74). Shipped together: both adopt
   the same upstream generation (`@genvidtech/c3source ^2.0.0`, `@genvidtech/mcp-utils

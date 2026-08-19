@@ -1,6 +1,19 @@
+---
+type: reference
+title: TypeScript Integration
+description: "C3 TypeScript scripting: runtime object access, the block concurrency and async-script model, wait-for-previous-actions, functionIsAsync, return-type call conventions, local-variable scoping, and JSON-plugin iteration."
+tags: [typescript, async, concurrency, scripting, scoping]
+status: stable
+sources:
+  - id: construct3-sample
+    resource: https://github.com/GenvidTechnologies/construct3-sample/tree/v0.4.0
+    title: construct3-sample@v0.4.0 — editor-validated C3 project; the verification ground truth for this doc's JSON shapes (#63)
+    last_modified: 2026-08-04
+---
+
 # C3 TypeScript Integration
 
-> Part of the [C3 platform reference](README.md). Covers the C3 TypeScript scripting and async-execution semantics that construct3-chef's extracted `.ts` output reflects.
+> Part of the [C3 platform reference](index.md). Covers the C3 TypeScript scripting and async-execution semantics that construct3-chef's extracted `.ts` output reflects.
 
 > **Verification provenance.** The on-disk JSON shapes in this doc were swept against the editor-validated [`construct3-sample`](https://github.com/GenvidTechnologies/construct3-sample) (`construct3-sample@v0.4.0`, cross-checked against `v0.1.0`–`v0.3.0`) in [#63](https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/issues/63). Sections carrying an *unverified* callout are claims that sweep could not settle; everything else was confirmed against the sample or corrected to match it. This doc describes the **runtime scripting API**, which an on-disk project evidences only weakly — what the sample does confirm is the file layout: `importsForEvents.ts` registration in `project.c3proj`, and the `scripts/ts-defs/` tree. Facts added after this sweep must be verified the same way.
 

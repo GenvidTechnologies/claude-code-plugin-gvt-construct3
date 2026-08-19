@@ -1,3 +1,11 @@
+---
+type: reference
+title: Addon Package Reference
+description: "The addon package's on-disk layout, companion to ace-reference.md: where properties are declared (editor ROOT plugin.js), the lang/*.json localization structure, and the opaque load-time error a missing language string produces."
+tags: [addons, packaging, localization, plugin-js]
+status: stable
+---
+
 # Addon Package Reference — layout, properties, and `lang/*.json`
 
 How a Construct 3 addon package is laid out on disk: where its **properties**

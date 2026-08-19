@@ -1,6 +1,10 @@
+---
+okf_version: "0.2"
+---
+
 # C3 Platform Reference
 
-Background reference on **Construct 3 itself** — the on-disk JSON formats and runtime semantics that construct3-chef reads, mutates, and extracts. This is distinct from the tool-usage docs one level up (`../recipe-reference.md`, `../generators.md`, `../cli.md`), which document construct3-chef's own commands and recipe format.
+Background reference on **Construct 3 itself** — the on-disk JSON formats and runtime semantics that construct3-chef reads, mutates, and extracts. This is distinct from the **tooling** reference — construct3-chef's own commands, recipe format, and generators — which lives in `construct3-chef://docs`, versioned with the tool, and is deliberately not duplicated here.
 
 These notes were adapted from a production C3 project; project-specific (game) content has been removed, leaving the platform mechanics that apply to any Construct 3 project. Example object, layer, and function names in code samples are illustrative only.
 
@@ -18,4 +22,4 @@ One doc in this set — `toolchain-config.md` — covers a cross-tool concern (h
 
 ## Why this lives here
 
-construct3-chef operates directly on C3 project JSON. Understanding *why* the tool behaves as it does — why SIDs matter, why string-expression parameters need escaped quotes, why script actions race within a block — requires knowing the platform. These docs are that knowledge base; the recipe gotchas and bugs catalogued in [recipe-reference.md](../recipe-reference.md) are downstream consequences of the mechanics described here. For the tool's own architecture and design rationale, see [mcp-architecture.md](../mcp-architecture.md).
+construct3-chef operates directly on C3 project JSON. Understanding *why* the tool behaves as it does — why SIDs matter, why string-expression parameters need escaped quotes, why script actions race within a block — requires knowing the platform. These docs are that knowledge base; the recipe gotchas and bugs catalogued in `construct3-chef://docs` are downstream consequences of the mechanics described here. For the tool's own architecture and design rationale, see that same tooling reference.

@@ -19,7 +19,7 @@ artifacts it keeps honest are `plugin/agents/c3-explorer.md` and
   (e.g. hand-picking SIDs because it doesn't know `generate-sids` exists).
 
 Keep the **read / mutate split** correct when reconciling, and stay within the
-[knowledge boundaries](../CLAUDE.md) — document tool *names and one-line
+[knowledge boundaries](../wiki/knowledge-boundaries.md) — document tool *names and one-line
 purposes*, never project-specific or tooling-schema content (that belongs to the
 consuming repo or each server's own docs).
 

@@ -1,3 +1,16 @@
+---
+type: reference
+title: Scripting API Reference
+description: Construct 3 scripting API quick reference — IRuntime, object and layout interfaces, system expressions and iteration conditions, with links to the official manual.
+tags: [scripting, iruntime, expressions, api]
+status: stable
+sources:
+  - id: construct3-sample
+    resource: https://github.com/GenvidTechnologies/construct3-sample/tree/v0.4.0
+    title: construct3-sample@v0.4.0 — editor-validated C3 project; the verification ground truth for this doc's JSON shapes (#63)
+    last_modified: 2026-08-04
+---
+
 # Construct 3 Scripting API — Quick Reference
 
 Online docs: <https://www.construct.net/en/make-games/manuals/construct-3/scripting/scripting-reference>
