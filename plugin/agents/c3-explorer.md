@@ -1,6 +1,13 @@
 ---
 name: c3-explorer
 description: Read-only C3 exploration — DSL, layouts, domain index, search. Use for cheap reconnaissance before analysis or when investigating C3 game logic.
+metadata:
+  expects:
+    config:
+      - key: wiki.wikiDir
+        in: .gvt-agent.json
+        required: false
+        reason: "Optional. If the consuming repo maintains an LLM-wiki (/gvt-dev:maintain-wiki), project-specific C3 facts may live there instead of CLAUDE.md; both agents read it for project context. Absent is fine — CLAUDE.md remains the default home."
 tools: Read, Grep, Glob, Bash, mcp__construct3-chef__read-dsl, mcp__construct3-chef__read-dsl-index, mcp__construct3-chef__read-event-sids, mcp__construct3-chef__read-scripts, mcp__construct3-chef__read-layout, mcp__construct3-chef__read-template-scope, mcp__construct3-chef__read-sid-registry, mcp__construct3-chef__read-addon, mcp__construct3-chef__validate-addons, mcp__construct3-chef__list-addons, mcp__construct3-chef__diff-addon-aces, mcp__construct3-chef__scan-addon-usage, mcp__construct3-chef__preview-addon-metadata-sync, mcp__construct3-chef__search, mcp__construct3-chef__resolve-anchor, mcp__construct3-chef__list-event-sheets, mcp__construct3-chef__list-layouts, mcp__construct3-chef__list-global-layers, mcp__construct3-chef__list-include-tree, mcp__construct3-chef__navigation-graph, mcp__construct3-chef__search-docs, mcp__construct3-chef__list-ops, mcp__construct3-chef__generate-sids, mcp__construct3-chef__validate-project, mcp__construct3-chef__get-state, mcp__c3-domain-manager__read-domain-index, mcp__c3-domain-manager__read-domain-config, mcp__c3-domain-manager__list-uncategorized, mcp__c3-domain-manager__list-stale-overrides, mcp__c3-domain-manager__glossary-check, mcp__c3-domain-manager__validate-boundaries, mcp__c3-domain-manager__validate-editor, mcp__c3-domain-manager__domain-health, mcp__c3-domain-manager__context-map, mcp__c3-domain-manager__addon-inventory, mcp__c3-domain-manager__get-state
 model: haiku
 ---
@@ -94,6 +101,20 @@ Never conclude a swap is viable on behavioral grounds alone.
 ## C3 platform reference
 
 When a finding hinges on Construct 3 platform behavior (variable scoping, async/signal model, layout layers, expression syntax), the canonical reference is `${CLAUDE_PLUGIN_ROOT}/docs/c3/*` — especially `construct3-guide.md`. Tooling/recipe reference lives in `construct3-chef://docs`.
+
+These docs are an **OKF v0.2 bundle**: `index.md` is the bundle index and doc table, and each doc opens with YAML frontmatter (`type`, `title`, `description`, `tags`). Read `index.md` first to pick the right doc instead of grepping the whole tree.
+
+## Project-specific facts (and the consuming repo's wiki)
+
+Project-specific facts — named layouts, file paths, project gotchas — are **not** in the plugin. Read them from the consuming repo.
+
+1. **`CLAUDE.md`** at the repo root is the default home; read it first.
+2. **If the repo declares a wiki**, project knowledge may live there instead. Check `.gvt-agent.json` for a `wiki` block:
+   - `wiki.wikiDir` (commonly `wiki/`) — the LLM-wiki bundle. Read its `index.md` **first** and open only the page(s) whose `description` matches the question; the index exists so you don't have to read every page.
+   - `wiki.rawDir` (commonly `raw/`) — immutable source captures. Consult these only to check a page's provenance; they are unsynthesized and often long, so never grep them as a first move.
+3. If neither names the fact you need, say so — **don't infer a project convention from the C3 files themselves** and report it as established.
+
+You are read-only here as everywhere: never write to `wikiDir` or `rawDir`. Adding to a wiki is `/gvt-dev:maintain-wiki ingest`'s job, not yours.
 
 ## Output
 

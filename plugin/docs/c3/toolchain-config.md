@@ -1,6 +1,14 @@
+---
+type: reference
+title: Toolchain Configuration
+description: "How the C3 toolchain (construct3-chef + c3-domain-manager) is wired into a repo: config-file locations, the extracted/ coupling, and the cwd-resolution model. A pointer doc — field-level reference stays in each tool's own docs."
+tags: [toolchain, construct3-chef, c3-domain-manager, config, extracted]
+status: stable
+---
+
 # C3 Toolchain Configuration
 
-> Part of the [C3 platform reference](README.md). Covers the cross-tool wiring between construct3-chef and c3-domain-manager — config-file locations, the `extracted/` coupling, and the cwd-resolution model. Field-level reference for each tool stays in that tool's own docs.
+> Part of the [C3 platform reference](index.md). Covers the cross-tool wiring between construct3-chef and c3-domain-manager — config-file locations, the `extracted/` coupling, and the cwd-resolution model. Field-level reference for each tool stays in that tool's own docs.
 
 ## The Two Config Files
 

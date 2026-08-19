@@ -1,6 +1,19 @@
+---
+type: reference
+title: Layout Reference
+description: Layout/layer JSON, render order, the template/replica system and the two unrelated "o" short keys, global layers and the passive overriden shadowing mechanism, effect declaration and application, subLayers, UID/SID constraints, and how navigation renders in the extracted DSL.
+tags: [layouts, layers, templates, effects, sublayers, navigation]
+status: stable
+sources:
+  - id: construct3-sample
+    resource: https://github.com/GenvidTechnologies/construct3-sample/tree/v0.4.0
+    title: construct3-sample@v0.4.0 — editor-validated C3 project; the verification ground truth for this doc's JSON shapes (#63)
+    last_modified: 2026-08-04
+---
+
 # C3 Layout Reference
 
-> Part of the [C3 platform reference](README.md). Describes how Construct 3 layouts are structured on disk — the JSON that construct3-chef reads, mutates, and scaffolds.
+> Part of the [C3 platform reference](index.md). Describes how Construct 3 layouts are structured on disk — the JSON that construct3-chef reads, mutates, and scaffolds.
 
 > **Verification provenance.** The on-disk JSON shapes in this doc were swept against the editor-validated [`construct3-sample`](https://github.com/GenvidTechnologies/construct3-sample) (`construct3-sample@v0.4.0`, cross-checked against `v0.1.0`–`v0.3.0`) in [#63](https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/issues/63). Sections carrying an *unverified* callout are claims that sweep could not settle; everything else was confirmed against the sample or corrected to match it. Facts added after this sweep must be verified the same way.
 

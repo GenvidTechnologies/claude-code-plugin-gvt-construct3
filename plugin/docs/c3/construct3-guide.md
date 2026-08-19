@@ -1,3 +1,16 @@
+---
+type: reference
+title: Construct 3 Platform Guide
+description: Construct 3 platform behavior — project registration, SIDs, event and action shapes, variable scoping, and the runtime gotchas that are the why behind the implementer's cheat-sheet.
+tags: [c3-platform, event-sheets, runtime, gotchas, project-json]
+status: stable
+sources:
+  - id: construct3-sample
+    resource: https://github.com/GenvidTechnologies/construct3-sample/tree/v0.4.0
+    title: construct3-sample@v0.4.0 — editor-validated C3 project; the verification ground truth for this doc's JSON shapes (#63)
+    last_modified: 2026-08-04
+---
+
 # Construct 3 Guide
 
 Comprehensive reference for Construct 3 platform behavior: event sheets, layouts, runtime scoping, and TypeScript integration. This is vendor-neutral reference material for any Construct 3 project. Sibling deep-dive documents live alongside this file in `docs/c3/`. For tooling and recipe authoring (the construct3-chef toolchain), see `construct3-chef://docs`.

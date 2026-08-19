@@ -62,7 +62,8 @@ role — the `needsInfoLabel` in the `bugTracker` block must be set to `question
 
 Several issues here belong to the authoritative tool (`construct3-chef`) rather
 than the plugin — content-validation and addon tooling in particular (see the
-validation boundary in `CLAUDE.md`). When deferring:
+[validation boundary](../wiki/the-audit-contract.md) and
+[Deferring an issue upstream](../wiki/deferring-issues-upstream.md)). When deferring:
 
 1. File the target-repo issue **in the same session**, and comment the link back
    on the origin issue so the linkage is bidirectional. An issue that merely

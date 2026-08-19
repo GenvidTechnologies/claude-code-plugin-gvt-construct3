@@ -1,3 +1,11 @@
+---
+type: reference
+title: ACE Metadata Reference
+description: "The ACE (action/condition/expression) metadata model: the aces.json structure for custom addons — category-keyed, params by id, expressions by expressionName — and why built-in plugins have no aces.json."
+tags: [aces, addons, metadata, aces-json]
+status: stable
+---
+
 # ACE Reference (`aces.json`) — plugin/behavior ACE metadata
 
 How Construct 3 plugins and behaviors declare their **ACEs** — **A**ctions,

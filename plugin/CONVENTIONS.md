@@ -63,6 +63,21 @@ The genericized agents read project-specific conventions from the **consuming re
 - **Cross-domain / two-commit rules** — when a C3 change requires editing TypeScript modules, the agents hand back to the orchestrator; how the project splits those commits is read from its `CLAUDE.md`.
 - **Project-specific C3 gotchas & provenance** — keep these in a project-owned doc (e.g. `docs/c3-project-gotchas.md`); the generic platform rules live in this plugin's `docs/c3/`.
 
+### If your repo keeps an LLM-wiki
+
+A consuming repo that maintains a wiki via `/gvt-dev:maintain-wiki` can host its project-specific C3 knowledge there instead of (or alongside) `CLAUDE.md`. Both agents support this — no configuration beyond the block you already declare:
+
+```jsonc
+// .gvt-agent.json
+"wiki": { "wikiDir": "wiki", "rawDir": "raw" }
+```
+
+When that block is present, the agents read `<wikiDir>/index.md` first and open only the page whose frontmatter `description` matches the question, rather than grepping the tree. `<rawDir>/` is treated as **provenance only** — consulted to check where a claim came from, never as a first-line source. **Neither agent ever writes to either directory**; authoring wiki content is `maintain-wiki ingest`'s job.
+
+The block is entirely optional. `audit-c3-conventions` reports it at **`info`** severity when absent — a discoverability note, never an error, and it does not affect the exit code. `CLAUDE.md` remains the default home for project facts.
+
+**This plugin's own `docs/c3/` is an OKF v0.2 bundle too** — `docs/c3/index.md` is its bundle index and doc table, and every doc carries `type`/`title`/`description`/`tags` frontmatter. So a wiki-aware consumer can route over the platform reference the same way it routes over its own pages.
+
 ## What the plugin provides
 
 **Agents** (dispatched as `subagent_type: "gvt-construct3:<name>"`):
