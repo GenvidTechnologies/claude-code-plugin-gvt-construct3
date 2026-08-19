@@ -70,15 +70,11 @@ Only `script` and `icon` are populated in the sample; `sound`, `music`, `video`,
 
 **Not every directory in a project is registered.** `tilemapBrushes/` and `addons/` exist on disk in the sample with no `project.c3proj` entry of any kind — bundled addons are referenced through `usedAddons` by addon id, not by path. Treat the rule as "tracked *kinds* must be registered", not "every directory must be".
 
-**Never edit `project.c3proj` by hand.** Run your project's c3proj sync command after adding or removing files (construct3-chef provides `sync-project`) — it handles SID generation, MIME types, and folder structure automatically. A dry-run validate command checks for drift without modifying.
+**Never edit `project.c3proj` by hand.** Run your project's c3proj sync command after adding or removing files — it handles SID generation, MIME types, and folder structure automatically. A dry-run validate command checks for drift without modifying. For the commands construct3-chef provides, see `construct3-chef://docs`.
 
 Script entries require unique 15-digit `sid` values. The sync tool generates these automatically and preserves existing SIDs for unchanged files.
 
-**SID range constraint — never hand-pick SIDs.** Every `sid` in any C3 JSON **must fit in `Number.MAX_SAFE_INTEGER` (2^53 − 1 ≈ 9.007 × 10¹⁵)**. SIDs above that lose trailing digits when JS parses them — the file value and in-memory value diverge, and C3 refuses to open the layout with `Error: invalid SID`. Existing project SIDs are 15-digit integers in `[1e14, 1e15)`. Use the **SID generator provided by construct3-chef (`generateUniqueSid()` from `c3/sidUtils.js`)** rather than picking numeric SIDs by hand. The utility:
-
-- Returns values in `[1e14, 1e15)` — guaranteed safe-int.
-- Reads a project-wide SID registry (init via `initSidContext(path)`) so collisions are deduped project-wide.
-- Is already used internally by the eventSheet, instVar, and layout mutators. Manual scaffolding paths may not auto-plug into it — call it explicitly.
+**SID range constraint — never hand-pick SIDs.** Every `sid` in any C3 JSON **must fit in `Number.MAX_SAFE_INTEGER` (2^53 − 1 ≈ 9.007 × 10¹⁵)**. SIDs above that lose trailing digits when JS parses them — the file value and in-memory value diverge, and C3 refuses to open the layout with `Error: invalid SID`. Existing project SIDs are 15-digit integers in `[1e14, 1e15)`. **Mint SIDs with your toolchain's generator rather than picking them by hand** — it draws from the safe range and dedupes against the SIDs already in the project. construct3-chef provides one; its docs own the entry point and its collision-avoidance guarantees, so see `construct3-chef://docs`.
 
 **Which JSON nodes carry a `sid`.** Verified against `construct3-sample@v0.4.0`: file roots (layout, eventSheet, objectType), `layers` and nested `subLayers` at any depth, layer `instances` and `nonworld-instances`, event nodes (`events`, their `children`, and each node's `conditions` and `actions`), `behaviorTypes`, `instanceVariables` declarations, animation folder `items`, and `project.c3proj`'s `rootFileFolders > {script,icon} > items`.
 
