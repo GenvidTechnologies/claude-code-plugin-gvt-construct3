@@ -33,6 +33,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are **unaffected** — no doc was moved, and no heading anchor changed.
 
 ### Fixed
+- **The C3 platform reference told you to call two construct3-chef functions that
+  no longer exist.** `docs/c3/construct3-guide.md` directed readers to
+  `generateUniqueSid()` from `c3/sidUtils.js`, and to initialise a SID registry via
+  `initSidContext(path)`. Both were **removed from chef** when the SID singleton was
+  retired; the current entry point is `mintUniqueSid(usedSids)` in
+  `src/c3/sidUtils.ts`, and the cited `.js` path was wrong as well. **If you wrote
+  scaffolding against either name, it never resolved** — re-check any SID-minting
+  code you based on that passage, and see `construct3-chef://docs` for the current
+  API. The platform half of the passage was correct and is unchanged: SIDs must fit
+  `Number.MAX_SAFE_INTEGER`, C3 refuses the layout with `Error: invalid SID`
+  otherwise, and existing project SIDs sit in `[1e14, 1e15)`.
+- **construct3-chef tooling facts removed from the C3 platform reference** (#69).
+  `docs/c3` no longer restates chef's CLI commands (`generate`, `sync-project`,
+  `scaffold-layout`, `navigation-graph`) or its MCP tools (`read-event-sids`,
+  `read-dsl-index`, `list-global-layers`); each now links to
+  `construct3-chef://docs`, which owns them. Nothing about C3 itself was removed —
+  the global-layer `"global"` / `"overriden"` semantics, the template/replica rules
+  and the SID range constraint all stay. Per ADR 0010, these docs now refer to the
+  toolchain by *capability* and never by symbol name, so this class of rot cannot
+  recur. The `global-layers.txt` report format and the `list-global-layers` tool
+  were undocumented on chef's side too, and are filed as
+  [chef#196](https://github.com/GenvidTechnologies/construct3-chef/issues/196).
 - **Four dead links in the C3 platform reference index.** `docs/c3/README.md`
   pointed at `../recipe-reference.md`, `../generators.md`, `../cli.md`, and
   `../mcp-architecture.md` — paths inherited from the founding import out of
