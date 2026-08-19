@@ -145,7 +145,7 @@ Two traps here. A group's label key is **`title`**, not `name`. And `initialValu
 
 Note the field name: nested events live under `children`, not `events`. Only the top-level event sheet object uses `events`. Hand-rolled JSON walkers that recurse on `events` will silently visit nothing past the root; recurse on `children`. (In the sample, `children` is demonstrated on a `group`; a `block` there carries none, so the key is optional and appears only where the event actually nests.)
 
-**Looking up SIDs in source JSON.** When you need the SID of a function or block from a `.json` source file (for a recipe's `in: "sid:X"`), don't parse the JSON yourself. Use `mcp__construct3-chef__read-event-sids` with a `grep` regex on the description — it returns a JSON-path-to-SID map for the matching events. Use this when SIDs from the latest mutation aren't yet in the extracted `.dsl.idx.txt`. Otherwise, prefer `read-dsl-index` for the §-prefixed SID column.
+**Looking up SIDs in source JSON.** Don't hand-parse event-sheet JSON to recover a node's SID — construct3-chef's read surface exposes them directly, and its docs own which tool to reach for. See `construct3-chef://docs`.
 
 **Action types** -- actions in the `actions` array appear in five shapes:
 
