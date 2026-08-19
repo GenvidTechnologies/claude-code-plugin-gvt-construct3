@@ -108,8 +108,6 @@ twpx, twpy, twpz, twpw, twph, twpa, twpd, dwp, ssm, d, sz
 
 Entries are `[name, boolean]` pairs, e.g. `["o", true]`. This namespace is not the `flags` namespace above and the two must not be read as the same set.
 
-Layout summaries (`.layout.txt`) show template definitions with full hierarchy; replicas (`mode: "replica"`) skip the hierarchy. Template definitions show all child instances; replicas show only the top-level instance.
-
 ## Global Layers and Overrides
 
 ### What global layers are
@@ -158,16 +156,6 @@ All consuming layouts that inherit the global layer then pick up the effect auto
 ### Initialization trap
 
 Global layers persist their visibility and interactivity state across layout transitions. Every layout that uses a global layer must explicitly reset it in `on-start-of-layout` — typically `set-layer-visible(invisible)` and/or `set-layer-interactive(false)` — then open it only when needed. Forgetting the reset causes the layer to appear with stale data when navigating back to a layout.
-
-### Global-layer tooling
-
-The `extracted/global-layers.txt` report (6th generator) lists every global layer with its originating (source) layout, the layouts that shadow it, and its instance count — counted **deep**, summing the source layer's own `instances` and those of its sublayers at any depth. The `list-global-layers` MCP tool returns the same report on demand. A layer is treated as the source where `"global": true` appears with `"overriden": 0`; shadowing layouts carry the same-named layer with `"overriden": 1` and `"global": false`, and that layer **may hold instances of its own**, which are ignored at runtime and must not be counted. Format:
-
-```
-global layer: source="Second Layout", overridingLayouts=[Main Layout], instanceCount=2
-```
-
-(Closed the former tooling gap, issue [#20](https://github.com/genvid-holdings/construct3-chef/issues/20).)
 
 ## Effects
 
@@ -284,13 +272,16 @@ An instance whose name ends in `*Layout` reads as "lives in that one layout," bu
 
 Creating a new layout requires several coordinated steps:
 
-1. **Create the layout JSON** in `layouts/`. Layouts contain layer definitions, instance placements with unique UIDs and SIDs, and scene-graph parent-child relationships. The C3 editor is strongly recommended for this step — manual JSON editing is fragile due to UID/SID uniqueness requirements. (construct3-chef's `scaffold-layout` clones an existing layout with freshly remapped UIDs/SIDs to make this safe.)
+1. **Create the layout JSON** in `layouts/`. Layouts contain layer definitions, instance placements with unique UIDs and SIDs, and scene-graph parent-child relationships. The C3 editor is strongly recommended for this step — manual JSON editing is fragile due to UID/SID uniqueness requirements. A scaffolding tool that clones an existing layout with freshly remapped UIDs/SIDs makes it safe to do outside the editor.
 
 2. **Create the event sheet** in `eventSheets/` — the JSON file that contains the layout's logic. Link it from the layout JSON via the `"eventSheet"` field (just the name, not the path).
 
-3. **Sync `project.c3proj`** to register the new files (`construct3-chef sync-project`). Never edit `project.c3proj` by hand.
+3. **Sync `project.c3proj`** to register the new files. Never edit `project.c3proj` by hand.
 
-4. **Regenerate extracted files** (`construct3-chef generate`).
+4. **Regenerate the extracted read surface** so it reflects the new layout.
+
+> Steps 1, 3 and 4 are toolchain operations. For construct3-chef's commands and their
+> options, see `construct3-chef://docs`.
 
 **Key constraints:**
 
@@ -302,10 +293,8 @@ Creating a new layout requires several coordinated steps:
 
 C3 layouts navigate using the System `GoToLayout` action. Two common patterns:
 
-- **Full-screen navigation** (separate layouts): the previous layout name is stored in a variable before navigating, and the back button calls `GoToLayout` with the stored name. `construct3-chef navigation-graph` extracts these `GoToLayout` calls into a navigation graph.
+- **Full-screen navigation** (separate layouts): the previous layout name is stored in a variable before navigating, and the back button calls `GoToLayout` with the stored name.
 - **Embedded layer modals**: a popup lives on its own layer within the current layout and is toggled with `set-layer-visible` / `set-layer-interactive` rather than a layout change.
-
-construct3-chef's `navigation-graph` subcommand surfaces the `GoToLayout` edges between event sheets, which is the tool-visible view of a project's navigation structure.
 
 ### How navigation renders in the extracted DSL
 

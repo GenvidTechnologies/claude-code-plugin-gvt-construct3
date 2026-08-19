@@ -17,6 +17,32 @@ the full maintenance schema.
 
 ## 2026-08-19
 
+* **Update**: `knowledge-boundaries.md` — new section "Name chef's *capability*,
+  never chef's *symbol*", recording [ADR 0010](../docs/decisions/0010-linking-out-generically-instead-of-naming-chef-symbols.md).
+  The table said which repo owns a fact but never how a `docs/c3` doc should
+  *refer* to the toolchain, and the founding import answered that by naming chef's
+  internals. Driven by #69, which found `construct3-guide.md` instructing agents to
+  call `generateUniqueSid()` and `initSidContext(path)` — both removed from chef
+  when the SID singleton was retired. Records that naming the *correct* current
+  symbol was considered and rejected, since the property that matters is whether a
+  name can go wrong undetected, not whether it is right today.
+
+* **Update**: `deferring-issues-upstream.md` — new opening section "First, check
+  whether chef's docs already cover it". The page was written entirely around the
+  under-filing failure (#32); #69 hit the opposite one, reasoning from "no chef
+  *issue* covers this" to "chef's *docs* don't" — two different questions, and
+  triage answers only the first. Eight of nine sites turned out to be already
+  documented by chef; one needed filing (chef#196). Default is delete-and-link;
+  filing is the exception.
+
+* **Update**: `verifying-against-construct3-sample.md` — a **fifth trap**: a
+  *toolchain* claim has no ground truth in this repo at all, and ADR 0008's
+  marker-absence convention will imply it was checked anyway. The
+  `generateUniqueSid` passage survived both #63's sweep and #71's follow-up, and
+  both were right to pass it — they check C3 JSON shapes, and a chef symbol is not
+  one. Heading renamed four → five traps, with its three referrers repointed in the
+  same commit (`CLAUDE.md`, `wiki/index.md`, the page's own `description`).
+
 * **Correction**: `doc-inventories.md` — the retired-token callout claimed the
   hygiene scan flags this page on every run. It does not: the scanners enumerate
   `docs/**.md` + repo-root `CLAUDE.md` only, so moving the rule into `wiki/`

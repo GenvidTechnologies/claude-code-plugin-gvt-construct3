@@ -1,7 +1,7 @@
 ---
 type: practice-note
 title: Deferring an issue upstream
-description: How an issue that belongs to construct3-chef gets relocated — file it there in the same session, cross-link both ways, and label the origin-side umbrella blocked-upstream so triage stops ranking it.
+description: How an issue that belongs to construct3-chef gets relocated — check chef's docs for existing coverage first, then file it there in the same session, cross-link both ways, and label the origin-side umbrella blocked-upstream so triage stops ranking it.
 tags: [issues, triage, construct3-chef, blocked-upstream, cross-repo]
 status: stable
 stale_after: 2027-08-18
@@ -22,6 +22,39 @@ Several issues filed here belong to `construct3-chef` — the authoritative tool
 for content-validation and addon tooling. See
 [the knowledge boundaries](/knowledge-boundaries.md) for *why* the split falls
 where it does; this page is about the mechanics of moving one.[^claude-md]
+
+## First, check whether chef's docs already cover it
+
+Everything below is about the cost of **not filing** when you should. The
+opposite error is just as real, and #69 hit it.
+
+**"No chef *issue* covers this fact" is not evidence that chef's *docs* don't.**
+Those are two different questions, and triage only ever answers the first. #69's
+proposed approach reasoned straight from one to the other:
+
+> Triage found **no existing chef issue** covering any of the candidate facts …
+> so expect to file rather than link.
+
+That was backwards. Of the nine sites in that issue, **eight were already
+documented by chef** — `docs/cli.md` carries full sections for `generate`,
+`sync-project`, `scaffold-layout` and `navigation-graph`, plus the
+`navigation.targetPatterns` config; `read-event-sids` / `read-dsl-index` are
+covered across `generators.md` and `recipe-reference.md`. Exactly **one** needed
+filing (chef#196 — the `list-global-layers` MCP tool, which is registered in
+chef's server but appears in none of its docs, plus the `global-layers.txt`
+report format and its deep-count rule).
+
+So before concluding a fact needs an upstream home, **grab chef's tree and grep
+its `docs/`.** The default outcome is delete-and-link; filing is the exception.
+
+```bash
+gh api repos/GenvidTechnologies/construct3-chef/tarball/main > chef.tgz && tar xzf chef.tgz
+grep -rn '<the fact>' */docs/
+```
+
+Getting this wrong in the over-filing direction costs an upstream maintainer a
+no-op issue, and — more expensively — sizes a plan for cross-repo work when the
+actual change was a local one-line link-out.
 
 ## File it there *and* cross-link both ways
 
