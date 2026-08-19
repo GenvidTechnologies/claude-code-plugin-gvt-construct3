@@ -1,7 +1,7 @@
 ---
 type: practice-note
 title: Verifying docs/c3 against construct3-sample
-description: How a C3 platform fact in plugin/docs/c3/ is proved against the editor-validated construct3-sample project, how its provenance is cited, and the four traps that have each shipped a wrong doc.
+description: How a C3 platform fact in plugin/docs/c3/ is proved against the editor-validated construct3-sample project, how its provenance is cited, and the five traps that have each shipped a wrong doc.
 tags: [docs-c3, verification, construct3-sample, provenance, adr-0008]
 status: stable
 stale_after: 2027-08-18
@@ -78,7 +78,7 @@ criterion naming a governing rule is a claim *about that rule*, and this repo's
 "verify against the artifact it modifies" habit points at the doc being edited,
 not at the rule being invoked.
 
-## The four traps
+## The five traps
 
 1. **A key that is present but empty proves the key is valid on that host, not
    what its populated shape is.** `"effectTypes": []` on layout roots confirms
@@ -113,6 +113,28 @@ not at the rule being invoked.
 4. **A correction is not inventory-neutral.** A `docs/c3` content correction
    earns a `plugin/CHANGELOG.md` entry — see
    [Doc inventories and the changelog](/doc-inventories.md).
+
+5. **A *toolchain* claim has no ground truth here at all — and the provenance
+   note will imply it was checked anyway.** The four traps above are all about
+   reading the sample correctly. This one is about a claim the sample can never
+   speak to: `construct3-sample` cannot verify `generateUniqueSid()`, because
+   that is not a C3 fact. No editor-validated project can observe another
+   repo's exported symbols.
+
+   So `construct3-guide.md`'s SID-generator passage — naming two chef functions
+   that had already been **removed** — sat untouched through #63's verification
+   sweep *and* #71's follow-up, and **both passed clean and were right to**:
+   they were checking C3 JSON shapes, which is their whole job.
+
+   The sharp part is the interaction with ADR 0008. The per-doc note makes
+   marker-**absence** meaningful — unmarked ⇒ verified — so an unmarked
+   chef-symbol claim reads as *checked* when it was never in scope to be
+   checked. The trap is not merely "the sample is silent here"; it is "the
+   doc's own provenance convention will assert otherwise."
+
+   The remedy is structural rather than procedural: don't name the symbol, and
+   the unverifiable claim stops existing. See
+   [Name chef's capability, never chef's symbol](/knowledge-boundaries.md).
 
 [^claude-md]: CLAUDE.md, "Verify every `docs/c3` JSON shape against
 `GenvidTechnologies/construct3-sample`".
