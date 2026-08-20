@@ -40,13 +40,20 @@ Comprehensive reference for Construct 3 platform behavior: event sheets, layouts
   - [`pick-children` Scoping vs Gating](#pick-children-scoping-vs-gating)
   - [Unpicked Custom Actions Broadcast to All Instances](#unpicked-custom-actions-broadcast-to-all-instances)
 - [6. Layout Architecture](#6-layout-architecture)
-- [7. C3 Conventions](#7-c3-conventions)
-  - [Event Sheets](#event-sheets)
+- [7. Platform Gotchas and Field Knowledge](#7-platform-gotchas-and-field-knowledge)
+  - [Declaration Order: Nodes Process in Array Order](#declaration-order-nodes-process-in-array-order)
+  - [Blocking Input: Layer Interactivity vs. Group Deactivation](#blocking-input-layer-interactivity-vs-group-deactivation)
   - [Instance Variables for Cross-Block State](#instance-variables-for-cross-block-state)
   - [Token-Based String Iteration](#token-based-string-iteration)
-  - [Addon Plugins](#addon-plugins)
   - [Animation Name Is Unreliable as an Identity](#animation-name-is-unreliable-as-an-identity)
+  - [Testing Whether an Object Exists on the Current Layout](#testing-whether-an-object-exists-on-the-current-layout)
   - [Common C3 Editor Errors](#common-c3-editor-errors)
+  - [Sheet-Root Variables Are Globals](#sheet-root-variables-are-globals)
+  - [Function/ACE Calls Hoist; Handler Blocks Don't](#functionace-calls-hoist-handler-blocks-dont)
+  - [JSON Plugin `set-json` Parses Async — Signal from `on-parse-success`](#json-plugin-set-json-parses-async--signal-from-on-parse-success)
+  - [Deferred Triggers Read Variables at Fire Time](#deferred-triggers-read-variables-at-fire-time)
+  - [HTML Controls Don't Respect Layer Visibility](#html-controls-dont-respect-layer-visibility)
+  - [UI Layout Surface vs. the Project Viewport](#ui-layout-surface-vs-the-project-viewport)
 - [Related Documentation](#related-documentation)
 
 ---
@@ -426,6 +433,8 @@ do: call refreshOtherUI()
 
 On layouts where the parent type (e.g., `ParentList`) has zero instances, the narrow block is harmlessly skipped while all other actions still execute. The wide block would skip everything.
 
+`pick-children` is also required in for-each loops: when iterating over parent objects with "For each" and acting on child objects, every child type referenced in actions needs a corresponding `pick-children` condition — without it, actions affect all instances of that type rather than just the child of the current parent.
+
 ### Sprite `set-animation-frame` Accepts Number or String
 
 The C3 Sprite plugin's `set-animation-frame` ACE accepts either a **number** (0-based frame index) or a **string** (frame tag name), dispatching by `typeof` on the parameter expression at runtime. Expressions that may return either form — for example a data lookup such as `MyData.Get("some.asset.path")` — flow through to the ACE without any coercion or disambiguation logic.
@@ -492,28 +501,11 @@ When triaging a `_CreateChildInstancesFromData` / `CreateInstanceFromData` crash
 
 ---
 
-## 7. C3 Conventions
+## 7. Platform Gotchas and Field Knowledge
 
-### Event Sheets
+These are runtime and editor behaviours observed in the field, not conventions read off any one project's files. Each entry is stated with the platform behaviour that forces it, not as house style. Project-specific conventions belong in a consuming repo's own `CLAUDE.md`, not here.
 
-- **Objects sharing instance variables** should be placed under a Family for shared behaviors and cleaner event sheet logic
-- **New object logic** should be created within a dedicated event sheet
-- Place event sheets in folders based on the object's purpose or type
-- Import new event sheets into the appropriate parent/root event sheet for the relevant layouts
-- **Reduce usage of Global variables** — prioritize Local variables
-- Use **Every seconds** instead of **Every ticks** where possible for better performance
-- **`pick-children` is required in for-each loops** — when iterating over parent objects with "For each" and acting on child objects, every child type referenced in actions needs a corresponding `pick-children` condition. Without it, actions affect all instances of that type rather than just the child of the current parent
-
-#### Event Sheet Organization
-
-Follow this canonical structure for event sheet `events` arrays:
-
-1. **Includes** — all `include` directives at the very top
-2. **Root-level variables** — global/static/const variables immediately after includes
-3. **Main group** — a single top-level group wrapping all event logic, containing:
-   - Local variables (declared before any blocks that reference them)
-   - Subgroups and function-blocks
-   - Event blocks
+### Declaration Order: Nodes Process in Array Order
 
 **Never reference a variable before its declaration in the JSON tree**, even if it's `static` or `const`. While C3 scoping makes variables visible throughout their group, the runtime processes nodes in array order — referencing a variable before its declaration position can produce `NaN` or `undefined` values at runtime (e.g., NaN coordinates when positioning objects). See [Variable and Function Accessibility](#variable-and-function-accessibility) for the full scoping rules.
 
@@ -547,8 +539,6 @@ obj.instVars.pendingKeys = pending.join(",");
 
 **Why not JSON properties**: Storing metadata like `__pendingKeys` in a JSON instance mixes control state with game data, making it hard to reason about what the object "really" contains. InstVars keep metadata separate from the JSON payload.
 
-**InstVars on global singletons vs static locals**: When multiple event sheets share the same state (e.g., a count or a current-selection used for display), prefer instVars on a global data object (e.g., `MyStateJSON.itemCount`) over duplicated `static` variables in each event sheet. Benefits: single source of truth, accessible via expressions anywhere (`MyStateJSON.itemCount`), and naturally scoped to the data they describe. Use custom ACE actions on the data object to encapsulate shared logic that operates on these instVars.
-
 ### Token-Based String Iteration
 
 For iterating comma-separated lists stored in string variables or instVars, use `tokencount` and `tokenat`:
@@ -571,30 +561,13 @@ block
 
 This pattern is common wherever comma-separated lists are stored in C3 string variables or instVars (e.g. position lists, character lists, coordinate strings, level-data fields).
 
-### Addon Plugins
-
-C3 addon plugins are stored as `.c3addon` files (zip archives) in `addons/plugin/` and `addons/effect/`. It is common to also extract each addon into a same-name subfolder (e.g., `addons/plugin/MyPlugin/`) for direct source inspection, while `.gitignore` tracks only the `.c3addon` files and ignores the extracted folders.
-
-To inspect a plugin's API surface, read its extracted files directly:
-
-- `aces.json` — action, condition, and expression definitions with parameter schemas
-- `c3runtime/` — runtime implementation (`actions.js`, `domSide.js`, `expressions.js`, etc.)
-- `lang/en-US.json` — display strings and parameter descriptions for the C3 editor
-- `addon.json` — plugin metadata (ID, version, author)
-
-To extract a new or updated addon:
-
-```bash
-mkdir -p addons/plugin/AddonName && cd addons/plugin/AddonName && unzip -o ../AddonName.c3addon
-```
-
 ### Animation Name Is Unreliable as an Identity
 
-A helper that derives an identity from a sprite's animation name (e.g. stripping trailing skin/variant digits) does **not** necessarily strip semantic suffixes like `"Active"` or `"Locked"`. An animation named `"FooActive"` may return `"FooActive"`, not `"Foo"`.
+C3 exposes an animation's name as a display string carrying no identity or stability guarantee. An animation named `"FooActive"` is just that string — nothing strips the semantic suffix (`"Active"`, `"Locked"`, etc.) for you, so deriving an identity from it (e.g. by stripping trailing skin/variant digits) can silently return `"FooActive"`, not `"Foo"`.
 
 Use a dedicated instance variable (e.g. `MyList.instVars.itemId`) for reliable identification. Never derive an identity from an animation name unless the animation naming convention is under your control and explicitly guarantees a clean base name.
 
-### Prefer Instance-Count Guards Over Layout-Name Exclusion Lists
+### Testing Whether an Object Exists on the Current Layout
 
 When C3 logic must run conditionally based on whether an object exists on the current layout, check the object's instance **count** rather than excluding specific layout names.
 
@@ -725,9 +698,9 @@ do: MyHtmlControl.set-visible(visibility=visible)  # required: shows the DOM ele
 
 Layer placement also matters more for HTML controls — they can render over the top of everything regardless of C3 z-ordering, so the layer's stacking has to be set deliberately in the layout JSON.
 
-### Match UI Layouts to the Project Viewport
+### UI Layout Surface vs. the Project Viewport
 
-A C3 layout can have a surface larger than the project's viewport, but only **gameplay levels** benefit from the extra surface (extra-canvas content for level design, where the camera scrolls). **UI layouts** (menus, modals, selection screens, etc.) should match the viewport — any extra area is wasted, since the camera never scrolls there.
+A C3 layout's surface may exceed the project's viewport, and a UI layout that never scrolls can never reveal the excess — only **gameplay levels** benefit from the extra surface (extra-canvas content for level design, where the camera scrolls). **UI layouts** (menus, modals, selection screens, etc.) should match the viewport, since any area beyond it is unreachable there.
 
 When placing new instances on a UI layout, use the viewport's coordinate space; the center is roughly half the viewport width and height. When opportunistically opening an old UI layout that's sized larger than the viewport, resize it down. When asking tooling (or another author) to place a widget or UI element on a UI layout, specify coordinates in the viewport coordinate space, not whatever larger size the layout currently shows.
 
