@@ -743,6 +743,8 @@ These documents (in this same `docs/c3/` directory) expand on sections within th
 - [./typescript-integration.md](./typescript-integration.md) — Facade pattern, runtime access, async model, signals (expands §2)
 - [./layout-reference.md](./layout-reference.md) — Layer system, templates, navigation patterns (expands §6)
 - [./scripting-reference.md](./scripting-reference.md) — C3 scripting API quick reference
+- [./ace-reference.md](./ace-reference.md) — ACE (action/condition/expression) metadata model, `aces.json` structure for custom addons
+- [./addon-package-reference.md](./addon-package-reference.md) — Addon package on-disk layout, `lang/*.json` localization structure
 
 ### Tooling and recipes
 
