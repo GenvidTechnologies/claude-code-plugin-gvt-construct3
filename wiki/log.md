@@ -15,6 +15,41 @@ before. If a past entry itself needs correcting, add a new entry that says
 so; never edit or remove the old one in place. See `docs/wiki-schema.md` for
 the full maintenance schema.
 
+## 2026-08-20
+
+* **Update**: `verifying-against-construct3-sample.md` — two new traps, six and
+  seven, from #76's retro. **Trap 6**: a destination doc's provenance note is part
+  of the cost of moving a fact into it. The docs in this bundle do not all carry
+  the same contract — `construct3-guide.md` carves out its runtime sections,
+  `layout-reference.md` does not — so a fact correctly stated in one can become a
+  false claim purely by relocation. #76's obvious fix (author the missing section
+  in `layout-reference.md` and repoint the dead link at it) would have asserted
+  sample verification of runtime input routing, which no on-disk project can
+  observe. Recorded as [ADR 0011](../docs/decisions/0011-a-docs-provenance-note-is-part-of-the-move-cost.md).
+  **Trap 7**: the sweep cannot see broken navigation — trap 5's shape a second
+  time. The dead anchor `layout-reference.md#modal-layer-management-toggleinteractivelayers`
+  shipped in `41c1816` and, per git history, its target heading has never existed
+  in any revision; it was broken on arrival, not rotted. It survived #59, #63,
+  #71, #72, #79 and #80, and — exactly as with the `generateUniqueSid` passage —
+  both verification sweeps were **right** to pass it, because they check JSON
+  shapes. Heading renamed five → seven traps, with its three referrers repointed
+  in the same commit (`CLAUDE.md`, `wiki/index.md`, the page's own `description`).
+  The description's claim that the traps "each shipped a wrong doc" was also
+  corrected: trap 6 was caught one decision before shipping.
+
+* **Update**: `doc-inventories.md` — two additions, both from #76. A subsection
+  under the absence-criterion rule recording that **fixing one absence row
+  manufactures confidence in the rest**: #76's criteria table scoped its
+  `toggleInteractiveLayers` row correctly *and* gave it a positive control, then
+  four rows later wrote the retired-anchor row tree-wide — the same defect the row
+  above existed to prevent, in the same table, past planning review. Also notes
+  that this variant surfaces late: that row's baseline was accurate when written,
+  and only the plan's *own* CHANGELOG task falsified it, so no pre-execution gate
+  can catch it. And a new section documenting `scripts/check-doc-anchors.mjs` —
+  what it covers that the three referrer greps do not, and that it is deliberately
+  not wired into `commands.validate`. Both stale the page's inventory description,
+  which was updated in the same commit per the page's own rule.
+
 ## 2026-08-19
 
 * **Update**: `knowledge-boundaries.md` — new section "Name chef's *capability*,

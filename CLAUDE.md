@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | Before you… | Read |
 |---|---|
-| Add or edit anything in `plugin/docs/c3/` | [Verifying docs/c3 against construct3-sample](wiki/verifying-against-construct3-sample.md) — the sample is ground truth, the ADR 0008 marker **scope**, and five traps that each shipped a wrong doc |
+| Add or edit anything in `plugin/docs/c3/` | [Verifying docs/c3 against construct3-sample](wiki/verifying-against-construct3-sample.md) — the sample is ground truth, the ADR 0008 marker **scope**, and seven traps that each shipped a wrong doc or came one decision from it |
 | Bump a `construct3-chef` / `c3-domain-manager` pin | [Verifying an MCP pin bump](wiki/pin-bump-verification.md) — the issue's surface table is an assertion to test; `c3-implementer.md` is the pin site that goes missing every time |
 | Add a skill, a `docs/c3` doc, or even a new `##` section | [Doc inventories, ADRs, and the changelog](wiki/doc-inventories.md) — the hand-maintained inventories that drift silently |
 | Write or change a skill's scripts or frontmatter | [Skill authoring conventions](wiki/skill-authoring-conventions.md) — the lib/CLI split, where tests must live, and the unimplemented-remediation trap |
