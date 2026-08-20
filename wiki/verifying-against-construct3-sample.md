@@ -1,11 +1,11 @@
 ---
 type: practice-note
 title: Verifying docs/c3 against construct3-sample
-description: How a C3 platform fact in plugin/docs/c3/ is proved against the editor-validated construct3-sample project, how its provenance is cited, and the five traps that have each shipped a wrong doc.
+description: How a C3 platform fact in plugin/docs/c3/ is proved against the editor-validated construct3-sample project, how its provenance is cited, and the seven traps that each shipped a wrong doc or came one decision from it.
 tags: [docs-c3, verification, construct3-sample, provenance, adr-0008]
 status: stable
 stale_after: 2027-08-18
-generated: { by: process:maintain-wiki, at: 2026-08-18T00:00:00Z }
+generated: { by: process:maintain-wiki, at: 2026-08-20T00:00:00Z }
 sources:
   - id: claude-md
     resource: ../raw/claude-md-2026-08-18.md
@@ -78,7 +78,7 @@ criterion naming a governing rule is a claim *about that rule*, and this repo's
 "verify against the artifact it modifies" habit points at the doc being edited,
 not at the rule being invoked.
 
-## The five traps
+## The seven traps
 
 1. **A key that is present but empty proves the key is valid on that host, not
    what its populated shape is.** `"effectTypes": []` on layout roots confirms
@@ -135,6 +135,72 @@ not at the rule being invoked.
    The remedy is structural rather than procedural: don't name the symbol, and
    the unverifiable claim stops existing. See
    [Name chef's capability, never chef's symbol](/knowledge-boundaries.md).
+
+6. **A destination doc's provenance note is part of the cost of moving a fact
+   into it.** Traps 1–5 are about whether a claim is true. This one is about
+   where it is allowed to live: the docs in this bundle do **not** all carry the
+   same provenance contract, so a fact that is correctly stated in one doc can
+   become a false claim simply by being moved to another.
+
+   `construct3-guide.md`'s note carves out its runtime sections — "the
+   runtime-behaviour sections (§5, §7) are field knowledge no on-disk sample can
+   observe". `layout-reference.md`'s note carries **no** such carve-out:
+   everything unmarked there reads as confirmed against the sample.
+
+   In #76 the obvious fix for a dead cross-reference was to author the missing
+   section in `layout-reference.md` and repoint the link at it. The fact in
+   question — `System.set-layer-interactive` blocks touch input where
+   `System.set-group-active(state=deactivated)` stops every event in the group,
+   signal and timer handlers included — is **runtime input routing**, which an
+   on-disk project cannot observe in either direction. Moving it would have
+   asserted sample verification of something the sample can never verify.
+
+   Both repairs cost more than they look. Amending the destination's note
+   weakens a doc-level invariant that is currently clean. Adding an `unverified`
+   callout collides with the marker **scope** rule above — ADR 0008 §1 lists
+   "not observable from an on-disk project" among its callout forms, while this
+   page holds that a runtime claim takes no marker at all. Either branch hands
+   the implementer an unresolved conflict between two standing rules.
+
+   So: **read the destination's provenance note before moving a fact, not just
+   its subject matter.** Topical fit is not the criterion. Recorded as
+   [ADR 0011](../docs/decisions/0011-a-docs-provenance-note-is-part-of-the-move-cost.md);
+   the fact stayed in `construct3-guide.md` §7, whose carve-out already covered
+   it, and `layout-reference.md` was left untouched.
+
+7. **The sweep cannot see broken navigation — and marker-absence will imply it
+   can.** This is trap 5's shape a second time, and the repetition is the point:
+   the sample settles *shapes*, so every non-shape property of a doc is outside
+   what "verified" ever meant. A link is not a shape.
+
+   `construct3-guide.md` shipped a link to
+   `layout-reference.md#modal-layer-management-toggleinteractivelayers` in the
+   founding import `41c1816`. Git history shows **no revision of
+   `layout-reference.md` has ever contained a heading of that name** — it was
+   never a link that rotted; it was broken on arrival. It then survived #59,
+   #63, #71, #72, #79 and #80, including **both** explicit verification sweeps —
+   and, exactly as in trap 5, every one of those passes was **right**: they were
+   checking C3 JSON shapes.
+
+   Nothing else covered it either. The deep-link rule in
+   [Doc inventories and the changelog](/doc-inventories.md) fires when *you*
+   remove a heading; it says nothing about a referrer that never had a target.
+   `gvt-dev:audit-conventions`' hygiene scan enumerates `docs/**.md` plus
+   repo-root `CLAUDE.md`, so it does not see `plugin/docs/c3/` at all.
+
+   #76 closed the gap with `scripts/check-doc-anchors.mjs` — dev-workspace,
+   dependency-free, resolving every intra-repo link against real GitHub heading
+   slugs. It is deliberately **not** wired into `commands.validate`; run it by
+   hand when editing the bundle:
+
+   ```bash
+   node scripts/check-doc-anchors.mjs plugin/docs/c3/*.md plugin/agents/*.md
+   ```
+
+   The general form is worth carrying past links: **when a doc's provenance note
+   makes absence meaningful, state what absence means.** Here it means the JSON
+   shapes were checked — never that the prose is current, the links resolve, or
+   the symbols exist.
 
 [^claude-md]: CLAUDE.md, "Verify every `docs/c3` JSON shape against
 `GenvidTechnologies/construct3-sample`".

@@ -1,11 +1,11 @@
 ---
 type: practice-note
 title: Doc inventories, ADRs, and the changelog
-description: Which hand-maintained inventories a new skill, a new docs/c3 doc, or even a new section must be added to — plus why ADRs are never rewritten and why a pure content correction still earns a CHANGELOG entry.
+description: Which hand-maintained inventories a new skill, a new docs/c3 doc, or even a new section must be added to; how to scope an absence criterion and why every such row needs auditing; the intra-repo anchor checker — plus why ADRs are never rewritten and why a pure content correction still earns a CHANGELOG entry.
 tags: [docs, inventories, changelog, adr, drift]
 status: stable
 stale_after: 2027-08-18
-generated: { by: process:maintain-wiki, at: 2026-08-18T00:00:00Z }
+generated: { by: process:maintain-wiki, at: 2026-08-20T00:00:00Z }
 sources:
   - id: claude-md
     resource: ../raw/claude-md-2026-08-18.md
@@ -134,6 +134,47 @@ Scope the grep (`git grep X -- plugin/docs/c3/`), keep the baseline in the row s
 it stays non-vacuous, and let the release notes say the name. Precedent: #72's R2
 was written as "0 hits repo-wide" before its own CHANGELOG entry existed, and had
 to be re-scoped at review.
+
+### Audit *every* absence row — fixing one manufactures confidence in the rest
+
+The rule above is easy to apply once and stop. #76's criteria table did exactly
+that: its `toggleInteractiveLayers` row was correctly scoped to
+`plugin/docs/c3/` **and** paired with a positive control requiring the CHANGELOG
+to name the string — and then, four rows later, the retired-anchor row was
+written `git grep '#7-c3-conventions'` **tree-wide**. Same table, same author,
+same defect the row above had just been written to avoid. It passed planning
+review, because a table that visibly gets the hard case right does not invite a
+re-read of the easy ones.
+
+The tell is mechanical, so apply it row by row: **does this row assert that a
+name is gone, while the release notes must still say that name?** If yes it is
+the defective shape, whatever else in the table is already correct. Both of
+#76's rows had it; only one was caught before execution.
+
+Note also *when* this surfaces. The tree-wide row's baseline was accurate when
+written — one hit, in the file being edited — so a premise re-check at planning
+time passes it. It only became unsatisfiable once the CHANGELOG task ran, i.e.
+**the plan's own later work falsified its own earlier criterion**. That is a
+distinct failure from a row that decayed or was born wrong, and no gate before
+execution can catch it.
+
+## The intra-repo anchor checker
+
+`scripts/check-doc-anchors.mjs` (dev-workspace, dependency-free, added in #76)
+resolves every intra-repo markdown link against real GitHub heading slugs —
+including the double-hyphen rule a stripped em-dash produces. It is deliberately
+**not** wired into `.gvt-agent.json`'s `commands.validate`; run it by hand when
+editing the bundle or an agent body:
+
+```bash
+node scripts/check-doc-anchors.mjs plugin/docs/c3/*.md plugin/agents/*.md
+```
+
+It complements, rather than replaces, the three greps above: those catch
+referrers to a heading **you** are removing, while this catches a link whose
+target never existed or has already gone. See
+[trap 7](/verifying-against-construct3-sample.md) for the dead link that
+survived six PRs because nothing checked this.
 
 ## ADRs are historical records — don't retroactively rewrite them
 
