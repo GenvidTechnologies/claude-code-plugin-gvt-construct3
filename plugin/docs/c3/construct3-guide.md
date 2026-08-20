@@ -211,11 +211,11 @@ Static variables (`isStatic: true`) persist their values across layout transitio
 
 A common pattern: declare feature-flag **keys** (constants) at the root of a configuration event sheet, e.g. `const FeatureFlag_SomeFeature: string = "someFeature"`. These are root-level globals and thus accessible from any sheet without include changes.
 
-Feature flag **values** are typically fetched per-caller via a function such as `Functions.GetFeatureFlagAsString(key, fallback)` (or boolean/number variants). When there is no pre-populated global that holds the current value, each consumer fetches at use time into a local scratch `var` or into a sheet-local static:
+Feature flag **values** are typically fetched per-caller via a project-defined function-block such as `Functions.GetFlagAsString(key, fallback)` (or boolean/number variants) — C3 exposes no feature-flag primitive of its own. When there is no pre-populated global that holds the current value, each consumer fetches at use time into a local scratch `var` or into a sheet-local static:
 
 ```text
 // Typical pattern inside a function or on-start block
-do: System.set-eventvar-value(variable=someFeature, value=Functions.GetFeatureFlagAsString(FeatureFlag_SomeFeature, ""))
+do: System.set-eventvar-value(variable=someFeature, value=Functions.GetFlagAsString(FeatureFlag_SomeFeature, ""))
 ```
 
 The sheet-local static is then readable from inline scripts as `localVars.someFeature`. When writing a new on-start handler that needs a flag value inside an inline script, insert the fetch action **before** the script — C3 actions run in array order, so a script that reads the static before the fetch runs will see whatever previous transition left behind (or the declared default).
@@ -338,7 +338,7 @@ In JSON, the child block has `"isOrBlock": true` and multiple conditions — tho
 3. The `else` branch runs, re-enabling background layer interactivity
 4. Later event sheets process the same tick — `on-tap-object` conditions on the now-interactive background layer evaluate as true for the same physical tap
 
-**Mitigation**: Prefer a shared helper that defers layer re-enable to the next tick — e.g. a `toggleInteractiveLayers()` function with a built-in `System.wait(0.1)` — over hand-coded `trigger-once-while-true` layer management. When writing custom modal open/close logic, always ensure that layer re-enable is deferred by at least one tick (e.g., via `System.wait(0)` or `System.wait(0.1)`) relative to the close action.
+**Mitigation**: layer re-enable must be deferred by at least one tick relative to the close action — `System.wait(0)` or `System.wait(0.1)` before `System.set-layer-interactive`. Because that deferral is easy to omit at an individual call site, route every modal close through one shared function-block that owns it, rather than hand-coding `trigger-once-while-true` layer management per modal. See [Blocking Input: Layer Interactivity vs. Group Deactivation](#blocking-input-layer-interactivity-vs-group-deactivation).
 
 ### Touch Event Timing and Animation Guards
 
@@ -517,9 +517,9 @@ Follow this canonical structure for event sheet `events` arrays:
 
 **Never reference a variable before its declaration in the JSON tree**, even if it's `static` or `const`. While C3 scoping makes variables visible throughout their group, the runtime processes nodes in array order — referencing a variable before its declaration position can produce `NaN` or `undefined` values at runtime (e.g., NaN coordinates when positioning objects). See [Variable and Function Accessibility](#variable-and-function-accessibility) for the full scoping rules.
 
-### Disabling UI Input: prefer `toggleInteractiveLayers` over group deactivation
+### Blocking Input: Layer Interactivity vs. Group Deactivation
 
-When a modal goes up and the underlying UI must stop responding to input, prefer a layer-interactivity helper such as [`toggleInteractiveLayers`](./layout-reference.md#modal-layer-management-toggleinteractivelayers) (or `System.set-layer-interactive`) over `System.set-group-active(state=deactivated)`.
+When a modal goes up and the underlying UI must stop responding to input, use `System.set-layer-interactive(interactive=false)` on the layers beneath it rather than `System.set-group-active(state=deactivated)`.
 
 **Why:** Group deactivation stops *every* event in the group from firing — including signal handlers, timers, and any cross-cutting handlers that happen to live in the same group as the buttons. Layer interactivity only stops touch input on that layer; signal/tick handlers continue to run. A common bug class: a modal's "disable layers" action deactivates a navbar group while the modal is up, dormant-ing a success-signal handler that lives in the same group — so a badge or counter never refreshes.
 
