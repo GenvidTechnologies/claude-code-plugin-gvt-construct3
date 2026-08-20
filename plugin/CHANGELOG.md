@@ -73,6 +73,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   non-`.json` files under `layouts/` are no longer listed (fallout of c3source
   2.0.0's `.json` item policy). A file's absence from the output is therefore not
   evidence it is missing from disk. Noted in `c3-explorer`.
+- **The C3 platform reference recommended a modal-input helper and a feature-flag
+  getter that don't exist in Construct 3** (#76). `docs/c3/construct3-guide.md`
+  told readers, at three sites, to call `toggleInteractiveLayers` to disable UI
+  input under a modal, and named `Functions.GetFeatureFlagAsString(key, fallback)`
+  as how flag values "are typically fetched" — both are project-specific helpers
+  belonging to the production project this reference was originally adapted from,
+  not C3 APIs. The `toggleInteractiveLayers` recommendation also linked to
+  `layout-reference.md#modal-layer-management-toggleinteractivelayers`; git history
+  confirms no revision of `layout-reference.md` has ever contained that heading —
+  the link shipped broken in the founding import and was never valid, so it was
+  **deleted rather than repaired** (no replacement section exists to point at; see
+  `docs/decisions/0011-a-docs-provenance-note-is-part-of-the-move-cost.md`). Both
+  passages now state the platform mechanism directly: use
+  `System.set-layer-interactive(interactive=false)` on the layers beneath a modal,
+  not `System.set-group-active(state=deactivated)`, which stops every event in the
+  group including signal and timer handlers; and a neutral
+  `Functions.GetFlagAsString(key, fallback)` placeholder, with the doc now saying
+  plainly that C3 exposes no feature-flag primitive so the function must be
+  project-defined. The platform half of each passage is unchanged — notably that
+  layer re-enable must be deferred by at least one tick past the modal close, or
+  the same physical tap passes through to the layer beneath. **If you wrote
+  event-sheet logic or tooling calling `toggleInteractiveLayers` or
+  `Functions.GetFeatureFlagAsString` on the strength of this reference, it was
+  calling something that only exists if your own project defines it** — grep for
+  both names. Separately, the guide's `## 7. C3 Conventions` section is renamed to
+  `## 7. Platform Gotchas and Field Knowledge`, since a "Conventions" section in a
+  platform reference invited readers to treat one project's house rules as C3
+  rules; house-rule content was removed and every platform behaviour in it was
+  kept. The section number is unchanged, but **the old anchor
+  `#7-c3-conventions` no longer resolves** — update any external link into it.
 
 ### Added
 - **`preview-addon-metadata-sync`** (chef `1.1.0`, `READ_ONLY`) added to
