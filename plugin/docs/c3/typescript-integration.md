@@ -1,7 +1,7 @@
 ---
 type: reference
 title: TypeScript Integration
-description: "C3 TypeScript scripting: runtime object access, the block concurrency and async-script model, wait-for-previous-actions, functionIsAsync, return-type call conventions, local-variable scoping, and JSON-plugin iteration."
+description: "C3 TypeScript scripting: the facade pattern that decides what a script block can see, runtime object access, the block concurrency and async-script model, wait-for-previous-actions, functionIsAsync, return-type call conventions, local-variable scoping, and JSON-plugin iteration."
 tags: [typescript, async, concurrency, scripting, scoping]
 status: stable
 sources:
@@ -46,7 +46,6 @@ runtime.globalVars.someFlag = true;
 
 - `IRuntime` and other types from `scripts/ts-defs/` are globally available -- no explicit imports needed
 - The generated barrel module provides whatever modules are made available to all script blocks
-- Always import from index files (e.g., `common/public/index.js`), not specific internal files
 - Types in `scripts/ts-defs/` may be stale -- re-export from the C3 editor to refresh
 - All script blocks run in an async context (`await` is valid)
 
@@ -104,7 +103,7 @@ All script actions in C3 event sheets are async functions. Within a block, each 
 
 ## Async C3 Functions (Signal + Wait Pattern)
 
-C3 functions can be made async using `System.wait-for-signal` internally and `System.wait-for-previous-actions` at call sites. This is the standard pattern for C3 functions that need to wait for an async operation (CloudScript call, timer, etc.) before returning:
+C3 functions can be made async using `System.wait-for-signal` internally and `System.wait-for-previous-actions` at call sites. This is the standard pattern for C3 functions that need to wait for an async operation (a network request, a timer, a tween, etc.) before returning:
 
 **Inside the function** — wait for a named signal:
 
@@ -161,7 +160,7 @@ await the function's completion:
 A trigger handler (`on-instance-signal`) that calls an async function via `callFunction`
 without `wait-for-previous-actions` dispatches the function body but returns
 immediately. Subsequent layout transitions or runtime state changes can cause queued
-network work (e.g. an internal `callCloudScript`) to be dropped before it executes —
+network work (e.g. an internal AJAX request) to be dropped before it executes —
 even though the function "is" being called.
 
 **Anti-pattern** — flipping a function from `functionIsAsync: true` to `false` to
@@ -195,7 +194,7 @@ C3 has two ways to invoke a function, and the return type determines which is va
 | `-> number` / `-> string` / `-> any` | **Error** — wrong return type | Valid (use without `()` for zero args)  |
 
 - **`call` action** (`callFunction` in JSON): For fire-and-forget invocations. Requires `-> none`.
-- **`Functions.X` expression**: For using the return value in parameters or assignments. Requires a non-`none` return type. Syntax: `Functions.FuncName` for zero arguments, `Functions.FuncName(arg1, arg2)` when arguments are present. **Never use `()` on a zero-argument function** — C3 raises `')' can't go here`. Typically used in `compare-two-values` conditions (`first-value=Functions.canAffordGame`) or action parameters.
+- **`Functions.X` expression**: For using the return value in parameters or assignments. Requires a non-`none` return type. Syntax: `Functions.FuncName` for zero arguments, `Functions.FuncName(arg1, arg2)` when arguments are present. **Never use `()` on a zero-argument function** — C3 raises `')' can't go here`. Typically used in `compare-two-values` conditions (`first-value=Functions.canProceed`) or action parameters.
 
 If a function needs to be called both ways (some callers need the value, others don't), prefer `-> none` and let callers that need the result check state independently (e.g., calling a pure helper function after the void call).
 
@@ -212,22 +211,22 @@ C3 local variables (`var`/`static` event type) have scope rules that differ from
 
 ```text
 group "My Group"
-  var canAfford: number = 0       ← group-level: in scope for all child block actions
+  var canProceed: number = 0      ← group-level: in scope for all child block actions
   block
     when: Touch.on-tap-object(...)
-    do: script { localVars.canAfford = data.canAffordGame(runtime) ? 1 : 0; }
+    do: script { localVars.canProceed = myModule.canProceed(runtime) ? 1 : 0; }
     block
-      when: System.compare-two-values(first-value=canAfford, ...)
+      when: System.compare-two-values(first-value=canProceed, ...)
 ```
 
 **Group-level variables reset every tick.** A group-level `var` (non-static) is re-initialized to its `initialValue` at the start of each tick. If any `wait`, `wait-for-signal`, or async pattern occurs between setting and reading the variable, the value will have been reset. For computed boolean checks that need to survive a yield, use a **function-block** instead:
 
 ```text
-function canAffordGame() -> number
-  do: script { runtime.setReturnValue(data.canAffordGame(runtime) ? 1 : 0); }
+function canProceed() -> number
+  do: script { runtime.setReturnValue(myModule.canProceed(runtime) ? 1 : 0); }
 ```
 
-Then reference the result as `Functions.canAffordGame` in conditions — no variable, no tick-reset risk.
+Then reference the result as `Functions.canProceed` in conditions — no variable, no tick-reset risk.
 
 **Static variables** (`isStatic: true`) persist across ticks and are safe to use across yields. Use `static` when the value must survive a wait.
 
