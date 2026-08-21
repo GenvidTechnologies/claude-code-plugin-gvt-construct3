@@ -5,7 +5,7 @@ description: Which hand-maintained inventories a new skill, a new docs/c3 doc, o
 tags: [docs, inventories, changelog, adr, drift]
 status: stable
 stale_after: 2027-08-18
-generated: { by: process:maintain-wiki, at: 2026-08-20T00:00:00Z }
+generated: { by: process:maintain-wiki, at: 2026-08-21T00:00:00Z }
 sources:
   - id: claude-md
     resource: ../raw/claude-md-2026-08-18.md
@@ -74,12 +74,22 @@ Prefer non-counted phrasing ("skills include…") over "N skills exist", so a
 hardcoded count can't go stale. `docs/TOC.md` needs nothing — it points at the
 README for the inventory.
 
-## Adding a docs/c3 reference doc touches two *exhaustive* inventories
+## Adding a docs/c3 reference doc touches three *exhaustive* description surfaces
 
 Unlike skills, each `docs/c3/*` doc is listed **individually** in *both*
 `plugin/docs/c3/index.md` (the doc table) **and** `docs/TOC.md` (the "C3 platform
 reference" list). Update both in the same commit — a retro found `docs/TOC.md`
 had been missing `ace-reference.md` and `toolchain-config.md` since they shipped.
+
+Since #79 made `plugin/docs/c3/` an OKF bundle, each doc's own YAML
+**frontmatter `description:`** is a **third** surface, enumerating the same
+content areas the other two do, and it drifts the same way. This rule predates
+#79, which is why it originally named only two — reconcile all three in the
+same commit. Evidence from #70: `construct3-guide.md`'s frontmatter description
+omitted its TypeScript-integration and layout-architecture sections;
+`typescript-integration.md`'s omitted the facade-pattern section;
+`layout-reference.md`'s omitted localization, instance-naming, and navigation —
+all three corrected alongside the two prose inventories.
 
 Cross-link a companion doc both ways (e.g. `addon-package-reference.md` ↔
 `ace-reference.md`).
@@ -89,10 +99,19 @@ The *prose* doc-lists in the root `README.md` and `plugin/CONVENTIONS.md` are
 And per the [knowledge-boundary rule](/knowledge-boundaries.md), don't restate in
 one `docs/c3` doc what a sibling owns; link instead.
 
+**Reconcile each surface against the doc's own `##` headings, not against a
+sibling inventory.** The three surfaces don't just go stale together — they can
+*contradict each other*, and agreement between two of them is not evidence
+either is right. #70 found `docs/TOC.md` naming `layout-reference.md`'s
+navigation content while `plugin/docs/c3/index.md` did not: two inventories
+asserting different content areas for the same doc, and neither flagged
+because nothing checks agreement between them. Only the doc's own headings are
+ground truth.
+
 ## Adding a *section* stales those inventories' descriptions, even with no new row
 
 The rule above is about a *new doc* needing new rows; the adjacent case is easy
-to rule out too fast. Both inventories describe each doc with a one-liner that
+to rule out too fast. All three surfaces describe each doc with a one-liner that
 **enumerates its content areas** ("layout/layer JSON, render order, the
 template/replica system, …"), so a new `##` section belongs in that enumeration
 even when no row is added.
@@ -191,28 +210,39 @@ reversed, add a **superseding** ADR rather than editing the old one in place.
 > renaming it here would leave the rule asserting a precedent it can no longer
 > show.
 >
-> **What changed when this rule moved into `wiki/`.** While it lived in
-> `CLAUDE.md`, `/gvt-dev:audit-conventions`'s retired-token scan flagged it on
-> every run (`info` severity, never affecting the exit code), and absorbing that
-> recurring finding was the accepted cost of citing the token. That is no longer
-> what happens: the hygiene scanners build their candidate set as
-> **`docs/**.md` + repo-root `CLAUDE.md`** (`listCandidateFiles` in
-> `audit-conventions/scripts/lib/hygiene.mjs`) — `wiki/` is not scanned at all.
-> So the finding is now silent, and the token survives here uncontested.
+> **What changed when this rule moved into `wiki/` — and changed again since.**
+> While it lived in `CLAUDE.md`, `/gvt-dev:audit-conventions`'s retired-token
+> scan flagged it on every run (`info` severity, never affecting the exit
+> code), and absorbing that recurring finding was the accepted cost of citing
+> the token. Moving the rule into `wiki/` silenced that finding for a while —
+> the hygiene scanners' general candidate set is `docs/**.md` + repo-root
+> `CLAUDE.md` (`listCandidateFiles` in
+> `audit-conventions/scripts/lib/hygiene.mjs`), which does not reach `wiki/`.
+> But as of **gvt-dev 4.19.0**, `scanRetiredTokens` — and only that scanner —
+> additionally unions in `wikiCandidateFiles(...)`, reaching `<wikiDir>/` too;
+> `lint` has no retired-token check of its own, and dead-wiki-link/orphan
+> checks still don't reach `<wikiDir>/`. A live `/gvt-dev:audit-conventions`
+> run on this repo now flags the three deliberate citations above at `info`
+> severity, same as it did before the move. Filed upstream as
+> `GenvidTechnologies/claude-code-plugin-gvt-dev#366`, and this is the fix that
+> landed for it.
 >
 > **This is worth more than the correction.** The `CLAUDE.md` → `wiki/`
 > migration silenced a finding that the original bullet was deliberately
 > engineered to keep alive — by *moving the file*, not by touching the token,
 > which is the outcome that bullet existed to prevent. Nothing broke and no
-> check failed; the doc simply went on describing a world it had left. Treat
+> check failed; the doc simply went on describing a world it had left, until
+> the upstream fix caught up and made the description true again. Treat
 > **"what tooling stops seeing this file"** as a required question whenever a
-> doc moves, alongside "what links to it" above. Filed upstream as
-> `GenvidTechnologies/claude-code-plugin-gvt-dev#366`.
+> doc moves, alongside "what links to it" above — and treat a note about
+> tooling behaviour as a claim with an expiry date, since an upstream fix like
+> this one is exactly what expires it.
 >
 > (The scan also has no per-citation exemption — only a global
 > `hygiene.retiredTokens` deny-list or a whole-file `excludePaths`, both of
 > which would suppress *real* drift elsewhere. That constraint is upstream
-> `#281`, and it still applies to any `docs/` or `CLAUDE.md` copy of this rule.)
+> `#281`, and it still applies to any `docs/` or `CLAUDE.md` copy of this rule
+> — and, now that the scan reaches `wiki/`, to this file too.)
 
 [^claude-md]: CLAUDE.md, "Conventions for editing this repo".
 
