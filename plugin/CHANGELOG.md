@@ -33,6 +33,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are **unaffected** — no doc was moved, and no heading anchor changed.
 
 ### Fixed
+- **The C3 platform reference stated one production project's house conventions as Construct 3
+  rules, and named that project's sheets, layouts and helpers** (#70) — the last of the
+  four-issue de-Burbanking family (#69, #72, #76). In
+  `docs/c3/event-sheet-architecture.md`, the sections *"Layout Event Sheets vs Included Event
+  Sheets"*, *"Per-Layout Event Sheet Pattern"* and *"Event Sheet Hierarchy"* prescribed one
+  studio's include conventions in platform voice ("should", "never", "the preferred pattern")
+  and named `CommonEvents`, `MainMenuEvents`, `HeroSelectionEvents`, `HeroSelectLayoutEvents`,
+  `BattleLayout`, `HeroSelectLayout` and `startGameRequest()` / `callCloudScript`;
+  `docs/c3/typescript-integration.md` told readers to *"always import from index files (e.g.,
+  `common/public/index.js`)"* — a module layout that exists in no generic C3 project — and
+  used `Functions.canAffordGame` and a `CloudScript` backend as its worked examples.
+  **One of these was not merely house-specific, it was wrong:** the doc claimed that
+  including a shared utilities sheet first "ensures common functions ... are available
+  everywhere", which the same page contradicted fifteen lines later. C3 functions are global
+  regardless of the include tree; what an include controls is whether that sheet's
+  **triggers** are installed for the layout.
+  **What it is now:** every platform mechanic in those sections is kept, and stated once
+  instead of up to four times — one layout event sheet per layout (the `"eventSheet"`
+  field), an included sheet's `on-start-of-layout` / `on-end-of-layout` firing for every layout
+  whose include chain reaches it, statics surviving layout changes, triggers firing in
+  include order, dispatched actions, action ordering within a block, and
+  `wait-for-previous-actions` suspending the block rather than the tick. The house rules, the
+  migration advice and the "5+ layouts" threshold are gone.
+  **Structural note:** `## Per-Layout Event Sheet Pattern` is replaced by
+  `## Trigger Installation and Execution Order`, and `## Event Sheet Hierarchy` — which
+  contained no fact not already stated earlier in the same file — is removed. **The anchors
+  `#per-layout-event-sheet-pattern` and `#event-sheet-hierarchy` no longer resolve**; update
+  any external link into them. Nothing in `## Event Sheet JSON Structure` changed.
+  **What to re-check:** if you ordered a layout event sheet's includes to put a shared
+  utilities sheet first *so that its functions would be callable*, that was never what the
+  include did — check instead which of that sheet's **triggers** your layout depends on. And
+  grep your own project for `CommonEvents`, `HeroSelectionEvents`, `startGameRequest`,
+  `callCloudScript`, `Functions.canAffordGame` and `common/public/index.js`: those are names
+  from the project this reference was adapted from, and they exist only if you defined them.
 - **The C3 platform reference told you to call two construct3-chef functions that
   no longer exist.** `docs/c3/construct3-guide.md` directed readers to
   `generateUniqueSid()` from `c3/sidUtils.js`, and to initialise a SID registry via
