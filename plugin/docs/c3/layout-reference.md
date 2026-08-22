@@ -1,7 +1,7 @@
 ---
 type: reference
 title: Layout Reference
-description: Layout/layer JSON, render order, the template/replica system and the two unrelated "o" short keys, global layers and the passive overriden shadowing mechanism, effect declaration and application, subLayers, UID/SID constraints, and how navigation renders in the extracted DSL.
+description: Layout/layer JSON, render order, the template/replica system and the two unrelated "o" short keys, global layers and the passive overriden shadowing mechanism, effect declaration and application, localization in layouts, subLayers, why instance naming doesn't imply scope, UID/SID constraints, and how navigation renders in the extracted DSL.
 tags: [layouts, layers, templates, effects, sublayers, navigation]
 status: stable
 sources:

@@ -1,7 +1,7 @@
 ---
 type: reference
 title: Construct 3 Platform Guide
-description: Construct 3 platform behavior — project registration, SIDs, event and action shapes, variable scoping, and the runtime gotchas that are the why behind the implementer's cheat-sheet.
+description: Construct 3 platform behavior — project registration, SIDs, TypeScript integration, event and action shapes, variable scoping, layout architecture, and the runtime gotchas and field knowledge that are the why behind the implementer's cheat-sheet.
 tags: [c3-platform, event-sheets, runtime, gotchas, project-json]
 status: stable
 sources:
@@ -117,7 +117,7 @@ See [./typescript-integration.md](./typescript-integration.md) for facade patter
 
 ## 3. Event Sheet Architecture
 
-See [./event-sheet-architecture.md](./event-sheet-architecture.md) for include composition, layout vs included sheets, per-layout pattern, JSON schema, and hierarchy.
+See [./event-sheet-architecture.md](./event-sheet-architecture.md) for include composition, layout vs included sheets, trigger installation and execution order, and the event sheet JSON schema.
 
 ---
 
@@ -712,7 +712,7 @@ When placing new instances on a UI layout, use the viewport's coordinate space; 
 
 These documents (in this same `docs/c3/` directory) expand on sections within this guide:
 
-- [./event-sheet-architecture.md](./event-sheet-architecture.md) — Include composition, per-layout pattern, JSON schema (expands §3)
+- [./event-sheet-architecture.md](./event-sheet-architecture.md) — Include composition, layout vs included sheets, trigger installation and execution order, JSON schema (expands §3)
 - [./typescript-integration.md](./typescript-integration.md) — Facade pattern, runtime access, async model, signals (expands §2)
 - [./layout-reference.md](./layout-reference.md) — Layer system, templates, navigation patterns (expands §6)
 - [./scripting-reference.md](./scripting-reference.md) — C3 scripting API quick reference

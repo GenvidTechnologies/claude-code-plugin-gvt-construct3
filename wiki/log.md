@@ -15,6 +15,29 @@ before. If a past entry itself needs correcting, add a new entry that says
 so; never edit or remove the old one in place. See `docs/wiki-schema.md` for
 the full maintenance schema.
 
+## 2026-08-21
+
+* **Correction + Update**: `doc-inventories.md` — three facts from #70's
+  session. **(1)** The "touches two *exhaustive* inventories" section
+  undercounted: since #79 made `plugin/docs/c3/` an OKF bundle, each doc's own
+  frontmatter `description:` is a *third* surface that drifts the same way as
+  `plugin/docs/c3/index.md` and `docs/TOC.md` — #70 found and fixed all three
+  gaps in `construct3-guide.md`, `typescript-integration.md`, and
+  `layout-reference.md`. Heading and body renamed two → three; the adjacent
+  "stales those descriptions" section updated to match the count. **(2)** New
+  rule: the surfaces can contradict each other, not just individually go
+  stale — #70 found `docs/TOC.md` naming `layout-reference.md`'s navigation
+  content while `plugin/docs/c3/index.md` did not, with neither flagged.
+  Reconcile each surface against the doc's own `##` headings, not against a
+  sibling surface. **(3)** The retired-token callout's claim that `wiki/` "is
+  not scanned at all" is now false: as of gvt-dev 4.19.0, `scanRetiredTokens`
+  (only that scanner) unions in `wikiCandidateFiles(...)` and reaches
+  `<wikiDir>/`, confirmed both by the installed `hygiene.mjs` and by a live
+  `/gvt-dev:audit-conventions` run flagging this page's three deliberate
+  `genvid-c3` citations at `info` severity — the fix for gvt-dev#366, which
+  this page itself had filed. The citations themselves are untouched; only the
+  claim about tooling behaviour was corrected.
+
 ## 2026-08-20
 
 * **Update**: `verifying-against-construct3-sample.md` — two new traps, six and
