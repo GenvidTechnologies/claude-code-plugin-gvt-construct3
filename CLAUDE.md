@@ -63,6 +63,15 @@ node plugin/skills/audit-c3-conventions/scripts/audit.mjs
 
 There is no build step, no `package.json`, no lint config — plain ESM `.mjs` run directly by Node, tests via the built-in `node:test` runner only.
 
+> **The `cd plugin &&` is load-bearing, and dropping it fails *open*.** The test glob is
+> relative to `plugin/`, so from the repo root it matches nothing, prints
+> `tests 0 / pass 0 / fail 0`, and **exits 0** — a green run that verified nothing. The same
+> glob is embedded in `.gvt-agent.json`'s `commands.validate`, so any wrapper or agent that
+> loses the working directory inherits the trap. **Confirm a non-zero test count** (currently
+> 174) rather than reading exit 0 as a pass. Note the shell's working directory also persists
+> between tool calls, so a `cd plugin` in one command silently changes where the *next* one
+> runs — which is how this usually happens.
+
 ## Components
 
 - **`plugin/agents/*.md`** — dispatched as `subagent_type: "gvt-construct3:<name>"`.
