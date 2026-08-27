@@ -15,14 +15,14 @@ sources:
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/CLAUDE.md
     title: CLAUDE.md in the repo (living version)
   - id: adr-0007
-    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/decisions/0007-verifying-the-resolverootfolder-mirror.md
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/decisions/0007-verifying-the-resolverootfolder-mirror.md
     title: ADR 0007 in the repo (living version)
   - id: adr-0009
-    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/decisions/0009-discharging-the-mirror-check-when-the-range-moves.md
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/decisions/0009-discharging-the-mirror-check-when-the-range-moves.md
     title: ADR 0009 in the repo (living version)
   - id: reconciliation
-    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/tool-surface-reconciliation.md
-    title: docs/tool-surface-reconciliation.md in the repo (living version)
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/9d77f5b/docs/tool-surface-reconciliation.md
+    title: docs/tool-surface-reconciliation.md as of 9d77f5b, the last commit before it was retired into this page
 ---
 
 # Verifying an MCP pin bump
@@ -49,7 +49,7 @@ from `npm pack`.
 | chef 1.0.0 / dm 0.7.0 (#61/#60) | #60 listed a "16 tool" read-side surface naming `domain-index`, `domains`, `overrides` | **None of the three is a registered MCP tool**; the real total is 14 |
 | same | #60's pin-location list named only `plugin.json` | **Omitted `plugin/agents/c3-implementer.md`**, which carries two dm version references |
 | same | chef#98's singular `validate-addon` had shipped under that name | 1.0.0 registers the **plural** `validate-addons`; the singular does not exist |
-| same | #60 argued `resolveRootFolder` was unaffected because 0.7.0's features looked unrelated | An argument from release notes — precisely the evidence a silent drift leaves undisturbed. [ADR 0007](../docs/decisions/0007-verifying-the-resolverootfolder-mirror.md) replaces it with a mechanical two-part check |
+| same | #60 argued `resolveRootFolder` was unaffected because 0.7.0's features looked unrelated | An argument from release notes — precisely the evidence a silent drift leaves undisturbed. [ADR 0007](/decisions/0007-verifying-the-resolverootfolder-mirror.md) replaces it with a mechanical two-part check |
 | chef 1.1.0 / dm 0.8.0 (#73/#74) | Both bodies again named only `plugin.json` as the pin site | **Omitted `c3-implementer.md` again** — the same file, the second consecutive bump |
 | same | #73 asserted **both** agents carry hard `tools:` allow-lists | Only `c3-explorer` does; `c3-implementer` has no `tools:` key and says so in its own body |
 
@@ -114,7 +114,7 @@ silent-zero grep fakes, so treat (1) and (3) as one habit, not two cautions.
 
 A `c3-domain-manager` bump also touches `audit.mjs`'s discovery check, which
 hand-mirrors `@genvidtech/mcp-utils`'s `resolveRootFolder` semantics
-([ADR 0006](../docs/decisions/0006-detect-discovery-ambiguity.md)):
+([ADR 0006](/decisions/0006-detect-discovery-ambiguity.md)):
 
 - `classifyDiscovery` / `checkDiscoveryAmbiguity` — the ambiguity finding and the
   suppression precedence (explicit `--project-dir` > env `C3_PROJECT_DIR` >
@@ -290,7 +290,7 @@ rather than by inspection.
 [^adr-0009]: ADR 0009 on discharging the `resolveRootFolder` mirror check when the
 dependency range actually moves.
 
-[^reconciliation]: `docs/tool-surface-reconciliation.md` — the C3-specific
+[^reconciliation]: `docs/tool-surface-reconciliation.md` (retired; its content now lives in this page) — the C3-specific
 reconciliation anchors, the read/mutate split, and the scope-rename categories.
 
 ## Related

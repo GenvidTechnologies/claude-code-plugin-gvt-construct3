@@ -8,8 +8,8 @@ stale_after: 2027-08-26
 generated: { by: process:maintain-wiki, at: 2026-08-26T00:00:00Z }
 sources:
   - id: grounding
-    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/grounding-in-chef-behavior.md
-    title: docs/grounding-in-chef-behavior.md in the repo (living version)
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/9d77f5b/docs/grounding-in-chef-behavior.md
+    title: docs/grounding-in-chef-behavior.md as of 9d77f5b, the last commit before it was retired into this page
 ---
 
 # Grounding a claim in chef's package source
@@ -105,7 +105,7 @@ Reading the package is what let the skill's preview helper mirror chef's
 from — and a hand-mirror drifts silently, which is the whole subject of
 [Verifying an MCP pin bump](/pin-bump-verification.md).
 
-[^grounding]: `docs/grounding-in-chef-behavior.md` — grounding gvt-construct3 content in chef behavior.
+[^grounding]: `docs/grounding-in-chef-behavior.md` (retired; its content now lives in this page) — grounding gvt-construct3 content in chef behavior.
 
 ## Related
 

@@ -161,7 +161,7 @@ schema's two-bundles note forbids folding it in here.
   false claim purely by relocation. #76's obvious fix (author the missing section
   in `layout-reference.md` and repoint the dead link at it) would have asserted
   sample verification of runtime input routing, which no on-disk project can
-  observe. Recorded as [ADR 0011](../docs/decisions/0011-a-docs-provenance-note-is-part-of-the-move-cost.md).
+  observe. Recorded as [ADR 0011](/decisions/0011-a-docs-provenance-note-is-part-of-the-move-cost.md).
   **Trap 7**: the sweep cannot see broken navigation — trap 5's shape a second
   time. The dead anchor `layout-reference.md#modal-layer-management-toggleinteractivelayers`
   shipped in `41c1816` and, per git history, its target heading has never existed
@@ -189,7 +189,7 @@ schema's two-bundles note forbids folding it in here.
 ## 2026-08-19
 
 * **Update**: `knowledge-boundaries.md` — new section "Name chef's *capability*,
-  never chef's *symbol*", recording [ADR 0010](../docs/decisions/0010-linking-out-generically-instead-of-naming-chef-symbols.md).
+  never chef's *symbol*", recording [ADR 0010](/decisions/0010-linking-out-generically-instead-of-naming-chef-symbols.md).
   The table said which repo owns a fact but never how a `docs/c3` doc should
   *refer* to the toolchain, and the founding import answered that by naming chef's
   internals. Driven by #69, which found `construct3-guide.md` instructing agents to

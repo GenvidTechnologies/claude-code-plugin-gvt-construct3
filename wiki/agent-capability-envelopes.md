@@ -15,7 +15,7 @@ sources:
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/CLAUDE.md
     title: CLAUDE.md in the repo (living version)
   - id: adr-0003
-    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/decisions/0003-two-agent-capability-split.md
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/decisions/0003-two-agent-capability-split.md
     title: ADR 0003 in the repo (living version)
 ---
 
@@ -24,7 +24,7 @@ sources:
 `plugin/agents/*.md` are flat Markdown files with YAML frontmatter, dispatched as
 `subagent_type: "gvt-construct3:<name>"`. Their `model` and `tools` keys are a
 **functional constraint, not documentation**
-([ADR 0003](../docs/decisions/0003-two-agent-capability-split.md)).[^claude-md]
+([ADR 0003](/decisions/0003-two-agent-capability-split.md)).[^claude-md]
 
 ## The two agents
 

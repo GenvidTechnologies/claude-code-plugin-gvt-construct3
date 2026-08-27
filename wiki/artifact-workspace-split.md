@@ -7,7 +7,7 @@ status: stable
 generated: { by: process:maintain-wiki, at: 2026-08-26T00:00:00Z }
 sources:
   - id: adr-0004
-    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/decisions/0004-plugin-subfolder-split-and-git-subdir.md
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/decisions/0004-plugin-subfolder-split-and-git-subdir.md
     title: ADR 0004 in the repo (living version)
 ---
 

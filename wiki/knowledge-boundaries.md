@@ -14,10 +14,10 @@ sources:
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/CLAUDE.md
     title: CLAUDE.md in the repo (living version)
   - id: adr-0010
-    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/decisions/0010-linking-out-generically-instead-of-naming-chef-symbols.md
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/decisions/0010-linking-out-generically-instead-of-naming-chef-symbols.md
     title: ADR 0010 in the repo (living version)
   - id: adr-0001
-    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/decisions/0001-three-knowledge-boundaries.md
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/decisions/0001-three-knowledge-boundaries.md
     title: ADR 0001 in the repo (living version)
 ---
 
@@ -26,7 +26,7 @@ sources:
 The plugin deliberately splits C3 knowledge across separate homes. Respect these
 when adding or editing content — this is the repo's central design principle,
 recorded as
-[ADR 0001](../docs/decisions/0001-three-knowledge-boundaries.md).[^claude-md]
+[ADR 0001](/decisions/0001-three-knowledge-boundaries.md).[^claude-md]
 
 ## The three primary homes
 
@@ -51,7 +51,7 @@ points to the canonical source.
 The table above says which repo owns a fact. It does not say **how** a `docs/c3`
 doc should refer to the toolchain when the two legitimately meet — and the
 founding import answered that by naming chef's internals directly.
-[ADR 0010](../docs/decisions/0010-linking-out-generically-instead-of-naming-chef-symbols.md)
+[ADR 0010](/decisions/0010-linking-out-generically-instead-of-naming-chef-symbols.md)
 settles it:
 
 > A `docs/c3` doc refers to construct3-chef by **capability** and links to

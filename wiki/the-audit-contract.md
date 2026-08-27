@@ -15,13 +15,13 @@ sources:
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/CLAUDE.md
     title: CLAUDE.md in the repo (living version)
   - id: adr-0002
-    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/decisions/0002-data-driven-audit-contract.md
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/decisions/0002-data-driven-audit-contract.md
     title: ADR 0002 in the repo (living version)
   - id: adr-0005
-    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/decisions/0005-non-rooted-c3-project-support.md
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/decisions/0005-non-rooted-c3-project-support.md
     title: ADR 0005 in the repo (living version)
   - id: adr-0006
-    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/decisions/0006-detect-discovery-ambiguity.md
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/decisions/0006-detect-discovery-ambiguity.md
     title: ADR 0006 in the repo (living version)
 ---
 
@@ -42,7 +42,7 @@ severity.
 
 **To add a new requirement, add an `expects` entry to the relevant component's
 frontmatter — do not hard-code checks in the script**
-([ADR 0002](../docs/decisions/0002-data-driven-audit-contract.md)).
+([ADR 0002](/decisions/0002-data-driven-audit-contract.md)).
 
 An entry with `required: false` reports at `info` severity and never affects the
 exit code — that is how an *optional* expectation is expressed without a script
@@ -64,7 +64,7 @@ The discovery check emits two advisory findings:
 
 - an **ambiguity `warning`** — ≥2 sibling `project.c3proj` dirs, which makes the
   server abort at startup with `-32000`
-  ([ADR 0006](../docs/decisions/0006-detect-discovery-ambiguity.md));
+  ([ADR 0006](/decisions/0006-detect-discovery-ambiguity.md));
 - a **root-divergence `info`** — the `paths.c3project` root differs from what bare
   auto-discovery would pick, so the server may run on a different project than
   the audit validated (added in #49, extending ADR 0006 with no new ADR).
@@ -111,7 +111,7 @@ itself stays repo-root-relative.
 
 Rooted repos (no `paths.c3project`) are unaffected — `base` is just another
 data-driven `expects` field, not a script-level check
-([ADR 0005](../docs/decisions/0005-non-rooted-c3-project-support.md)).
+([ADR 0005](/decisions/0005-non-rooted-c3-project-support.md)).
 
 ## Supporting libs
 
@@ -155,13 +155,13 @@ Measured against **gvt-dev 4.22.0**:
 
 | Signal | Expected | Cause |
 |---|---|---|
-| broken-link warnings | **57** | `scanBrokenLinks` resolves a bundle-absolute `](/page.md)` against the repo root instead of the bundle root — gvt-dev #421. One per intra-wiki link; all false. |
+| broken-link warnings | **75** | `scanBrokenLinks` resolves a bundle-absolute `](/page.md)` against the repo root instead of the bundle root — gvt-dev #421. One per intra-wiki link; all false. |
 | retired-token findings | **8** | The four deliberate retired-token citations this repo carries on purpose, each emitted twice because `scanRetiredTokens` unions the docs-root and wiki-dir walks and this repo's overrides make them the same directory. No upstream issue filed. |
 | orphaned-doc findings | **0** | **Not a pass.** `scanOrphanedDocs` looks for a `TOC.md` inside the docs root; this bundle's index is `index.md`, so the scanner returns empty on its first line. It is inert, not satisfied — index completeness is checked by hand. |
 | exit code | **0** | Only `error` severity moves the exit code; everything above is `warning` or `info`. |
-| scanned line | `scanned 17 file(s) under wiki/, CLAUDE.md` | `resolveDocsRoot` derives the docs-tier root from the `docs/TOC.md` override, so the scanners walk `wiki/`. |
+| scanned line | `scanned 18 file(s) under wiki/, CLAUDE.md` | `resolveDocsRoot` derives the docs-tier root from the `docs/TOC.md` override, so the scanners walk `wiki/`. |
 
-**What a regression actually looks like:** a 58th broken-link warning, or a 56th. Both
+**What a regression actually looks like:** a 76th broken-link warning, or a 74th. Both
 mean something moved — a new unswept `../docs/…` link, or a wiki link deleted. The count
 being *nonzero* is not the signal; the count *changing* is.
 

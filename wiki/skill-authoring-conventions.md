@@ -15,8 +15,8 @@ sources:
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/CLAUDE.md
     title: CLAUDE.md in the repo (living version)
   - id: grounding
-    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/grounding-in-chef-behavior.md
-    title: docs/grounding-in-chef-behavior.md in the repo (living version)
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/9d77f5b/docs/grounding-in-chef-behavior.md
+    title: docs/grounding-in-chef-behavior.md as of 9d77f5b, retired into wiki/grounding-in-chef-source.md
 ---
 
 # Skill authoring conventions
@@ -75,7 +75,7 @@ e.g. `author-navigation-patterns`. Mirror the tool's algorithm only against its
 validator** (`navigation-graph`). Any bundled helper script is a fast *preview*
 that must agree with — never replace — that output. Pin the mirrored logic to
 ground truth from the package source (see
-[`docs/grounding-in-chef-behavior.md`](../docs/grounding-in-chef-behavior.md)).
+[Grounding a claim in chef's package source](/grounding-in-chef-source.md)).
 
 ### A skill that produces a data cache the tool reads
 
