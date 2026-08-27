@@ -155,15 +155,27 @@ Measured against **gvt-dev 4.22.0**:
 
 | Signal | Expected | Cause |
 |---|---|---|
-| broken-link warnings | **75** | `scanBrokenLinks` resolves a bundle-absolute `](/page.md)` against the repo root instead of the bundle root — gvt-dev #421. One per intra-wiki link; all false. |
+| broken-link warnings | **one per intra-wiki bundle-absolute link** — 76 today | `scanBrokenLinks` resolves a bundle-absolute `](/page.md)` against the repo root instead of the bundle root — gvt-dev #421. One per intra-wiki link; all false. |
 | retired-token findings | **8** | The four deliberate retired-token citations this repo carries on purpose, each emitted twice because `scanRetiredTokens` unions the docs-root and wiki-dir walks and this repo's overrides make them the same directory. No upstream issue filed. |
 | orphaned-doc findings | **0** | **Not a pass.** `scanOrphanedDocs` looks for a `TOC.md` inside the docs root; this bundle's index is `index.md`, so the scanner returns empty on its first line. It is inert, not satisfied — index completeness is checked by hand. |
 | exit code | **0** | Only `error` severity moves the exit code; everything above is `warning` or `info`. |
 | scanned line | `scanned 18 file(s) under wiki/, CLAUDE.md` | `resolveDocsRoot` derives the docs-tier root from the `docs/TOC.md` override, so the scanners walk `wiki/`. |
 
-**What a regression actually looks like:** a 76th broken-link warning, or a 74th. Both
-mean something moved — a new unswept `../docs/…` link, or a wiki link deleted. The count
-being *nonzero* is not the signal; the count *changing* is.
+**A fixed count is the wrong baseline here, and the right one is an invariant.** The
+warning total moves every time anyone adds or removes an intra-wiki link, so pinning a
+number guarantees false alarms on legitimate edits. What actually holds is a one-to-one
+correspondence:
+
+```bash
+# these two numbers must be equal
+node <audit> | grep -c 'broken link'
+grep -rho '](/[a-z0-9][a-z0-9./-]*\.md)' wiki/ | wc -l   # minus any inside backticks
+```
+
+**A regression is a broken-link warning with no matching `](/…)` link, or a `](/…)` link
+with no matching warning** — either means something other than #421 is at work. Verified
+exact at the time of writing: 76 warnings, 78 raw matches, 2 of which are backticked prose
+examples the audit's parser correctly ignores.
 
 > **The `scanned` figure is the one to re-measure rather than trust.** It depends on the
 > audit's internal declared-expectation-path resolution rather than a file count, so it

@@ -16,7 +16,7 @@ sources:
     title: CLAUDE.md in the repo (living version)
   - id: toc
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/index.md
-    title: docs/TOC.md in the repo (living version)
+    title: wiki/index.md, the bundle index that absorbed docs/TOC.md when it was retired
 ---
 
 # Doc inventories, ADRs, and the changelog
@@ -74,21 +74,25 @@ update:
 - **`plugin/CHANGELOG.md`**.
 
 Prefer non-counted phrasing ("skills include…") over "N skills exist", so a
-hardcoded count can't go stale. `docs/TOC.md` needs nothing — it points at the
-README for the inventory.
+hardcoded count can't go stale. The wiki's own `index.md` needs nothing for a
+new *skill* — it indexes wiki pages, not the shipped plugin's surface.
 
-## Adding a docs/c3 reference doc touches three *exhaustive* description surfaces
+## Adding a docs/c3 reference doc touches two *exhaustive* description surfaces
 
-Unlike skills, each `docs/c3/*` doc is listed **individually** in *both*
-`plugin/docs/c3/index.md` (the doc table) **and** `docs/TOC.md` (the "C3 platform
-reference" list). Update both in the same commit — a retro found `docs/TOC.md`
-had been missing `ace-reference.md` and `toolchain-config.md` since they shipped.
+Unlike skills, each `docs/c3/*` doc is listed **individually** in
+`plugin/docs/c3/index.md` (the doc table), and — since #79 made `plugin/docs/c3/`
+an OKF bundle — in each doc's own YAML **frontmatter `description:`**, which
+enumerates the same content areas and drifts the same way. Reconcile both in the
+same commit.
 
-Since #79 made `plugin/docs/c3/` an OKF bundle, each doc's own YAML
-**frontmatter `description:`** is a **third** surface, enumerating the same
-content areas the other two do, and it drifts the same way. This rule predates
-#79, which is why it originally named only two — reconcile all three in the
-same commit. Evidence from #70: `construct3-guide.md`'s frontmatter description
+> **This count has moved twice, in both directions, and that is the point.** It
+> was two surfaces originally, became three when #79 added the frontmatter
+> descriptions, and is two again since [#90](/decisions/0012-retiring-docs-into-the-wiki-bundle.md)
+> retired `docs/TOC.md` — whose "C3 platform reference" list was the third. That
+> list is **not** carried into `wiki/index.md`: the bundle root's own scope note
+> forbids indexing another bundle's pages there, and the list had already drifted
+> twice. Retiring a duplicate inventory is the one change that makes this rule
+> *cheaper* rather than more expensive. Evidence from #70: `construct3-guide.md`'s frontmatter description
 omitted its TypeScript-integration and layout-architecture sections;
 `typescript-integration.md`'s omitted the facade-pattern section;
 `layout-reference.md`'s omitted localization, instance-naming, and navigation —
@@ -103,7 +107,7 @@ And per the [knowledge-boundary rule](/knowledge-boundaries.md), don't restate i
 one `docs/c3` doc what a sibling owns; link instead.
 
 **Reconcile each surface against the doc's own `##` headings, not against a
-sibling inventory.** The three surfaces don't just go stale together — they can
+sibling inventory.** The surfaces don't just go stale together — they can
 *contradict each other*, and agreement between two of them is not evidence
 either is right. #70 found `docs/TOC.md` naming `layout-reference.md`'s
 navigation content while `plugin/docs/c3/index.md` did not: two inventories
@@ -114,7 +118,7 @@ ground truth.
 ## Adding a *section* stales those inventories' descriptions, even with no new row
 
 The rule above is about a *new doc* needing new rows; the adjacent case is easy
-to rule out too fast. All three surfaces describe each doc with a one-liner that
+to rule out too fast. Both surfaces describe each doc with a one-liner that
 **enumerates its content areas** ("layout/layer JSON, render order, the
 template/replica system, …"), so a new `##` section belongs in that enumeration
 even when no row is added.
@@ -201,7 +205,11 @@ survived six PRs because nothing checked this.
 ## ADRs are historical records — don't retroactively rewrite them
 
 When a rename or refactor lands, sweep the *living* docs (README, `CLAUDE.md`,
-`docs/*.md`, these wiki pages) but leave `docs/decisions/` untouched.
+these wiki pages) but leave `wiki/decisions/` untouched.
+
+The precedent below names `docs/decisions/` because that is where the ADRs lived
+when it happened. That wording is **historical and stays** — the rule above moved,
+the record of what was done does not.
 
 Precedent: commit `2400b62` renamed the plugin `genvid-c3` → `gvt-construct3`
 without editing ADR 0004's `genvid-c3` references, and the later `genvid-dev` →
