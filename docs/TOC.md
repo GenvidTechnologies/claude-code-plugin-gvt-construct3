@@ -37,6 +37,7 @@ Architecture and compromise decisions for the dev workspace and plugin design. S
 - [docs/decisions/0009-discharging-the-mirror-check-when-the-range-moves.md](decisions/0009-discharging-the-mirror-check-when-the-range-moves.md) — What to do when ADR 0007's part 2 fails: diff `resolveRootFolder.js` *and its import closure* between the reviewed and newly-resolvable `@genvidtech/mcp-utils` versions, and record the reviewed baseline. (#74)
 - [docs/decisions/0010-linking-out-generically-instead-of-naming-chef-symbols.md](decisions/0010-linking-out-generically-instead-of-naming-chef-symbols.md) — `docs/c3` refers to construct3-chef by *capability* and links to `construct3-chef://docs`; it never names chef's functions, modules, or MCP tools — not even correct ones, since a correct name can rot into confident wrongness undetected. (#69)
 - [docs/decisions/0011-a-docs-provenance-note-is-part-of-the-move-cost.md](decisions/0011-a-docs-provenance-note-is-part-of-the-move-cost.md) — A fact isn't relocated between `docs/c3` docs on topical fit alone; the target document's ADR 0008 provenance note (does it carve out runtime behaviour, or assert blanket sample verification?) is part of the move's cost. (#76)
+- [docs/decisions/0012-retiring-docs-into-the-wiki-bundle.md](decisions/0012-retiring-docs-into-the-wiki-bundle.md) — `docs/` is retired into the `wiki/` bundle behind four `paths` overrides; the audit residue that no override can reach is accepted and named site by site rather than counted. (#90)
 
 ## C3 platform reference (`plugin/docs/c3/`)
 
