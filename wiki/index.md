@@ -15,7 +15,7 @@ a new page is registered here when it's created, and `lint` flags any page liste
 in **no** index. Each entry's description is the linked page's frontmatter
 `description`, so the index and the page can't drift.
 
-See [`docs/wiki-schema.md`](../docs/wiki-schema.md) for the page format and
+See [`wiki-schema.md`](wiki-schema.md) for the page format and
 maintenance rules.
 
 > **Scope.** This bundle covers the **dev workspace**. The shipped C3 platform
@@ -43,3 +43,15 @@ maintenance rules.
 * [Deferring an issue upstream](deferring-issues-upstream.md) - How an issue that belongs to construct3-chef gets relocated — check chef's docs for existing coverage first, then file it there in the same session, cross-link both ways, and label the origin-side umbrella blocked-upstream so triage stops ranking it.
 * [Working with the code reviewer](working-with-code-review.md) - The reviewer recurrently over-escalates valid-but-unusual Markdown to critical — how to verify the severity against the spec, and why a sound finding can still carry a remedy that is wrong for this repo.
 * [Issue triage conventions](issue-triage-conventions.md) - This repo's flat-label triage model — one category label, no priority scheme, question doubling as needs-info, and the blocked-upstream lifecycle — plus why a small clean backlog is still worth triaging.
+
+## Decision records
+
+* [Decision records](decisions/index.md) - Architecture and compromise decisions for the dev workspace and plugin design; the issue linked in each record carries the original context. Historical records — never rewritten in place.
+
+## Process contracts
+
+* [Process contracts](process/index.md) - Contracts read *by path* by a `gvt-dev` skill rather than by a human, resolved through `.gvt-agent.json` `paths` overrides.
+
+## Contract
+
+* [Wiki Maintenance Schema](wiki-schema.md) - The maintenance schema for this three-tier wiki (`raw/` captures → `wiki/` pages → the schema itself), consumed by `/gvt-dev:maintain-wiki`.

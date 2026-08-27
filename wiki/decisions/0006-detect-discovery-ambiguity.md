@@ -1,3 +1,12 @@
+---
+type: decision-record
+title: "0006. Detect `project.c3proj` Discovery Ambiguity in the Audit"
+description: >-
+  A second bespoke audit check mirrors `resolveRootFolder`'s ambiguous-root discovery and reports it as a new advisory `warning` severity (exit code unchanged).
+tags: [decision, architecture]
+status: stable
+generated: { by: process:maintain-wiki, at: 2026-08-27T00:00:00Z }
+---
 # 0006. Detect `project.c3proj` Discovery Ambiguity in the Audit
 
 - **Status:** Accepted

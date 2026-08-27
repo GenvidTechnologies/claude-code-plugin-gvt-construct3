@@ -1,3 +1,12 @@
+---
+type: decision-record
+title: "0008. Record Verification Provenance in `docs/c3`, and Cite the Sample Tag — Never `path:line`"
+description: >-
+  `docs/c3` docs declare their verification provenance so an *unmarked* section means "checked"; shipped docs cite the `construct3-sample` tag, never `path:line`, which drifts silently on a re-tag.
+tags: [decision, architecture]
+status: stable
+generated: { by: process:maintain-wiki, at: 2026-08-27T00:00:00Z }
+---
 # 0008. Record Verification Provenance in `docs/c3`, and Cite the Sample Tag — Never `path:line`
 
 - **Status:** Accepted

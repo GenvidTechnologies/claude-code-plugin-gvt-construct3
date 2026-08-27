@@ -1,3 +1,12 @@
+---
+type: decision-record
+title: "0005. Non-Rooted C3 Project Support"
+description: >-
+  Why `plugin.json` stays bare (no `--project-dir`); why `metadata.expects.files` gains a per-entry `base: project|repo` field for project-root vs. repo-root resolution.
+tags: [decision, architecture]
+status: stable
+generated: { by: process:maintain-wiki, at: 2026-08-27T00:00:00Z }
+---
 # 0005. Non-Rooted C3 Project Support
 
 - **Status:** Accepted

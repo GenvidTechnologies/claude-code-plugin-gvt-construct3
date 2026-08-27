@@ -1,3 +1,12 @@
+---
+type: decision-record
+title: "0003. Two-Agent Capability Split (Read-Only Explorer vs. Mutating Implementer)"
+description: >-
+  `c3-explorer` (haiku, read-only, hard `tools:` allow-list) vs. `c3-implementer` (opus, mutations); the allow-list is a functional constraint, not docs.
+tags: [decision, architecture]
+status: stable
+generated: { by: process:maintain-wiki, at: 2026-08-27T00:00:00Z }
+---
 # 0003. Two-Agent Capability Split (Read-Only Explorer vs. Mutating Implementer)
 
 - **Status:** Accepted

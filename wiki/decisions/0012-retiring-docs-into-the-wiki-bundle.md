@@ -1,3 +1,12 @@
+---
+type: decision-record
+title: "0012. Retire `docs/` into the `wiki/` Bundle, Accepting the Audit-Tooling Residue"
+description: >-
+  `docs/` is retired into the `wiki/` bundle behind four `paths` overrides; the audit residue that no override can reach is accepted and named site by site rather than counted.
+tags: [decision, architecture]
+status: stable
+generated: { by: process:maintain-wiki, at: 2026-08-27T00:00:00Z }
+---
 # 0012. Retire `docs/` into the `wiki/` Bundle, Accepting the Audit-Tooling Residue
 
 - **Status:** Accepted

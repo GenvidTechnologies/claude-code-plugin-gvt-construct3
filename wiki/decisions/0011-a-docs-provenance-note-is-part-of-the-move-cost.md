@@ -1,3 +1,12 @@
+---
+type: decision-record
+title: "0011. A `docs/c3` Doc's Provenance Note Is Part of the Cost of Moving a Fact Into It"
+description: >-
+  A fact isn't relocated between `docs/c3` docs on topical fit alone; the target document's ADR 0008 provenance note (does it carve out runtime behaviour, or assert blanket sample verification?) is part of the move's cost.
+tags: [decision, architecture]
+status: stable
+generated: { by: process:maintain-wiki, at: 2026-08-27T00:00:00Z }
+---
 # 0011. A `docs/c3` Doc's Provenance Note Is Part of the Cost of Moving a Fact Into It
 
 - **Status:** Accepted
