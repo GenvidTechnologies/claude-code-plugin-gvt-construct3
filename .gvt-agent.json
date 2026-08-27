@@ -7,14 +7,18 @@
     "validate": "cd plugin && claude plugin validate . && node --test skills/*/scripts/test/*.test.mjs"
   },
   "paths": {
-    "plugin_root": "plugin"
+    "plugin_root": "plugin",
+    "docs/TOC.md": "wiki/index.md",
+    "docs/decisions/": "wiki/decisions/",
+    "docs/issue-triage.md": "wiki/process/issue-triage.md",
+    "docs/wiki-schema.md": "wiki/wiki-schema.md"
   },
   "wiki": {
     "wikiDir": "wiki",
     "rawDir": "raw"
   },
   "hygiene": {
-    "excludePaths": ["raw/"]
+    "excludePaths": ["raw/", "wiki/decisions/"]
   },
   "bugTracker": {
     "kind": "github",
