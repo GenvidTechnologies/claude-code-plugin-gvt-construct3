@@ -15,6 +15,53 @@ before. If a past entry itself needs correcting, add a new entry that says
 so; never edit or remove the old one in place. See `docs/wiki-schema.md` for
 the full maintenance schema.
 
+## 2026-08-27
+
+* **Migration**: `docs/` **retired entirely** into this bundle (#90), reaching the
+  zero-`docs/` end state `construct3-chef` already occupies. 11 ADRs plus a new
+  ADR 0012 moved to `wiki/decisions/`; `wiki-schema.md` to `wiki/wiki-schema.md`;
+  `issue-triage.md` to `wiki/process/issue-triage.md`. `docs/TOC.md` was folded into
+  `index.md` and deleted, along with `tool-surface-reconciliation.md` and
+  `grounding-in-chef-behavior.md` whose content already lived here. Four
+  `.gvt-agent.json` `paths` overrides plus `wiki/decisions/` in `hygiene.excludePaths`
+  carry the contract; the audit holds at **exit 0, `required: 35 of 35`**.
+
+* **Correction to the plan, caught by its own gate**: `tool-surface-reconciliation.md`
+  was scheduled for a bare delete on the grounds that `pin-bump-verification.md` had
+  absorbed it. The pre-delete gate found only 2 of its 9 count anchors had survived —
+  the *historical series* (chef 36/34/30, `+list-ops` 37/35/31, dm 14/13) was absent,
+  as were the pinned package names, the silent-zero warning and the burbank
+  ground-truth cross-check. Worse, `pin-bump-verification.md` **pointed at the doomed
+  file by path** as the place to refresh those totals. Deleting it would have destroyed
+  the anchors and left a dangling instruction — the precise "breaks the one after"
+  failure that passage exists to warn about. Migrated first, then deleted.
+
+* **Correction, self-inflicted**: the `Expected audit residue` section added to
+  `the-audit-contract.md` named the retired token literally while stating how many such
+  citations exist — making itself the fifth and taking the audit from 4 to 5. It now
+  describes them without naming the token. Caught within minutes by
+  `scripts/audit-snapshot.mjs`, on that script's first real run.
+
+* **Prose was swept by hand, not by regex.** A dry run of the mechanical sweep wanted to
+  rewrite three statements that are *true about the past*: a note that an earlier sweep
+  "skipped `docs/decisions/`" (it did — they were there then), a log entry recording
+  which file a capture was taken from, and a rule naming a `docs/TOC.md` inventory list
+  this migration deliberately dropped. Only dead links and `sources[].resource` URLs
+  were automated.
+
+* **Provenance for the three deleted sources is pinned, not dropped.** Their
+  `sources[].resource` URLs now point at commit `9d77f5b` — the last commit where those
+  files existed — rather than at `blob/main` (which would 404) or nowhere (which would
+  erase provenance the content genuinely has).
+
+* **Two predicted numbers were wrong and are recorded as findings rather than edited
+  away**: broken-link came in at **75** against a predicted 57, and the scanned count at
+  **18** against 17. Both grew from bundle-absolute links and an index this migration
+  itself added; the residue table now carries the measured values. Acceptance criterion
+  T13 was separately found **defective** — its `sed` frontmatter-stripper never worked —
+  and was amended in the open on #90 after the underlying requirement was re-verified by
+  other means and shown to hold.
+
 ## 2026-08-26
 
 Bulk `ingest` of the whole dev-workspace `docs/` tree, **capture-first**: all 16
