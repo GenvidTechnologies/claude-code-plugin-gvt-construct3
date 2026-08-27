@@ -26,7 +26,7 @@ maintenance rules.
 ## Architecture
 
 * [The knowledge boundaries](knowledge-boundaries.md) - The four homes C3 knowledge is split across — this plugin's platform reference, chef's tooling docs, the consuming repo's CLAUDE.md, and cross-tool wiring — plus c3source as a fifth home the agents never read, and the rule that docs/c3 names chef's capabilities but never chef's symbols.
-* [The convention contract and the audit](the-audit-contract.md) - How audit-c3-conventions validates a consuming repo — the data-driven expects model, the two checks deliberately baked into the script, the presence-vs-content validation boundary, and base project resolution.
+* [The convention contract and the audit](the-audit-contract.md) - How audit-c3-conventions validates a consuming repo — the data-driven expects model, the two checks deliberately baked into the script, the presence-vs-content validation boundary, base project resolution, and the audit residue this repo expects on every run as known cost rather than regression.
 * [Agent capability envelopes](agent-capability-envelopes.md) - The two agents' model and tools frontmatter is a functional constraint, not documentation — don't instruct an agent to do what it cannot observe or call.
 * [The artifact / workspace split](artifact-workspace-split.md) - Why the shipped plugin lives in plugin/ while the repo root is a gvt-dev dev workspace, what each side owns, and why that split forced the marketplace entry onto a git-subdir source rather than a plain url.
 

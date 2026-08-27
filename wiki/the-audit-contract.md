@@ -1,10 +1,10 @@
 ---
 type: reference
 title: The convention contract and the audit
-description: How audit-c3-conventions validates a consuming repo — the data-driven expects model, the two checks deliberately baked into the script, the presence-vs-content validation boundary, and base project resolution.
+description: How audit-c3-conventions validates a consuming repo — the data-driven expects model, the two checks deliberately baked into the script, the presence-vs-content validation boundary, base project resolution, and the audit residue this repo expects on every run as known cost rather than regression.
 tags: [audit, expects, contract, discovery, adr-0002, adr-0005, adr-0006]
 status: stable
-stale_after: 2027-08-18
+stale_after: 2027-02-27
 generated: { by: process:maintain-wiki, at: 2026-08-18T00:00:00Z }
 sources:
   - id: claude-md
@@ -143,6 +143,40 @@ that package.
 | `2` | Unexpected script error |
 
 [^claude-md]: CLAUDE.md, "The convention contract & the audit".
+
+## Expected audit residue
+
+**A clean run of this repo's audit is not a silent one.** Since `docs/` was retired into
+this bundle ([ADR 0012](/decisions/0012-retiring-docs-into-the-wiki-bundle.md)), the audit
+reports a stable set of findings that are **known cost, not regression**. Subtract these
+before treating any output as a problem.
+
+Measured against **gvt-dev 4.22.0**:
+
+| Signal | Expected | Cause |
+|---|---|---|
+| broken-link warnings | **57** | `scanBrokenLinks` resolves a bundle-absolute `](/page.md)` against the repo root instead of the bundle root — gvt-dev #421. One per intra-wiki link; all false. |
+| retired-token findings | **8** | The four deliberate `genvid-c3` citations, each emitted twice because `scanRetiredTokens` unions the docs-root and wiki-dir walks and this repo's overrides make them the same directory. No upstream issue filed. |
+| orphaned-doc findings | **0** | **Not a pass.** `scanOrphanedDocs` looks for a `TOC.md` inside the docs root; this bundle's index is `index.md`, so the scanner returns empty on its first line. It is inert, not satisfied — index completeness is checked by hand. |
+| exit code | **0** | Only `error` severity moves the exit code; everything above is `warning` or `info`. |
+| scanned line | `scanned 17 file(s) under wiki/, CLAUDE.md` | `resolveDocsRoot` derives the docs-tier root from the `docs/TOC.md` override, so the scanners walk `wiki/`. |
+
+**What a regression actually looks like:** a 58th broken-link warning, or a 56th. Both
+mean something moved — a new unswept `../docs/…` link, or a wiki link deleted. The count
+being *nonzero* is not the signal; the count *changing* is.
+
+> **The `scanned` figure is the one to re-measure rather than trust.** It depends on the
+> audit's internal declared-expectation-path resolution rather than a file count, so it
+> was not independently derivable when this section was written. If a run reports a
+> different number, the **measured** value is authoritative — record the delta as a
+> finding, don't edit this table to match.
+
+**These numbers are pinned to a gvt-dev version and will move.** When #421 lands the
+broken-link count goes to 0; when #390 lands the Practice Coverage row returns from
+`Environment … partial adoption` to `adopted` and `run-retro` resumes detecting the wiki.
+Re-measure on the next gvt-dev bump rather than carrying this table forward — which is
+why this page's `stale_after` sits in the six-month bucket for version-pinned content
+rather than the one-year bucket its topic would otherwise get.
 
 ## Related
 
