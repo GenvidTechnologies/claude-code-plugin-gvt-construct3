@@ -156,7 +156,7 @@ Measured against **gvt-dev 4.22.0**:
 | Signal | Expected | Cause |
 |---|---|---|
 | broken-link warnings | **57** | `scanBrokenLinks` resolves a bundle-absolute `](/page.md)` against the repo root instead of the bundle root — gvt-dev #421. One per intra-wiki link; all false. |
-| retired-token findings | **8** | The four deliberate `genvid-c3` citations, each emitted twice because `scanRetiredTokens` unions the docs-root and wiki-dir walks and this repo's overrides make them the same directory. No upstream issue filed. |
+| retired-token findings | **8** | The four deliberate retired-token citations this repo carries on purpose, each emitted twice because `scanRetiredTokens` unions the docs-root and wiki-dir walks and this repo's overrides make them the same directory. No upstream issue filed. |
 | orphaned-doc findings | **0** | **Not a pass.** `scanOrphanedDocs` looks for a `TOC.md` inside the docs root; this bundle's index is `index.md`, so the scanner returns empty on its first line. It is inert, not satisfied — index completeness is checked by hand. |
 | exit code | **0** | Only `error` severity moves the exit code; everything above is `warning` or `info`. |
 | scanned line | `scanned 17 file(s) under wiki/, CLAUDE.md` | `resolveDocsRoot` derives the docs-tier root from the `docs/TOC.md` override, so the scanners walk `wiki/`. |
