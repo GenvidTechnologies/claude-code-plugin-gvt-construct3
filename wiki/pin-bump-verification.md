@@ -246,18 +246,40 @@ The old scope stays **resolvable** (frozen, not unpublished), so a version probe
 against the stale package still "works" — **pack both old and new and diff their
 registration names** rather than trusting a "no change" claim.[^reconciliation]
 
-## Refresh the count anchors
+## The count anchors
 
-A pin bump must also refresh the hardcoded totals in
-[`docs/tool-surface-reconciliation.md`](../docs/tool-surface-reconciliation.md)
-(chef `reg()`-in-`server.js` + `list-ops`; dm `registerTool`). Those are what the
-**next** bump greps against to sanity-check its own diff — so leaving them stale
-doesn't break the bump that made them wrong, **it breaks the one after**. That
-failure mode is invisible at the time you cause it, which is exactly why it is a
-checklist item rather than a judgement call.
+**These totals are the anchors the *next* bump greps against to sanity-check its own
+diff.** Refreshing them is a checklist item, not a judgement call, because leaving them
+stale doesn't break the bump that made them wrong — **it breaks the one after**, and
+that failure mode is invisible at the time you cause it.[^reconciliation]
 
-Re-confirm the `reg()`-vs-`opsRegistry.js` split before rewriting the numbers,
-since the doc's whole purpose is to warn that a `server.js`-only grep undercounts.
+**Packages pinned:** `@genvidtech/construct3-chef` and `@genvidtech/c3-domain-manager`,
+in `plugin/.claude-plugin/plugin.json`'s `mcpServers`.
+
+| Server | Idiom | Location | Count |
+|---|---|---|---|
+| construct3-chef | `reg("…")` | `dist/mcp/server.js` | **36** at `1.1.0` — was **34** at `1.0.0`, **30** stable `0.9.0` → `0.11.2` |
+| construct3-chef | + `list-ops` from `opsRegistry.js` | — | **37 total** — was **35**, **31** |
+| c3-domain-manager | `registerTool` | — | **14** at `0.8.0` (unchanged from `0.7.0`; was **13** before) |
+
+**Grep `reg(` in `server.js`, not `registerTool(`.** A bare `registerTool(` grep barely
+matches chef — only `list-ops` and the dynamic `op-<name>` wrapper use that idiom — so it
+undercounts badly.[^reconciliation]
+
+> **Distrust a silent zero.** If a surface grep returns **0**, or an implausibly small
+> set, the registration idiom or the file moved — it does not mean the surface shrank.
+> chef `1.0.0` relocated the registry to `dist/mcp/server.js`, so a bare `dist/server.js`
+> grep now finds nothing at all. Re-confirm the `reg()`-vs-`opsRegistry.js` split before
+> rewriting any number here, since a `server.js`-only grep is exactly what undercounts an
+> ops bump.[^reconciliation]
+
+## Ground-truth cross-check
+
+`genvid-holdings/burbank` is the real embedded consumer. Its `.claude/settings.json`
+allow-list — entries prefixed `mcp__plugin_gvt-construct3_<server>__<tool>` — is a useful
+sanity check on which tools are *actually exercised in practice*. But it is a **subset**,
+covering only what that project has needed, so treat the package's own registration list
+as authoritative for completeness and burbank as confirmation of real usage.[^reconciliation]
 
 [^claude-md]: CLAUDE.md, "Release status" and "A pin-bump issue's tool/surface
 table is an assertion to test".

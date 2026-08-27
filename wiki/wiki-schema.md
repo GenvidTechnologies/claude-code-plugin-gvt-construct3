@@ -26,7 +26,7 @@ Pages under `wiki/` follow the [Open Knowledge Format (OKF) v0.2](https://github
 
 OKF has already shipped one breaking revision within v0.x: v0.1's body `# Citations` list was superseded by frontmatter `sources`, and `timestamp` became `generated.at`. Upstream declares v0.x provisional, so without a declared pin the next revision would be silent drift.
 
-**Bundle root.** The OKF bundle root is `wiki/` — the directory named by `.gvt-agent.json` `wiki.wikiDir`. Write it as `wiki/`, never hardcoded `wiki/`, because a consuming repo may set it to something else. `raw/` is **outside** the bundle — captures are not concept documents, so §11's frontmatter requirement never reaches them and the `raw/` immutability convention (below) stands unamended.
+**Bundle root.** The OKF bundle root is the directory named by `.gvt-agent.json` `wiki.wikiDir`, which in this repo is `wiki`. This document writes that literal throughout, which is correct *here*; a repo that sets `wikiDir` to something else must read every `wiki/` below as its own bundle root. `raw/` is **outside** the bundle — captures are not concept documents, so §11's frontmatter requirement never reaches them and the `raw/` immutability convention (below) stands unamended.
 
 ## Page format
 
