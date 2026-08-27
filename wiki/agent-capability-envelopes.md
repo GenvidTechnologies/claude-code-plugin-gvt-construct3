@@ -14,6 +14,9 @@ sources:
   - id: claude-md-upstream
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/CLAUDE.md
     title: CLAUDE.md in the repo (living version)
+  - id: adr-0003
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/decisions/0003-two-agent-capability-split.md
+    title: ADR 0003 in the repo (living version)
 ---
 
 # Agent capability envelopes
@@ -64,3 +67,4 @@ envelope".
 
 - [Verifying an MCP pin bump](/pin-bump-verification.md) — keeping the allow-list correct across bumps.
 - [The knowledge boundaries](/knowledge-boundaries.md) — keeping agent bodies generic across C3 projects.
+- [Grounding a claim in chef's package source](/grounding-in-chef-source.md) — why a CLI-only finding expires and can leave a tool uncallable.

@@ -14,6 +14,15 @@ sources:
   - id: claude-md-upstream
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/CLAUDE.md
     title: CLAUDE.md in the repo (living version)
+  - id: adr-0002
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/decisions/0002-data-driven-audit-contract.md
+    title: ADR 0002 in the repo (living version)
+  - id: adr-0005
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/decisions/0005-non-rooted-c3-project-support.md
+    title: ADR 0005 in the repo (living version)
+  - id: adr-0006
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/decisions/0006-detect-discovery-ambiguity.md
+    title: ADR 0006 in the repo (living version)
 ---
 
 # The convention contract and the audit

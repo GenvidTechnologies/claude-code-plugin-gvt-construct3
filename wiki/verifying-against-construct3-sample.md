@@ -14,6 +14,12 @@ sources:
   - id: claude-md-upstream
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/CLAUDE.md
     title: CLAUDE.md in the repo (living version)
+  - id: adr-0008
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/decisions/0008-recording-verification-provenance-in-docs-c3.md
+    title: ADR 0008 in the repo (living version)
+  - id: adr-0011
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/decisions/0011-a-docs-provenance-note-is-part-of-the-move-cost.md
+    title: ADR 0011 in the repo (living version)
 ---
 
 # Verifying docs/c3 against construct3-sample

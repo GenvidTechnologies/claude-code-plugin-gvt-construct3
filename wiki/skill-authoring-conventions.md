@@ -14,6 +14,9 @@ sources:
   - id: claude-md-upstream
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/CLAUDE.md
     title: CLAUDE.md in the repo (living version)
+  - id: grounding
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/grounding-in-chef-behavior.md
+    title: docs/grounding-in-chef-behavior.md in the repo (living version)
 ---
 
 # Skill authoring conventions
@@ -113,3 +116,4 @@ this repo".
 - [The convention contract and the audit](/the-audit-contract.md) — the `expects` model a skill declares against.
 - [Doc inventories, ADRs, and the changelog](/doc-inventories.md) — every inventory a new skill must be added to.
 - [The knowledge boundaries](/knowledge-boundaries.md) — deciding whether a fact belongs in a skill at all.
+- [Grounding a claim in chef's package source](/grounding-in-chef-source.md) — how to answer a design question from the pinned package rather than from memory.

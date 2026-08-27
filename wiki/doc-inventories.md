@@ -14,6 +14,9 @@ sources:
   - id: claude-md-upstream
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/CLAUDE.md
     title: CLAUDE.md in the repo (living version)
+  - id: toc
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/TOC.md
+    title: docs/TOC.md in the repo (living version)
 ---
 
 # Doc inventories, ADRs, and the changelog
@@ -251,3 +254,4 @@ reversed, add a **superseding** ADR rather than editing the old one in place.
 - [Verifying docs/c3 against construct3-sample](/verifying-against-construct3-sample.md) — a correction's evidence standard.
 - [Skill authoring conventions](/skill-authoring-conventions.md) — what a new skill's directory must contain.
 - [Working with the code reviewer](/working-with-code-review.md) — who has historically caught these misses.
+- [The artifact / workspace split](/artifact-workspace-split.md) — why an inventory can span the shipped tree and the workspace tree.

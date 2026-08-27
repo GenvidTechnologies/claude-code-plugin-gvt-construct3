@@ -15,6 +15,119 @@ before. If a past entry itself needs correcting, add a new entry that says
 so; never edit or remove the old one in place. See `docs/wiki-schema.md` for
 the full maintenance schema.
 
+## 2026-08-26
+
+Bulk `ingest` of the whole dev-workspace `docs/` tree, **capture-first**: all 16
+files under `docs/` (11 ADRs + 5 living docs) were first snapshotted byte-exact into
+`raw/` as `*-2026-08-26.md`, then ingested from those immutable captures. Verified
+byte-equal against their sources at capture time. `plugin/docs/c3/` was **excluded** —
+it is a separate OKF bundle, hand-maintained against `construct3-sample`, and the
+schema's two-bundles note forbids folding it in here.
+
+* **Correction** (supersedes the capture-first framing in the entries below, which
+  are left intact per this log's append-only rule): **the 16 `*-2026-08-26.md` captures
+  were removed, and each page's `(id, id-upstream)` source pair collapsed to a single
+  entry** keyed by the bare `id` — footnotes resolve against `sources[].id`, so the id
+  had to survive — carrying the stable upstream URL as its `resource`. The captures
+  were **unnecessary**: every one snapshotted a file already git-tracked in this repo,
+  so git history already preserved what it said, and re-verification never needed a
+  second on-disk copy. The justification given below ("the schema requires it")
+  **overstated the contract**. `maintain-wiki`'s `SKILL.md` never mandates a `raw/`
+  capture — its ingest step accepts a source named directly by the caller — and the
+  two-entry rule it was read from (`wiki-schema.template.md`, copied into
+  `docs/wiki-schema.md`) is worded *"write two entries **per capture**"*: it governs how
+  a capture is cited, not whether a source must become one. Neither the skill, the
+  template, nor OKF distinguishes an in-repo git-tracked source from an external one,
+  so **no rule was violated in either direction** — the capture step was simply
+  redundant work. `raw/claude-md-2026-08-18.md` was **kept**: it preserves CLAUDE.md's
+  pre-migration text from before the 40 KB slim, which no longer exists in the working
+  tree, so it is a genuine capture rather than a duplicate. No page content changed;
+  the wiki pages authored below stand as written.
+
+* **Creation**: `artifact-workspace-split.md` — from the ADR 0004 capture. The
+  `plugin/` shipped-artifact vs. repo-root dev-workspace split, what each side owns,
+  and why the subfolder layout *forced* the marketplace entry onto a `git-subdir`
+  source with `path: "plugin"` (the two are one decision, not two). Carries **no
+  `stale_after`**, per the schema's rule that a page restating a settled split changes
+  only by a superseding ADR — the schema's decay policy names this page's topic
+  explicitly. Records one **unresolved discrepancy** rather than papering over it: ADR
+  0004 and this repo's `CLAUDE.md` both name the catalog
+  `genvid-holdings/claude-code-marketplace`, while the installed `gvt-dev`
+  `release-plugin` skill describes it as
+  `GenvidTechnologies/claude-code-gvt-marketplace`. The page asserts the stable
+  *mechanism* and tells the reader to resolve the repo name against the catalog before
+  a `source.ref` bump.
+
+* **Creation**: `grounding-in-chef-source.md` — from the
+  `docs/grounding-in-chef-behavior.md` capture. The design-time motion (`npm pack` the
+  pinned package, read `dist/`) as distinct from the maintenance motion in
+  `pin-bump-verification.md`. Keeps the captured doc's three lessons — read the source
+  not the README, ground the *ingestion path* not just the schema (chef's `aceLookup`
+  concatenating live `aces.json` with the cache, no dedup), and "CLI-only" findings
+  having a shelf life (`navigation-graph`, CLI-only through 0.7.0, promoted at 0.8.0).
+  Two caveats are marked in-page as **workspace practice rather than claims from the
+  capture**: pack into a fixed scratchpad instead of `mktemp -d`, and treat a silent
+  zero as "the layout moved" rather than "the feature is absent".
+
+* **Creation**: `issue-triage-conventions.md` — from the `docs/issue-triage.md`
+  capture. The flat-label model, the deliberate absence of priority labels, `question`
+  doubling as the needs-info signal, and the `blocked-upstream` lifecycle. It
+  **deliberately does not restate the `gh` mutation recipes**: `/gvt-dev:triage-issues`
+  executes those from the living doc, so a second copy would drift while looking
+  authoritative. Closes with a workspace-practice note that a small, duplicate-free
+  backlog is still worth triaging, since enrichment and staleness-detection are
+  per-issue and do not shrink with backlog size.
+
+* **Update**: `pin-bump-verification.md` — from the ADR 0007, ADR 0009 and
+  `docs/tool-surface-reconciliation.md` captures. This closed the **sharpest gap found
+  in the corpus**: the page cited ADR 0007 and told the reader to discharge the
+  `resolveRootFolder` mirror obligation, but never stated what the two parts *were*,
+  and said nothing about what to do when part 2 **fails** — which is ADR 0009's entire
+  subject. Added: the two-part check (diff `dist/adapters/locations.js`; prove the
+  `@genvidtech/mcp-utils` range cannot reach an unreviewed version), the ADR 0009
+  escalation to a diff of `resolveRootFolder.js` **and its import closure**, the #74
+  results table, and the **reviewed baseline `{0.5.1, 0.7.0}`** — state the check
+  depends on, which "silently resets the check to its most expensive form" if it goes
+  unwritten. Also added the rule that `c3-explorer`'s allow-list is **not** chef's
+  `READ_ONLY` set (allow-list = annotated `READ_ONLY` − `validate-recipe` + `list-ops`
+  + `generate-sids`, measured at chef 1.1.0), since reconciling them by set-equality
+  silently widens a **haiku** agent's envelope; and the scope-rename split into
+  functional / live-prose / historical-record categories. `stale_after` moved to
+  **2027-02-26** (6 months) per the schema's rule for version-pinned content, and the
+  index entry was refreshed because the `description` changed.
+
+* **Provenance**: `knowledge-boundaries.md` — the ADR 0001 capture added as a source,
+  and the existing ADR 0010 entry **repointed** from the living
+  `../docs/decisions/0010-*.md` path to its immutable `../raw/` capture. Body
+  unchanged: ADR 0001's operational test (a platform gotcha invisible to
+  lint/typecheck belongs here; a recipe/tooling gotcha belongs to chef) was already
+  present.
+
+* **Provenance**: `the-audit-contract.md` — ADR 0002, 0005 and 0006 captures added as
+  sources. Body unchanged; all three decisions were already reflected.
+
+* **Provenance**: `agent-capability-envelopes.md` — ADR 0003 capture added as a source.
+
+* **Provenance**: `verifying-against-construct3-sample.md` — ADR 0008 and 0011
+  captures added as sources.
+
+* **Provenance**: `doc-inventories.md` — the `docs/TOC.md` capture added as a source.
+  `TOC.md` got **no page of its own**: it is an index, not durable insight, and a wiki
+  page restating an index drifts on the next doc added. It lands here instead, as
+  provenance for the page that already governs inventory drift.
+
+* **Provenance**: `deferring-issues-upstream.md` — the `docs/issue-triage.md` capture
+  added as a source, alongside a cross-link to the new triage page that owns the
+  `blocked-upstream` label lifecycle.
+
+* **Captured, no page**: `docs/wiki-schema.md` — snapshotted to
+  `raw/docs-wiki-schema-2026-08-26.md` for provenance, but deliberately **not**
+  authored into a `wiki/` page. It is the *normative schema governing this wiki*; a
+  wiki page restating it would create a second, competing source of truth for the rules
+  the wiki itself is maintained under, and the two could contradict with no tiebreak.
+  It is already reachable from `wiki/index.md`. This is the one capture from this run
+  that no page cites.
+
 ## 2026-08-21
 
 * **Correction + Update**: `doc-inventories.md` — three facts from #70's

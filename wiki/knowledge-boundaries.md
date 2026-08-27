@@ -14,12 +14,11 @@ sources:
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/CLAUDE.md
     title: CLAUDE.md in the repo (living version)
   - id: adr-0010
-    resource: ../docs/decisions/0010-linking-out-generically-instead-of-naming-chef-symbols.md
-    title: ADR 0010 — docs/c3 links out generically instead of naming chef symbols
-    last_modified: 2026-08-19
-  - id: adr-0010-upstream
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/decisions/0010-linking-out-generically-instead-of-naming-chef-symbols.md
     title: ADR 0010 in the repo (living version)
+  - id: adr-0001
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/docs/decisions/0001-three-knowledge-boundaries.md
+    title: ADR 0001 in the repo (living version)
 ---
 
 # The knowledge boundaries
@@ -169,3 +168,4 @@ principle)".
 - [Doc inventories and the changelog](/doc-inventories.md) — what a new doc must touch.
 - [Deferring issues upstream](/deferring-issues-upstream.md) — acting on the boundary when an issue lands in the wrong repo.
 - [Agent capability envelopes](/agent-capability-envelopes.md) — what each agent can actually observe.
+- [The artifact / workspace split](/artifact-workspace-split.md) — the other structural split, between what ships and what is dev-workspace only.
