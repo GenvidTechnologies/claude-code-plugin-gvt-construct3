@@ -1,3 +1,12 @@
+---
+type: decision-record
+title: "0002. Data-Driven Audit Contract + Minimal Frontmatter Parser"
+description: >-
+  The audit contract is data-driven (`metadata.expects`, "add an entry, don't hard-code"); the frontmatter parser is minimal and hand-rolled, not a YAML lib.
+tags: [decision, architecture]
+status: stable
+generated: { by: process:maintain-wiki, at: 2026-08-27T00:00:00Z }
+---
 # 0002. Data-Driven Audit Contract + Minimal Frontmatter Parser
 
 - **Status:** Accepted

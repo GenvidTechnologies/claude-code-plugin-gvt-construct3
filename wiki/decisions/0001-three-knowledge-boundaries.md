@@ -1,3 +1,12 @@
+---
+type: decision-record
+title: "0001. Three Knowledge Boundaries for C3 Knowledge"
+description: >-
+  C3 platform reference (here) vs. tooling reference (chef's docs) vs. project facts (consuming repo): the three homes for C3 knowledge.
+tags: [decision, architecture]
+status: stable
+generated: { by: process:maintain-wiki, at: 2026-08-27T00:00:00Z }
+---
 # 0001. Three Knowledge Boundaries for C3 Knowledge
 
 - **Status:** Accepted

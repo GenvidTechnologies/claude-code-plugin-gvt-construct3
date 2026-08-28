@@ -1,10 +1,10 @@
 ---
 type: reference
 title: The convention contract and the audit
-description: How audit-c3-conventions validates a consuming repo — the data-driven expects model, the two checks deliberately baked into the script, the presence-vs-content validation boundary, and base project resolution.
+description: How audit-c3-conventions validates a consuming repo — the data-driven expects model, the two checks deliberately baked into the script, the presence-vs-content validation boundary, base project resolution, and the audit residue this repo expects on every run as known cost rather than regression.
 tags: [audit, expects, contract, discovery, adr-0002, adr-0005, adr-0006]
 status: stable
-stale_after: 2027-08-18
+stale_after: 2027-02-27
 generated: { by: process:maintain-wiki, at: 2026-08-18T00:00:00Z }
 sources:
   - id: claude-md
@@ -14,6 +14,15 @@ sources:
   - id: claude-md-upstream
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/CLAUDE.md
     title: CLAUDE.md in the repo (living version)
+  - id: adr-0002
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/decisions/0002-data-driven-audit-contract.md
+    title: ADR 0002 in the repo (living version)
+  - id: adr-0005
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/decisions/0005-non-rooted-c3-project-support.md
+    title: ADR 0005 in the repo (living version)
+  - id: adr-0006
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/decisions/0006-detect-discovery-ambiguity.md
+    title: ADR 0006 in the repo (living version)
 ---
 
 # The convention contract and the audit
@@ -33,7 +42,7 @@ severity.
 
 **To add a new requirement, add an `expects` entry to the relevant component's
 frontmatter — do not hard-code checks in the script**
-([ADR 0002](../docs/decisions/0002-data-driven-audit-contract.md)).
+([ADR 0002](/decisions/0002-data-driven-audit-contract.md)).
 
 An entry with `required: false` reports at `info` severity and never affects the
 exit code — that is how an *optional* expectation is expressed without a script
@@ -55,7 +64,7 @@ The discovery check emits two advisory findings:
 
 - an **ambiguity `warning`** — ≥2 sibling `project.c3proj` dirs, which makes the
   server abort at startup with `-32000`
-  ([ADR 0006](../docs/decisions/0006-detect-discovery-ambiguity.md));
+  ([ADR 0006](/decisions/0006-detect-discovery-ambiguity.md));
 - a **root-divergence `info`** — the `paths.c3project` root differs from what bare
   auto-discovery would pick, so the server may run on a different project than
   the audit validated (added in #49, extending ADR 0006 with no new ADR).
@@ -102,7 +111,7 @@ itself stays repo-root-relative.
 
 Rooted repos (no `paths.c3project`) are unaffected — `base` is just another
 data-driven `expects` field, not a script-level check
-([ADR 0005](../docs/decisions/0005-non-rooted-c3-project-support.md)).
+([ADR 0005](/decisions/0005-non-rooted-c3-project-support.md)).
 
 ## Supporting libs
 
@@ -134,6 +143,52 @@ that package.
 | `2` | Unexpected script error |
 
 [^claude-md]: CLAUDE.md, "The convention contract & the audit".
+
+## Expected audit residue
+
+**A clean run of this repo's audit is not a silent one.** Since `docs/` was retired into
+this bundle ([ADR 0012](/decisions/0012-retiring-docs-into-the-wiki-bundle.md)), the audit
+reports a stable set of findings that are **known cost, not regression**. Subtract these
+before treating any output as a problem.
+
+Measured against **gvt-dev 4.22.0**:
+
+| Signal | Expected | Cause |
+|---|---|---|
+| broken-link warnings | **one per intra-wiki bundle-absolute link** — 76 today | `scanBrokenLinks` resolves a bundle-absolute `](/page.md)` against the repo root instead of the bundle root — gvt-dev #421. One per intra-wiki link; all false. |
+| retired-token findings | **8** | The four deliberate retired-token citations this repo carries on purpose, each emitted twice because `scanRetiredTokens` unions the docs-root and wiki-dir walks and this repo's overrides make them the same directory. No upstream issue filed. |
+| orphaned-doc findings | **0** | **Not a pass.** `scanOrphanedDocs` looks for a `TOC.md` inside the docs root; this bundle's index is `index.md`, so the scanner returns empty on its first line. It is inert, not satisfied — index completeness is checked by hand. |
+| exit code | **0** | Only `error` severity moves the exit code; everything above is `warning` or `info`. |
+| scanned line | `scanned 18 file(s) under wiki/, CLAUDE.md` | `resolveDocsRoot` derives the docs-tier root from the `docs/TOC.md` override, so the scanners walk `wiki/`. |
+
+**A fixed count is the wrong baseline here, and the right one is an invariant.** The
+warning total moves every time anyone adds or removes an intra-wiki link, so pinning a
+number guarantees false alarms on legitimate edits. What actually holds is a one-to-one
+correspondence:
+
+```bash
+# these two numbers must be equal
+node <audit> | grep -c 'broken link'
+grep -rho '](/[a-z0-9][a-z0-9./-]*\.md)' wiki/ | wc -l   # minus any inside backticks
+```
+
+**A regression is a broken-link warning with no matching `](/…)` link, or a `](/…)` link
+with no matching warning** — either means something other than #421 is at work. Verified
+exact at the time of writing: 76 warnings, 78 raw matches, 2 of which are backticked prose
+examples the audit's parser correctly ignores.
+
+> **The `scanned` figure is the one to re-measure rather than trust.** It depends on the
+> audit's internal declared-expectation-path resolution rather than a file count, so it
+> was not independently derivable when this section was written. If a run reports a
+> different number, the **measured** value is authoritative — record the delta as a
+> finding, don't edit this table to match.
+
+**These numbers are pinned to a gvt-dev version and will move.** When #421 lands the
+broken-link count goes to 0; when #390 lands the Practice Coverage row returns from
+`Environment … partial adoption` to `adopted` and `run-retro` resumes detecting the wiki.
+Re-measure on the next gvt-dev bump rather than carrying this table forward — which is
+why this page's `stale_after` sits in the six-month bucket for version-pinned content
+rather than the one-year bucket its topic would otherwise get.
 
 ## Related
 

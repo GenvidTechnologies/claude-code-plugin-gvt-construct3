@@ -1,3 +1,12 @@
+---
+type: decision-record
+title: "0007. Verify the `resolveRootFolder` Mirror by Package Diff, Not Inspection"
+description: >-
+  How to discharge the ADR 0006 mirror obligation on a `c3-domain-manager` bump: diff the adapter *and* prove the `@genvidtech/mcp-utils` range can't move, rather than trusting release notes.
+tags: [decision, architecture]
+status: stable
+generated: { by: process:maintain-wiki, at: 2026-08-27T00:00:00Z }
+---
 # 0007. Verify the `resolveRootFolder` Mirror by Package Diff, Not Inspection
 
 - **Status:** Accepted

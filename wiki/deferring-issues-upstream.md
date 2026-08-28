@@ -14,6 +14,9 @@ sources:
   - id: claude-md-upstream
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/CLAUDE.md
     title: CLAUDE.md in the repo (living version)
+  - id: triage
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/process/issue-triage.md
+    title: docs/issue-triage.md in the repo (living version)
 ---
 
 # Deferring an issue upstream
@@ -100,3 +103,4 @@ through v1.2.0 for exactly this reason.
 
 - [The knowledge boundaries](/knowledge-boundaries.md) — which repo owns what.
 - [The convention contract and the audit](/the-audit-contract.md) — the presence-vs-content boundary that sends content checks to chef.
+- [Issue triage conventions](/issue-triage-conventions.md) — the blocked-upstream label lifecycle that tracks a deferral.

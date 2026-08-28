@@ -52,7 +52,7 @@ Every triaged issue should have enough to act on: for a `bug`, a reproduction
 version; for an `enhancement`, a clear statement of the desired outcome and
 motivation. For a **pin-bump chore**, the target version and whether the server's
 MCP tool surface changed (which determines if `/gvt-dev:reconcile-mcp-pin` is
-required — see [tool-surface-reconciliation.md](tool-surface-reconciliation.md)).
+required — see [Verifying an MCP pin bump](/pin-bump-verification.md)).
 
 Missing the essentials → add the **`question`** label and comment exactly what is
 needed. (This repo has no dedicated `needs-info` label; `question` serves that
@@ -62,8 +62,8 @@ role — the `needsInfoLabel` in the `bugTracker` block must be set to `question
 
 Several issues here belong to the authoritative tool (`construct3-chef`) rather
 than the plugin — content-validation and addon tooling in particular (see the
-[validation boundary](../wiki/the-audit-contract.md) and
-[Deferring an issue upstream](../wiki/deferring-issues-upstream.md)). When deferring:
+[validation boundary](/the-audit-contract.md) and
+[Deferring an issue upstream](/deferring-issues-upstream.md)). When deferring:
 
 1. File the target-repo issue **in the same session**, and comment the link back
    on the origin issue so the linkage is bidirectional. An issue that merely

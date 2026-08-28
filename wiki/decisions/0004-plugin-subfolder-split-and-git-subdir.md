@@ -1,3 +1,12 @@
+---
+type: decision-record
+title: "0004. `plugin/` Artifact-vs-Workspace Split + `git-subdir` Marketplace Source"
+description: >-
+  `plugin/` shipped-artifact vs. repo-root dev-workspace split, and the `git-subdir` marketplace source it forced.
+tags: [decision, architecture]
+status: stable
+generated: { by: process:maintain-wiki, at: 2026-08-27T00:00:00Z }
+---
 # 0004. `plugin/` Artifact-vs-Workspace Split + `git-subdir` Marketplace Source
 
 - **Status:** Accepted

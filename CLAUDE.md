@@ -19,8 +19,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Write guidance for an agent | [Agent capability envelopes](wiki/agent-capability-envelopes.md) |
 | Defer an issue to `construct3-chef` | [Deferring an issue upstream](wiki/deferring-issues-upstream.md) |
 | Act on code-review feedback | [Working with the code reviewer](wiki/working-with-code-review.md) |
+| Record an architecture decision | [`wiki/decisions/`](wiki/decisions/index.md) — ADRs live in the wiki bundle, not `docs/`; `create-adr` finds them only via the **ADR location** line under § Conventions |
 
-Ask the wiki a question with `/gvt-dev:maintain-wiki query`; add to it with `ingest`. `raw/` holds immutable captures — never edit a file there. The schema is [`docs/wiki-schema.md`](docs/wiki-schema.md).
+Ask the wiki a question with `/gvt-dev:maintain-wiki query`; add to it with `ingest`. `raw/` holds immutable captures — never edit a file there. The schema is [`wiki/wiki-schema.md`](wiki/wiki-schema.md) — **not** the `docs/wiki-schema.md` that `maintain-wiki` still hard-codes.
+
+> **Never run `/gvt-dev:maintain-wiki ingest --non-interactive` in this repo** until gvt-dev #390 lands. Its §0 probe looks for `docs/wiki-schema.md`, finds nothing, and unattended it **scaffolds a generic schema doc and re-creates the `docs/` directory this repo deliberately retired**. An attended run offers the scaffold — decline it, and point at `wiki/wiki-schema.md`.
 
 ## What this repo is
 
@@ -31,17 +34,17 @@ This repository develops the **`gvt-construct3` Claude Code plugin** — not app
 The repo is split in two on purpose:
 
 - **`plugin/`** — the **shipped artifact**. `plugin/.claude-plugin/plugin.json` is the manifest; everything a consumer installs lives under here (`plugin/agents/`, `plugin/skills/`, `plugin/docs/c3/`, `plugin/CONVENTIONS.md`, `plugin/CHANGELOG.md`). The marketplace installs this subtree, so `${CLAUDE_PLUGIN_ROOT}` resolves to `plugin/`.
-- **repo root** — the **dev workspace**, which *consumes* the `gvt-dev` plugin. `.gvt-agent.json` (`commands.validate`, `repo.*`, `paths.plugin_root`, `wiki`), `docs/`, and `wiki/` exist so the gvt-dev workflow skills (audit, plan-task, rebase, release-plugin, maintain-wiki, etc.) work here. This `CLAUDE.md` is dev guidance for the workspace; it is **not** shipped.
+- **repo root** — the **dev workspace**, which *consumes* the `gvt-dev` plugin. `.gvt-agent.json` (`commands.validate`, `repo.*`, `paths.plugin_root`, `wiki`, and the four `paths` overrides that point the contract at `wiki/`) and `wiki/` exist so the gvt-dev workflow skills (audit, plan-task, rebase, release-plugin, maintain-wiki, etc.) work here. This `CLAUDE.md` is dev guidance for the workspace; it is **not** shipped.
 
 The plugin is distributed through the [`claude-code-marketplace`](https://github.com/genvid-holdings/claude-code-marketplace) catalog (marketplace name `genvid-plugins`). Because the artifact is in a subfolder, the marketplace entry uses a `git-subdir` source with `path: "plugin"`.
 
 > **Why the split:** keeping the artifact in `plugin/` means the gvt-dev consumer files at the root never collide with what ships, and the gvt-construct3 contract (`plugin/CONVENTIONS.md`) is unambiguously distinct from gvt-dev's root-level conventions. A `gvt-dev:audit-conventions --fix` at the root only touches workspace files, never the plugin.
 
-> **Note on `--fix`:** this repo is in gvt-dev **MIGRATED** state (it has `.gvt-agent.json`), so `gvt-dev:audit-conventions --fix` does **not** run the greenfield/legacy scaffolder here. The `.gvt-agent.json` / `docs/TOC.md` were hand-tuned — if a future audit reports gaps, prefer editing them by hand over a blanket fixer run.
+> **Note on `--fix`:** this repo is in gvt-dev **MIGRATED** state (it has `.gvt-agent.json`), so `gvt-dev:audit-conventions --fix` does **not** run the greenfield/legacy scaffolder here. The `.gvt-agent.json` / `wiki/index.md` were hand-tuned — if a future audit reports gaps, prefer editing them by hand over a blanket fixer run.
 
 ### Two OKF bundles
 
-`wiki/` (dev-workspace, `ingest`-maintained) and `plugin/docs/c3/` (shipped, hand-maintained against `construct3-sample`) are **both** OKF v0.2 bundles, and they are different tiers. Never fold one into the other — see [`docs/wiki-schema.md`](docs/wiki-schema.md).
+`wiki/` (dev-workspace, `ingest`-maintained) and `plugin/docs/c3/` (shipped, hand-maintained against `construct3-sample`) are **both** OKF v0.2 bundles, and they are different tiers. Never fold one into the other — see [`wiki/wiki-schema.md`](wiki/wiki-schema.md).
 
 ## Commands
 
@@ -86,7 +89,9 @@ There is no build step, no `package.json`, no lint config — plain ESM `.mjs` r
 - Commit format observed in history: `{type}: short description` (e.g. `feat:`, `docs:`).
 - Top-level frontmatter keys are fixed to `name`, `description`, and Anthropic-supported fields (`model`, `tools`); custom expectations go under `metadata.expects`.
 - Keep agent bodies generic across C3 projects — project-specific facts belong in the consuming repo.
-- ADRs in `docs/decisions/` are historical records; sweep the living docs, never the ADRs.
+- **ADR location: `wiki/decisions/`.** This repo has no `docs/` directory — decision records live in the wiki bundle. `/gvt-dev:create-adr` and `gvt-dev:tech-writer` both read *this line*; without it they fall back to `docs/decisions/` and re-create the directory this repo retired.
+- ADRs in `wiki/decisions/` are historical records; sweep the living docs, never the ADRs.
+- **New ADRs and new `wiki/process/` contracts must be indexed by hand.** Every `gvt-dev` self-indexer writes to a hard-coded `docs/TOC.md` and skips silently when it is absent, and the audit's orphan scan is inert against an `index.md`-named index — so **nothing will tell you a row is missing**.
 
 Every one of these has a fuller treatment in the wiki — see the table at the top.
 
@@ -94,4 +99,4 @@ Every one of these has a fuller treatment in the wiki — see the table at the t
 
 Releasing is a cross-repo workflow (bump `plugin/.claude-plugin/plugin.json`, move `plugin/CHANGELOG.md`'s Unreleased section, tag, bump the marketplace ref). Use the **`gvt-dev:release-plugin`** skill rather than doing it by hand; it honors `paths.plugin_root` and keeps the marketplace entry on its `git-subdir` source.
 
-**When a release bumps the pinned chef / dm versions, run `/gvt-dev:reconcile-mcp-pin` before tagging** — and read [Verifying an MCP pin bump](wiki/pin-bump-verification.md) first. It covers what `reconcile-mcp-pin` does *not*: the `audit.mjs` discovery-check mirror of `resolveRootFolder`, the count anchors in [`docs/tool-surface-reconciliation.md`](docs/tool-surface-reconciliation.md), and the ways this verification silently fakes a pass.
+**When a release bumps the pinned chef / dm versions, run `/gvt-dev:reconcile-mcp-pin` before tagging** — and read [Verifying an MCP pin bump](wiki/pin-bump-verification.md) first. It covers what `reconcile-mcp-pin` does *not*: the `audit.mjs` discovery-check mirror of `resolveRootFolder`, the count anchors (now carried by that same wiki page), and the ways this verification silently fakes a pass.

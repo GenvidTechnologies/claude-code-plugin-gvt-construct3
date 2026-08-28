@@ -1,3 +1,12 @@
+---
+type: decision-record
+title: "0010. `docs/c3` Links Out to chef Generically and Never Names chef's Internal Symbols"
+description: >-
+  `docs/c3` refers to construct3-chef by *capability* and links to `construct3-chef://docs`; it never names chef's functions, modules, or MCP tools — not even correct ones, since a correct name can rot into confident wrongness undetected.
+tags: [decision, architecture]
+status: stable
+generated: { by: process:maintain-wiki, at: 2026-08-27T00:00:00Z }
+---
 # 0010. `docs/c3` Links Out to chef Generically and Never Names chef's Internal Symbols
 
 - **Status:** Accepted

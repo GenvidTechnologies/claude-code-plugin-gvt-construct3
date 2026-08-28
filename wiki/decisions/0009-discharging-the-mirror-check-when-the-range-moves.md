@@ -1,3 +1,12 @@
+---
+type: decision-record
+title: "0009. Discharging the `resolveRootFolder` Mirror Check When the Range Actually Moves"
+description: >-
+  What to do when ADR 0007's part 2 fails: diff `resolveRootFolder.js` *and its import closure* between the reviewed and newly-resolvable `@genvidtech/mcp-utils` versions, and record the reviewed baseline.
+tags: [decision, architecture]
+status: stable
+generated: { by: process:maintain-wiki, at: 2026-08-27T00:00:00Z }
+---
 # 0009. Discharging the `resolveRootFolder` Mirror Check When the Range Actually Moves
 
 - **Status:** Accepted

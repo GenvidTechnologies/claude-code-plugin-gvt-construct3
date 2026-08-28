@@ -14,6 +14,12 @@ sources:
   - id: claude-md-upstream
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/CLAUDE.md
     title: CLAUDE.md in the repo (living version)
+  - id: adr-0008
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/decisions/0008-recording-verification-provenance-in-docs-c3.md
+    title: ADR 0008 in the repo (living version)
+  - id: adr-0011
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/decisions/0011-a-docs-provenance-note-is-part-of-the-move-cost.md
+    title: ADR 0011 in the repo (living version)
 ---
 
 # Verifying docs/c3 against construct3-sample
@@ -38,7 +44,7 @@ gh api repos/GenvidTechnologies/construct3-sample/tarball/v0.1.0 > s.tgz && tar 
 ## Citing provenance
 
 Cite the sample **tag** in shipped docs, never `path:line`
-([ADR 0008](../docs/decisions/0008-recording-verification-provenance-in-docs-c3.md)).
+([ADR 0008](/decisions/0008-recording-verification-provenance-in-docs-c3.md)).
 A line number points into a moving target and rots silently on a re-tag, and a
 wrong citation inside a *verification* note is worse than no note at all. Put
 the precise `sample@<tag> <path>:<line>` in the **commit message**, which is
@@ -164,7 +170,7 @@ not at the rule being invoked.
 
    So: **read the destination's provenance note before moving a fact, not just
    its subject matter.** Topical fit is not the criterion. Recorded as
-   [ADR 0011](../docs/decisions/0011-a-docs-provenance-note-is-part-of-the-move-cost.md);
+   [ADR 0011](/decisions/0011-a-docs-provenance-note-is-part-of-the-move-cost.md);
    the fact stayed in `construct3-guide.md` §7, whose carve-out already covered
    it, and `layout-reference.md` was left untouched.
 
