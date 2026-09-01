@@ -52,11 +52,15 @@ The table above says which repo owns a fact. It does not say **how** a `docs/c3`
 doc should refer to the toolchain when the two legitimately meet — and the
 founding import answered that by naming chef's internals directly.
 [ADR 0010](/decisions/0010-linking-out-generically-instead-of-naming-chef-symbols.md)
-settles it:
-
-> A `docs/c3` doc refers to construct3-chef by **capability** and links to
-> `construct3-chef://docs`. It never names chef's functions, modules, file paths,
-> or MCP tools — **not even correct ones**.
+settles it, as amended by
+[ADR 0013](/decisions/0013-addressing-the-chef-docs-resource-by-server-and-uri.md):
+a `docs/c3` doc refers to construct3-chef by **capability**, and links to it by
+naming the `construct3-chef` server together with the `docs:///` URI of the
+resource. It never names chef's functions, modules, file paths, internal APIs,
+or MCP tools — **not even correct ones**. The normative form ships in
+[`plugin/CONVENTIONS.md`](../plugin/CONVENTIONS.md); this page deliberately does
+not restate it, so there is one canonical statement rather than two that can
+drift.
 
 So: *"mint SIDs with your toolchain's generator"*, never *"call `mintUniqueSid()`
 from `src/c3/sidUtils.ts`"*.
