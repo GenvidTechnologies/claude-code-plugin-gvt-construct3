@@ -33,7 +33,7 @@ recorded as
 | Knowledge | Home |
 |---|---|
 | **C3 platform reference** — how Construct 3 *itself* behaves: variable scoping, the async/signal model, layout layers, JSON formats | **Here**, in `plugin/docs/c3/`. Agents link it as `${CLAUDE_PLUGIN_ROOT}/docs/c3/*` |
-| **Tooling reference** — recipe format, generators, CLI, recipe gotchas | `construct3-chef://docs`, versioned with the tool. **Not** duplicated here |
+| **Tooling reference** — recipe format, generators, CLI, recipe gotchas | The `construct3-chef` server's `docs:///index` resource, versioned with the tool. **Not** duplicated here |
 | **Project-specific facts** — named layouts, file paths, commit format, project gotchas | The **consuming repo's** `CLAUDE.md`, read by the agents at runtime |
 
 The agents are genericized and fall back to `{type}: Description` commits when

@@ -104,8 +104,17 @@ The block is entirely optional. `audit-c3-conventions` reports it at **`info`** 
 
 `gvt-construct3` owns **C3 platform reference** (how Construct 3 itself behaves). It deliberately does **not** duplicate:
 
-- **Tooling reference** (recipe format, generators, CLI, recipe gotchas) — that lives in `construct3-chef://docs`, versioned with the tool it describes.
+- **Tooling reference** (recipe format, generators, CLI, recipe gotchas) — that lives in the `construct3-chef` server's `docs:///index` resource, versioned with the tool it describes.
 - **Project-specific facts** (named layouts, file paths, commit format, project gotchas) — those live in the consuming repo.
+
+### Naming the docs resource
+
+Name chef's documentation resource as the pair: the `construct3-chef` server and its
+`docs:///<path>` URI (e.g. `docs:///index`, `docs:///reference/cli`). Every file that
+names a `docs:///` URI names `construct3-chef` at or before its first occurrence,
+because `c3-domain-manager` also registers the `docs` scheme and a bare URI is
+ambiguous between the two bundled servers. See ADR 0013
+(`wiki/decisions/0013-addressing-the-chef-docs-resource-by-server-and-uri.md`).
 
 ## Forking and adapting
 

@@ -22,7 +22,7 @@ Currently one field matters for cross-tool coordination:
 | ----- | ------- | ------- |
 | `extractedDir` | `"extracted"` | Directory where construct3-chef writes its read surface (DSL files, extracted TypeScript, layout summaries, indexes). Must resolve inside the project root. |
 
-For the authoritative list of all fields and the full CLI reference (`--project-dir`, etc.), see the `construct3-chef://docs` resource — specifically the `cli.md` "Configuration file" section.
+For the authoritative list of all fields and the full CLI reference (`--project-dir`, etc.), see the `construct3-chef` server's `docs:///reference/cli` resource — specifically its "Configuration file" section.
 
 ### `domain-config.json` (required)
 
@@ -112,5 +112,5 @@ Both servers resolve `extracted/` relative to **their own project root**. If you
 
 ## External References
 
-- **construct3-chef CLI and config fields** (`--project-dir`, `extractedDir`, all other options): `construct3-chef://docs` → `cli.md`, "Configuration file" section.
+- **construct3-chef CLI and config fields** (`--project-dir`, `extractedDir`, all other options): the `construct3-chef` server's `docs:///reference/cli` resource, "Configuration file" section.
 - **c3-domain-manager domain topology schema** (`domains`, `sharedSubdomains`, `overrides`, `relationships`): c3-domain-manager's `domain-architecture.md`.

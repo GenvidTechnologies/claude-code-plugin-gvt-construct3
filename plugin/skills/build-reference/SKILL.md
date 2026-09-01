@@ -48,8 +48,8 @@ present and current — say so and stop.
 
 ## What it produces (and what it must NOT)
 
-The cache schema (`ReferenceIndexSchema`) is **owned by construct3-chef** — see
-`construct3-chef://docs` and chef's `src/c3/c3Reference.ts`. In brief, `index.json`
+The cache schema (`ReferenceIndexSchema`) is **owned by construct3-chef** — see the
+`construct3-chef` server's `docs:///reference/cli` resource and chef's `src/c3/c3Reference.ts`. In brief, `index.json`
 is `{ schemaVersion, manualVersion, generatedAt, aces?, chunks? }` where each ACE is
 `{ source, objectClass, kind, id, scriptName?, params:[{name,type}], description?,
 canonicalUrl? }` and each chunk is `{ title, text, canonicalUrl, category }`

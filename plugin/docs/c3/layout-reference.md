@@ -281,7 +281,7 @@ Creating a new layout requires several coordinated steps:
 4. **Regenerate the extracted read surface** so it reflects the new layout.
 
 > Steps 1, 3 and 4 are toolchain operations. For construct3-chef's commands and their
-> options, see `construct3-chef://docs`.
+> options, see the `construct3-chef` server's `docs:///reference/cli` resource.
 
 **Key constraints:**
 
@@ -347,6 +347,6 @@ definition to skip.
 Each `targetPatterns` entry must have **exactly one capture group**, and that group is
 the resolved target layout name. `definitionMarkers` are matched as plain substrings.
 The field-level schema and matching semantics are owned by construct3-chef — see
-`construct3-chef://docs` (`cli.md`, the **Configuration file** and **navigation-graph**
-sections). The `/gvt-construct3:author-navigation-patterns` skill helps inspect a project's
+the `construct3-chef` server's `docs:///reference/cli` resource (its **Configuration file**
+and **navigation-graph** sections). The `/gvt-construct3:author-navigation-patterns` skill helps inspect a project's
 DSL and author/validate these entries.

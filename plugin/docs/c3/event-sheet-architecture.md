@@ -119,7 +119,7 @@ Two traps here. A group's label key is **`title`**, not `name`. And `initialValu
 
 Note the field name: nested events live under `children`, not `events`. Only the top-level event sheet object uses `events`. Hand-rolled JSON walkers that recurse on `events` will silently visit nothing past the root; recurse on `children`. (In the sample, `children` is demonstrated on a `group`; a `block` there carries none, so the key is optional and appears only where the event actually nests.)
 
-**Looking up SIDs in source JSON.** Don't hand-parse event-sheet JSON to recover a node's SID — construct3-chef's read surface exposes them directly, and its docs own which tool to reach for. See `construct3-chef://docs`.
+**Looking up SIDs in source JSON.** Don't hand-parse event-sheet JSON to recover a node's SID — construct3-chef's read surface exposes them directly, and its docs own which tool to reach for. See the `construct3-chef` server's `docs:///reference/cli` resource.
 
 **Action types** -- actions in the `actions` array appear in five shapes:
 

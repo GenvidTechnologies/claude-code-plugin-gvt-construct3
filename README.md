@@ -43,7 +43,7 @@ The audit checks for a **C3-project marker** and that both MCP servers are reach
 
 **Bundled docs** (`plugin/docs/c3/`): the canonical **C3 platform reference** — event-sheet architecture, layouts, scripting, TS integration, and `construct3-guide.md`. The agents link these via `${CLAUDE_PLUGIN_ROOT}/docs/c3/*`.
 
-**Bundled MCP servers** (`plugin.json` `mcpServers`): `construct3-chef` (recipes, DSL, scaffolding, `construct3-chef://docs`) and `c3-domain-manager` (domain index, overrides).
+**Bundled MCP servers** (`plugin.json` `mcpServers`): `construct3-chef` (recipes, DSL, scaffolding; its own docs at the `construct3-chef` server's `docs:///index` resource) and `c3-domain-manager` (domain index, overrides).
 
 ## The convention contract
 
@@ -52,7 +52,7 @@ The audit checks for a **C3-project marker** and that both MCP servers are reach
 ## Knowledge boundaries
 
 - **C3 platform reference** (how Construct 3 behaves) → this plugin (`plugin/docs/c3/`).
-- **Tooling reference** (recipe format, generators, CLI, recipe gotchas) → `construct3-chef://docs`, versioned with the tool.
+- **Tooling reference** (recipe format, generators, CLI, recipe gotchas) → the `construct3-chef` server's `docs:///index` resource, versioned with the tool.
 - **Project-specific facts** (named layouts, file paths, commit format, project gotchas) → the consuming repo.
 
 ## Contributing

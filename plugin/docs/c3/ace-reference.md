@@ -14,7 +14,7 @@ to the event sheet and the expression language. This is C3 *platform* structure
 (the addon SDK's on-disk contract), distinct from how any tool indexes or searches
 it. The gvt-construct3 `build-reference` skill reads these files to produce
 construct3-chef's `c3-reference` cache; the cache's own schema is owned by chef
-(see `construct3-chef://docs`), not restated here.
+(see the `construct3-chef` server's `docs:///reference/cli` resource), not restated here.
 
 This doc covers the ACE metadata model only; for the rest of the addon
 package — property declaration and `lang/*.json` localization structure —
