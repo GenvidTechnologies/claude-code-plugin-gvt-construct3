@@ -113,7 +113,11 @@ Name chef's documentation resource as the pair: the `construct3-chef` server and
 `docs:///<path>` URI (e.g. `docs:///index`, `docs:///reference/cli`). Every file that
 names a `docs:///` URI names `construct3-chef` at or before its first occurrence,
 because `c3-domain-manager` also registers the `docs` scheme and a bare URI is
-ambiguous between the two bundled servers. See ADR 0013
+ambiguous between the two bundled servers. **Repeating the server name reads as
+redundant in a file that only ever discusses chef — that redundancy is deliberate
+and load-bearing**, since it is what keeps the form correct the moment a
+`c3-domain-manager` resource is cited alongside (as `docs/c3/toolchain-config.md`
+already does). See ADR 0013
 (`wiki/decisions/0013-addressing-the-chef-docs-resource-by-server-and-uri.md`).
 
 ## Forking and adapting
