@@ -43,7 +43,7 @@ tar -xzf *.tgz
 # algorithms / semantics:
 ls package/dist/**          # e.g. dist/c3/navConvention.js, dist/c3/chefConfig.d.ts
 # config + CLI reference:
-sed -n '1,80p' package/docs/cli.md
+sed -n '1,80p' package/wiki/reference/cli.md
 ```
 
 Run the same `npm pack` / `tar` for `@genvidtech/c3-domain-manager@<pinned>` when the
@@ -93,7 +93,7 @@ other side.
 ## Worked example: `author-navigation-patterns`
 
 Three design questions, all answered from `dist/c3/navConvention.js` plus
-`docs/cli.md`:[^grounding]
+`wiki/reference/cli.md`:[^grounding]
 
 - the **capture-group contract** — group 1 is the target;
 - **`definitionMarkers` semantics** — substring `line.includes`, and a bad regex is

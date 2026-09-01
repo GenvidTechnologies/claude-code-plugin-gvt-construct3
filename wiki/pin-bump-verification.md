@@ -189,13 +189,30 @@ review that release notes would have talked us out of — and the review then fo
 nothing had moved.[^adr-0009]
 
 > **The reviewed baseline is now state the check depends on.** It currently stands at
-> **{0.5.1, 0.7.0}**, recorded in the provenance comment above `scanC3ProjectMarkers`
-> in `audit.mjs` and in ADR 0009. **A baseline that is not written down silently resets
-> the check to its most expensive form.**
+> **{0.5.1, 0.7.0, 0.8.0}**, recorded in the provenance comment above
+> `scanC3ProjectMarkers` in `audit.mjs` and in ADR 0009. **A baseline that is not
+> written down silently resets the check to its most expensive form.**
 
-**Part 2 will expire again**, and that is expected rather than a defect: `^0.7.0`
-currently admits only `0.7.0`, so the range is pinned in practice once more — until
-`mcp-utils 0.8.0` publishes. **A dm bump is not the only trigger.**[^adr-0009]
+**Part 2 expired again on 2026-09-01, exactly as predicted** — and the trigger was the
+one this page called out rather than the expected one. The previous revision said the
+range was pinned in practice "until `mcp-utils 0.8.0` publishes. **A dm bump is not the
+only trigger.**" Both halves fired at once: `mcp-utils 0.8.0` published, and **chef**
+moved `^0.7.0` → `^0.8.0` alongside dm. This is the **first chef-side trigger** of an
+obligation written for dm bumps.[^adr-0009]
+
+The ADR 0009 escalation was run for the chef `1.2.0` / dm `0.9.0` bump, with every
+`diff` exit status observed:
+
+| Check | Result |
+|---|---|
+| ADR 0007 part 1 — dm `dist/adapters/locations.js`, `0.8.0` ↔ `0.9.0` | **byte-identical** |
+| ADR 0007 part 2 — range moved `^0.7.0` → `^0.8.0` (both servers) | **fails procedurally** |
+| `dist/resolveRootFolder.js`, mcp-utils `0.7.0` ↔ `0.8.0` | **byte-identical** |
+| `dist/mcpError.js` — its only non-node import | **byte-identical** |
+| `diff -rq` over `dist/` (completeness) | only `exposeDocs.*`, `index.d.ts(.map)`, `index.js.map` differ — `index.js` itself identical, all **outside the closure** |
+
+**Verdict: PASS.** `audit.mjs`'s four mirror functions needed **no logic change**; only
+the baseline widened. Part 2 will expire again the moment `mcp-utils 0.9.0` publishes.
 
 ## The explorer allow-list is *not* chef's `READ_ONLY` set
 
@@ -203,7 +220,7 @@ The obvious mechanical check — diff chef's `READ_ONLY` tools against `c3-explo
 allow-list and add what is missing — is **wrong in both directions**, and wrong in a
 way that changes a **capability**, not just a doc.[^reconciliation]
 
-Measured at chef `1.1.0`: **24 `READ_ONLY` + 10 `MUTATE` + 2 unannotated**
+Measured at chef `1.2.0` (unchanged from `1.1.0`): **24 `READ_ONLY` + 10 `MUTATE` + 2 unannotated**
 (`generate-sids`, `regenerate`) = **36** `reg()` tools, while the explorer's chef
 allow-list holds **25**. Three deliberate divergences explain the gap:[^reconciliation]
 
@@ -258,9 +275,9 @@ in `plugin/.claude-plugin/plugin.json`'s `mcpServers`.
 
 | Server | Idiom | Location | Count |
 |---|---|---|---|
-| construct3-chef | `reg("…")` | `dist/mcp/server.js` | **36** at `1.1.0` — was **34** at `1.0.0`, **30** stable `0.9.0` → `0.11.2` |
+| construct3-chef | `reg("…")` | `dist/mcp/server.js` | **36** at `1.2.0` (unchanged from `1.1.0`) — was **34** at `1.0.0`, **30** stable `0.9.0` → `0.11.2` |
 | construct3-chef | + `list-ops` from `opsRegistry.js` | — | **37 total** — was **35**, **31** |
-| c3-domain-manager | `registerTool` | — | **14** at `0.8.0` (unchanged from `0.7.0`; was **13** before) |
+| c3-domain-manager | `registerTool` | — | **14** at `0.9.0` (unchanged from `0.8.0` and `0.7.0`; was **13** before) |
 
 **Grep `reg(` in `server.js`, not `registerTool(`.** A bare `registerTool(` grep barely
 matches chef — only `list-ops` and the dynamic `op-<name>` wrapper use that idiom — so it
