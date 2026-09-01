@@ -26,7 +26,7 @@ For the authoritative list of all fields and the full CLI reference (`--project-
 
 ### `domain-config.json` (required)
 
-Placed at the **C3 project root** (which is the workspace root for the standard single-project layout, or the project subdirectory for non-rooted repos — see below). This file is **required** by c3-domain-manager; the server errors on startup without it. Its content is your project's DDD domain topology (domains, shared subdomains, overrides, relationships) — that schema is project-specific and documented in c3-domain-manager's own `domain-architecture.md`, not here.
+Placed at the **C3 project root** (which is the workspace root for the standard single-project layout, or the project subdirectory for non-rooted repos — see below). This file is **required** by c3-domain-manager; the server errors on startup without it. Its content is your project's DDD domain topology (domains, shared subdomains, overrides, relationships) — that schema is project-specific and documented in the `c3-domain-manager` server's `docs:///reference/domain-architecture` MCP resource, not here.
 
 ## Why the Bundled Servers Work With No Launch Flags
 
@@ -113,4 +113,4 @@ Both servers resolve `extracted/` relative to **their own project root**. If you
 ## External References
 
 - **construct3-chef CLI and config fields** (`--project-dir`, `extractedDir`, all other options): the `construct3-chef` server's `docs:///reference/cli` resource, "Configuration file" section.
-- **c3-domain-manager domain topology schema** (`domains`, `sharedSubdomains`, `overrides`, `relationships`): c3-domain-manager's `domain-architecture.md`.
+- **c3-domain-manager domain topology schema** (`domains`, `sharedSubdomains`, `overrides`, `relationships`): the `c3-domain-manager` server's `docs:///reference/domain-architecture` resource.
