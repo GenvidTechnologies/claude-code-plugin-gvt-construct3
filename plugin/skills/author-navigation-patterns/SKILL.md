@@ -16,8 +16,8 @@ metadata:
     mcp:
       - server: construct3-chef
         package: "@genvidtech/construct3-chef"
-        minVersion: "0.7.0"
-        reason: The navigation.targetPatterns / definitionMarkers config surface and the navigation-graph subcommand landed in 0.7.0 (construct3-chef#43).
+        minVersion: "1.2.0"
+        reason: The navigation.targetPatterns / definitionMarkers config surface and the navigation-graph subcommand landed in 0.7.0 (construct3-chef#43); the floor is 1.2.0 because this skill cites the path-shaped docs:///reference/cli resource, which exists only from 1.2.0 (ADR 0013).
 ---
 
 # Author Navigation Patterns
@@ -50,8 +50,8 @@ sites, and the call-site-vs-definition-line pitfall — is documented in
 [`${CLAUDE_PLUGIN_ROOT}/docs/c3/layout-reference.md`](../../docs/c3/layout-reference.md)
 ("Navigation Between Layouts" → "How navigation renders in the extracted DSL").
 Read it first. The **field-level schema** of `navigation.targetPatterns` /
-`definitionMarkers` is owned by construct3-chef — see `construct3-chef://docs`
-(`cli.md`). Key contract points the skill depends on:
+`definitionMarkers` is owned by construct3-chef — see the `construct3-chef` server's
+`docs:///reference/cli` resource (`cli.md`). Key contract points the skill depends on:
 
 - Each `targetPatterns` entry must have **exactly one capture group**; group 1 is
   the resolved target layout name.

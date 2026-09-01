@@ -13,7 +13,7 @@ sources:
 
 # Construct 3 Guide
 
-Comprehensive reference for Construct 3 platform behavior: event sheets, layouts, runtime scoping, and TypeScript integration. This is vendor-neutral reference material for any Construct 3 project. Sibling deep-dive documents live alongside this file in `docs/c3/`. For tooling and recipe authoring (the construct3-chef toolchain), see `construct3-chef://docs`.
+Comprehensive reference for Construct 3 platform behavior: event sheets, layouts, runtime scoping, and TypeScript integration. This is vendor-neutral reference material for any Construct 3 project. Sibling deep-dive documents live alongside this file in `docs/c3/`. For tooling and recipe authoring (the construct3-chef toolchain), see the `construct3-chef` server's `docs:///index` resource.
 
 > **Verification provenance.** The on-disk JSON shapes in this doc were swept against the editor-validated [`construct3-sample`](https://github.com/GenvidTechnologies/construct3-sample) (`construct3-sample@v0.4.0`, cross-checked against `v0.1.0`–`v0.3.0`) in [#63](https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/issues/63). Sections carrying an *unverified* callout are claims that sweep could not settle; everything else was confirmed against the sample or corrected to match it. Most of this doc entered in the founding import: only its concrete structural claims are sample-checkable, and the runtime-behaviour sections (§5, §7) are field knowledge no on-disk sample can observe. The prose past the last JSON fence was grepped for stray key names and confirmed to contain none. Facts added after this sweep must be verified the same way.
 
@@ -77,11 +77,11 @@ Only `script` and `icon` are populated in the sample; `sound`, `music`, `video`,
 
 **Not every directory in a project is registered.** `tilemapBrushes/` and `addons/` exist on disk in the sample with no `project.c3proj` entry of any kind — bundled addons are referenced through `usedAddons` by addon id, not by path. Treat the rule as "tracked *kinds* must be registered", not "every directory must be".
 
-**Never edit `project.c3proj` by hand.** Run your project's c3proj sync command after adding or removing files — it handles SID generation, MIME types, and folder structure automatically. A dry-run validate command checks for drift without modifying. For the commands construct3-chef provides, see `construct3-chef://docs`.
+**Never edit `project.c3proj` by hand.** Run your project's c3proj sync command after adding or removing files — it handles SID generation, MIME types, and folder structure automatically. A dry-run validate command checks for drift without modifying. For the commands construct3-chef provides, see the `construct3-chef` server's `docs:///reference/cli` resource.
 
 Script entries require unique 15-digit `sid` values. The sync tool generates these automatically and preserves existing SIDs for unchanged files.
 
-**SID range constraint — never hand-pick SIDs.** Every `sid` in any C3 JSON **must fit in `Number.MAX_SAFE_INTEGER` (2^53 − 1 ≈ 9.007 × 10¹⁵)**. SIDs above that lose trailing digits when JS parses them — the file value and in-memory value diverge, and C3 refuses to open the layout with `Error: invalid SID`. Existing project SIDs are 15-digit integers in `[1e14, 1e15)`. **Mint SIDs with your toolchain's generator rather than picking them by hand** — it draws from the safe range and dedupes against the SIDs already in the project. construct3-chef provides one; its docs own the entry point and its collision-avoidance guarantees, so see `construct3-chef://docs`.
+**SID range constraint — never hand-pick SIDs.** Every `sid` in any C3 JSON **must fit in `Number.MAX_SAFE_INTEGER` (2^53 − 1 ≈ 9.007 × 10¹⁵)**. SIDs above that lose trailing digits when JS parses them — the file value and in-memory value diverge, and C3 refuses to open the layout with `Error: invalid SID`. Existing project SIDs are 15-digit integers in `[1e14, 1e15)`. **Mint SIDs with your toolchain's generator rather than picking them by hand** — it draws from the safe range and dedupes against the SIDs already in the project. construct3-chef provides one; its docs own the entry point and its collision-avoidance guarantees, so see the `construct3-chef` server's `docs:///reference/recipe-reference` resource.
 
 **Which JSON nodes carry a `sid`.** Verified against `construct3-sample@v0.4.0`: file roots (layout, eventSheet, objectType), `layers` and nested `subLayers` at any depth, layer `instances` and `nonworld-instances`, event nodes (`events`, their `children`, and each node's `conditions` and `actions`), `behaviorTypes`, `instanceVariables` declarations, animation folder `items`, and `project.c3proj`'s `rootFileFolders > {script,icon} > items`.
 
@@ -721,4 +721,4 @@ These documents (in this same `docs/c3/` directory) expand on sections within th
 
 ### Tooling and recipes
 
-For the construct3-chef toolchain — recipe authoring, generators, SID handling, project sync, and related tooling gotchas — see the `construct3-chef://docs` MCP resource (start with `recipe-reference.md`).
+For the construct3-chef toolchain — recipe authoring, generators, SID handling, project sync, and related tooling gotchas — see the `construct3-chef` server's `docs:///reference/recipe-reference` resource (start there).

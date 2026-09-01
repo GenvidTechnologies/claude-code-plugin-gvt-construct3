@@ -9,7 +9,7 @@ This document is the contract between the `gvt-construct3` Claude Code plugin an
 | Requirement | How it's satisfied | Checked by |
 |-------------|--------------------|------------|
 | **A C3-project marker** | `project.c3proj` at the repo root, **or** `.gvt-agent.json` with `features.c3: true`, **or** `.gvt-agent.json` `paths.c3project` pointing at the `.c3proj` file (the legacy `.genvid-agent.json` is still accepted, with a deprecation warning, during the transition) | `audit-c3-conventions` |
-| **construct3-chef MCP server** | Launched as `npx -y @genvidtech/construct3-chef server`, version ≥ `1.0.0` | `audit-c3-conventions` |
+| **construct3-chef MCP server** | Launched as `npx -y @genvidtech/construct3-chef server`, version ≥ `1.2.0` | `audit-c3-conventions` |
 | **c3-domain-manager MCP server** | Launched as `npx -y @genvidtech/c3-domain-manager server`, version ≥ `0.6.1` | `audit-c3-conventions` |
 
 The plugin **declares both servers in its `plugin.json`** (`mcpServers`), so they start automatically when `gvt-construct3` is enabled. Bundled plugin servers may install as **"Pending approval"** — approve them once in Claude Code. If the consuming repo also wires these servers in its own `.mcp.json`, that is redundant but harmless.
@@ -92,9 +92,9 @@ The block is entirely optional. `audit-c3-conventions` reports it at **`info`** 
 | Skill | Purpose |
 |-------|---------|
 | `audit-c3-conventions` | Read-only validator: checks the C3-project marker, that `domain-config.json` is present at the C3 project root, and that both MCP servers are reachable at their minimum versions. |
-| `author-navigation-patterns` | Authors and validates a construct3-chef `navigation.targetPatterns` / `definitionMarkers` convention for a project that navigates through a wrapper function: inspects the extracted DSL, proposes the capture-group regex, previews captures/skips, and validates against `navigation-graph`. Requires `construct3-chef ≥ 0.7.0` (declared in its own `metadata.expects`; now subsumed by the baseline `≥ 1.0.0` floor). |
-| `build-reference` | Produces construct3-chef's `c3-reference` cache (built-in plugin ACEs + layout/scripting/Expression concept chunks) so `search-docs` resolves built-ins, not just custom-addon ACEs. Requires `construct3-chef ≥ 0.9.0` (declared in its own `metadata.expects`). |
-| `create-c3-op` | Authors and dry-run-validates a construct3-chef user-defined op (a parameterized recipe template): elicits typed params, places `{{PARAM}}` tokens, writes the op-file wrapper, and validates via `list-ops` + `apply-op --dry-run`. Authors the op wrapper only (recipe body defers to chef's docs + `c3-implementer`) and never runs a writing `apply-op`. Requires `construct3-chef ≥ 0.10.0` (declared in its own `metadata.expects`; now subsumed by the baseline `≥ 1.0.0` floor). |
+| `author-navigation-patterns` | Authors and validates a construct3-chef `navigation.targetPatterns` / `definitionMarkers` convention for a project that navigates through a wrapper function: inspects the extracted DSL, proposes the capture-group regex, previews captures/skips, and validates against `navigation-graph`. Its capability landed in `construct3-chef ≥ 0.7.0`, but it declares `≥ 1.2.0` in its own `metadata.expects` — subsumed by the baseline `≥ 1.2.0` floor. |
+| `build-reference` | Produces construct3-chef's `c3-reference` cache (built-in plugin ACEs + layout/scripting/Expression concept chunks) so `search-docs` resolves built-ins, not just custom-addon ACEs. Its capability landed in `construct3-chef ≥ 0.9.0`, but it declares `≥ 1.2.0` in its own `metadata.expects` — subsumed by the baseline `≥ 1.2.0` floor. |
+| `create-c3-op` | Authors and dry-run-validates a construct3-chef user-defined op (a parameterized recipe template): elicits typed params, places `{{PARAM}}` tokens, writes the op-file wrapper, and validates via `list-ops` + `apply-op --dry-run`. Authors the op wrapper only (recipe body defers to chef's docs + `c3-implementer`) and never runs a writing `apply-op`. Its capability landed in `construct3-chef ≥ 0.10.0`, but it declares `≥ 1.2.0` in its own `metadata.expects` — subsumed by the baseline `≥ 1.2.0` floor. |
 
 **Bundled docs** (`docs/c3/`): the canonical **C3 platform reference** — event-sheet architecture, layouts, scripting, TS integration, and `construct3-guide.md`. Agents reference these via `${CLAUDE_PLUGIN_ROOT}/docs/c3/*`.
 
@@ -104,8 +104,21 @@ The block is entirely optional. `audit-c3-conventions` reports it at **`info`** 
 
 `gvt-construct3` owns **C3 platform reference** (how Construct 3 itself behaves). It deliberately does **not** duplicate:
 
-- **Tooling reference** (recipe format, generators, CLI, recipe gotchas) — that lives in `construct3-chef://docs`, versioned with the tool it describes.
+- **Tooling reference** (recipe format, generators, CLI, recipe gotchas) — that lives in the `construct3-chef` server's `docs:///index` resource, versioned with the tool it describes.
 - **Project-specific facts** (named layouts, file paths, commit format, project gotchas) — those live in the consuming repo.
+
+### Naming the docs resource
+
+Name chef's documentation resource as the pair: the `construct3-chef` server and its
+`docs:///<path>` URI (e.g. `docs:///index`, `docs:///reference/cli`). Every file that
+names a `docs:///` URI names `construct3-chef` at or before its first occurrence,
+because `c3-domain-manager` also registers the `docs` scheme and a bare URI is
+ambiguous between the two bundled servers. **Repeating the server name reads as
+redundant in a file that only ever discusses chef — that redundancy is deliberate
+and load-bearing**, since it is what keeps the form correct the moment a
+`c3-domain-manager` resource is cited alongside (as `docs/c3/toolchain-config.md`
+already does). See ADR 0013
+(`wiki/decisions/0013-addressing-the-chef-docs-resource-by-server-and-uri.md`).
 
 ## Forking and adapting
 

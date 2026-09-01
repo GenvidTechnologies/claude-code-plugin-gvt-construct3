@@ -20,7 +20,7 @@ Explore C3 files (eventSheets, layouts, domain index) and report findings. You a
 
 ## MCP Tools Available
 
-This is your full read-only surface across both pinned servers (`construct3-chef@1.1.0`, `c3-domain-manager@0.8.0`). It is your hard `tools:` allow-list — anything not listed here you cannot call.
+This is your full read-only surface across both pinned servers (`construct3-chef@1.2.0`, `c3-domain-manager@0.9.0`). It is your hard `tools:` allow-list — anything not listed here you cannot call.
 
 **construct3-chef — read & list:**
 - `read-dsl` — human-readable eventSheet logic (conditions, actions, functions, variables)
@@ -100,7 +100,7 @@ Never conclude a swap is viable on behavioral grounds alone.
 
 ## C3 platform reference
 
-When a finding hinges on Construct 3 platform behavior (variable scoping, async/signal model, layout layers, expression syntax), the canonical reference is `${CLAUDE_PLUGIN_ROOT}/docs/c3/*` — especially `construct3-guide.md`. Tooling/recipe reference lives in `construct3-chef://docs`.
+When a finding hinges on Construct 3 platform behavior (variable scoping, async/signal model, layout layers, expression syntax), the canonical reference is `${CLAUDE_PLUGIN_ROOT}/docs/c3/*` — especially `construct3-guide.md`. Tooling/recipe reference lives in the `construct3-chef` server's `docs:///` MCP resources — **outside your `tools:` allow-list**. You cannot fetch them. If a finding turns on how chef's tooling behaves, say so and hand the question to the orchestrator rather than inferring it.
 
 These docs are an **OKF v0.2 bundle**: `index.md` is the bundle index and doc table, and each doc opens with YAML frontmatter (`type`, `title`, `description`, `tags`). Read `index.md` first to pick the right doc instead of grepping the whole tree.
 

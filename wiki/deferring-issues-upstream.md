@@ -39,7 +39,7 @@ proposed approach reasoned straight from one to the other:
 > so expect to file rather than link.
 
 That was backwards. Of the nine sites in that issue, **eight were already
-documented by chef** — `docs/cli.md` carries full sections for `generate`,
+documented by chef** — `wiki/reference/cli.md` carries full sections for `generate`,
 `sync-project`, `scaffold-layout` and `navigation-graph`, plus the
 `navigation.targetPatterns` config; `read-event-sids` / `read-dsl-index` are
 covered across `generators.md` and `recipe-reference.md`. Exactly **one** needed
@@ -48,12 +48,22 @@ chef's server but appears in none of its docs, plus the `global-layers.txt`
 report format and its deep-count rule).
 
 So before concluding a fact needs an upstream home, **grab chef's tree and grep
-its `docs/`.** The default outcome is delete-and-link; filing is the exception.
+its `wiki/`.** The default outcome is delete-and-link; filing is the exception.
 
 ```bash
 gh api repos/GenvidTechnologies/construct3-chef/tarball/main > chef.tgz && tar xzf chef.tgz
-grep -rn '<the fact>' */docs/
+grep -rn '<the fact>' */wiki/
 ```
+
+Chef retired the `docs/` tier into `wiki/` (chef ADR 0028), so the previous form
+of this recipe — scoped to that retired directory — now matches nothing and
+reads as "chef doesn't document this", the exact wrong conclusion this page
+exists to prevent. Verified 2026-09-01 against chef `main`: the retired-tier form
+returns **0** hits for `navigation.targetPatterns`, the form above returns **3**.
+
+Scope it to `*/wiki/` rather than widening to `*/`: chef's `raw/` immutable
+captures sit **beside** `wiki/`, not inside it, and a bare `*/` also drags in
+`src/`, so hits stop being evidence that a fact is *documented*.
 
 Getting this wrong in the over-filing direction costs an upstream maintainer a
 no-op issue, and — more expensively — sizes a plan for cross-repo work when the

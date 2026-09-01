@@ -13,13 +13,13 @@ Implement C3 changes: eventSheet mutations (via recipes), layout scaffolding, sp
 ## Domain Knowledge
 
 Read these as needed at runtime:
-- **`construct3-chef://docs`** (`recipe-reference.md`) — the canonical, full recipe operations + shorthands + the complete numbered tooling-gotcha list. This is the authority for how the recipe tools behave.
+- **`ReadMcpResourceTool` with `(construct3-chef, docs:///reference/recipe-reference)`** — the canonical, full recipe operations + shorthands + the complete numbered tooling-gotcha list. This is the authority for how the recipe tools behave. If the URI errors, enumerate with `ListMcpResourcesTool` and re-resolve.
 - **`${CLAUDE_PLUGIN_ROOT}/docs/c3/construct3-guide.md`** — Construct 3 *platform* behavior (event types, action types, variable scoping, layouts, async patterns) — the *why* behind the platform gotchas below. Sibling files in `docs/c3/` cover event-sheet architecture, layouts, scripting, and TS integration. The set is an **OKF v0.2 bundle** — start at `docs/c3/index.md`, whose table and per-doc frontmatter `description` point you at the right file.
 - **The consuming repo's project knowledge** — `CLAUDE.md` at the repo root is the default home for project-specific facts (commit format, cross-domain conventions, named layouts, project gotchas). **If `.gvt-agent.json` declares a `wiki` block**, that knowledge may live in the wiki instead: read `<wiki.wikiDir>/index.md` first and open only the page whose `description` matches what you need. Treat `<wiki.rawDir>/` as provenance-only. Never write to either — authoring wiki content is `/gvt-dev:maintain-wiki ingest`'s job. Where both exist and disagree, the more specific and more recently updated source wins; if you can't tell, ask rather than guess.
 
 ## MCP Tools
 
-These are the construct3-chef tools at the pinned `@1.1.0`. (Unlike `c3-explorer`,
+These are the construct3-chef tools at the pinned `@1.2.0`. (Unlike `c3-explorer`,
 this agent has no `tools:` allow-list — it can call anything, so this list is for
 accuracy, not capability gating.)
 
@@ -60,9 +60,9 @@ accuracy, not capability gating.)
 
 To author or fix an op *wrapper* (params + `{{PARAM}}` placement) and dry-run-validate it before applying, use the `/gvt-construct3:create-c3-op` skill.
 
-## Domain-config maintenance (c3-domain-manager @0.8.0)
+## Domain-config maintenance (c3-domain-manager @0.9.0)
 
-The domain-manager server (pinned `@0.8.0`) exposes write tools for the
+The domain-manager server (pinned `@0.9.0`) exposes write tools for the
 project's domain taxonomy, plus the `validate-editor` read diagnostic. The
 *capability* is generic, but the **content is project-specific** — which file
 maps to which domain is a fact that lives in the consuming repo, not here. Treat
@@ -83,7 +83,7 @@ domain index) and reports what the C3 editor would reject — a useful
 post-mutation editor-strictness check after `apply-recipe`, complementing
 `validate-project`'s `project.c3proj`-vs-disk drift check.
 
-## Recipe-tooling cheat-sheet (canonical: `construct3-chef://docs` → recipe-reference.md)
+## Recipe-tooling cheat-sheet (canonical: `construct3-chef` server, `docs:///reference/recipe-reference`)
 
 High-frequency rules for authoring recipes. The full numbered list with details lives in chef's docs — read it before any non-trivial recipe.
 

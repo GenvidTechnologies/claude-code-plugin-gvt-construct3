@@ -33,7 +33,7 @@ recorded as
 | Knowledge | Home |
 |---|---|
 | **C3 platform reference** — how Construct 3 *itself* behaves: variable scoping, the async/signal model, layout layers, JSON formats | **Here**, in `plugin/docs/c3/`. Agents link it as `${CLAUDE_PLUGIN_ROOT}/docs/c3/*` |
-| **Tooling reference** — recipe format, generators, CLI, recipe gotchas | `construct3-chef://docs`, versioned with the tool. **Not** duplicated here |
+| **Tooling reference** — recipe format, generators, CLI, recipe gotchas | The `construct3-chef` server's `docs:///index` resource, versioned with the tool. **Not** duplicated here |
 | **Project-specific facts** — named layouts, file paths, commit format, project gotchas | The **consuming repo's** `CLAUDE.md`, read by the agents at runtime |
 
 The agents are genericized and fall back to `{type}: Description` commits when
@@ -52,11 +52,15 @@ The table above says which repo owns a fact. It does not say **how** a `docs/c3`
 doc should refer to the toolchain when the two legitimately meet — and the
 founding import answered that by naming chef's internals directly.
 [ADR 0010](/decisions/0010-linking-out-generically-instead-of-naming-chef-symbols.md)
-settles it:
-
-> A `docs/c3` doc refers to construct3-chef by **capability** and links to
-> `construct3-chef://docs`. It never names chef's functions, modules, file paths,
-> or MCP tools — **not even correct ones**.
+settles it, as amended by
+[ADR 0013](/decisions/0013-addressing-the-chef-docs-resource-by-server-and-uri.md):
+a `docs/c3` doc refers to construct3-chef by **capability**, and links to it by
+naming the `construct3-chef` server together with the `docs:///` URI of the
+resource. It never names chef's functions, modules, file paths, internal APIs,
+or MCP tools — **not even correct ones**. The normative form ships in
+[`plugin/CONVENTIONS.md`](../plugin/CONVENTIONS.md); this page deliberately does
+not restate it, so there is one canonical statement rather than two that can
+drift.
 
 So: *"mint SIDs with your toolchain's generator"*, never *"call `mintUniqueSid()`
 from `src/c3/sidUtils.ts`"*.

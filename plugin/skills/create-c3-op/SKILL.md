@@ -14,15 +14,15 @@ metadata:
     mcp:
       - server: construct3-chef
         package: "@genvidtech/construct3-chef"
-        minVersion: "0.10.0"
-        reason: User-defined ops (the ops/ directory, list-ops and apply-op CLI/MCP surfaces, OpTemplate substitution) landed in 0.10.0 (construct3-chef #89). The skill is inert below this version.
+        minVersion: "1.2.0"
+        reason: User-defined ops (the ops/ directory, list-ops and apply-op CLI/MCP surfaces, OpTemplate substitution) landed in 0.10.0 (construct3-chef #89), below which the skill is inert; the floor is 1.2.0 because this skill cites the path-shaped docs:///reference/ops and docs:///reference/recipe-reference resources, which exist only from 1.2.0 (ADR 0013).
 ---
 
 # Create C3 Op
 
 Help a user **author and dry-run-validate** a construct3-chef **user-defined op** — a parameterized recipe template stored as a single JSON file in the project's ops directory. The filename (sans `.json`) is the op name; a valid op registers as an MCP `op-<name>` tool and as a CLI `apply-op <name>` subcommand.
 
-**This skill covers the op wrapper only:** `description`, `params`, and `{{PARAM}}` placement within the recipe skeleton. The recipe body's content and syntax are the domain of chef's recipe reference (`construct3-chef://docs`, `recipe-reference.md`) and the `gvt-construct3:c3-implementer` agent — this skill places the substitution tokens, not the recipe ops themselves. **This skill is the intelligence; chef is the validator.** `list-ops` and `apply-op --dry-run` are the sole authoritative checks — no `validate-op` command exists.
+**This skill covers the op wrapper only:** `description`, `params`, and `{{PARAM}}` placement within the recipe skeleton. The recipe body's content and syntax are the domain of chef's recipe reference — read it with `ReadMcpResourceTool` (`construct3-chef`, `docs:///reference/recipe-reference`; if the URI errors, enumerate with `ListMcpResourcesTool` and re-resolve) — and the `gvt-construct3:c3-implementer` agent — this skill places the substitution tokens, not the recipe ops themselves. **This skill is the intelligence; chef is the validator.** `list-ops` and `apply-op --dry-run` are the sole authoritative checks — no `validate-op` command exists.
 
 The skill **never runs a writing `apply-op`**. It stops at a green dry-run and hands real application to the user or `gvt-construct3:c3-implementer`.
 
@@ -37,13 +37,13 @@ The skill **never runs a writing `apply-op`**. It stops at a green dry-run and h
 
 This skill does NOT:
 
-- Author the recipe body inside the op (the `recipe` array's content/syntax — defer to `construct3-chef://docs` → `recipe-reference.md` and `gvt-construct3:c3-implementer`).
+- Author the recipe body inside the op (the `recipe` array's content/syntax — defer to the `construct3-chef` server's `docs:///reference/recipe-reference` resource and `gvt-construct3:c3-implementer`).
 - Run a writing `apply-op` (dry-run only — never `apply-op <name>` without `--dry-run`).
 - Add a bundled helper script — `list-ops` and `apply-op --dry-run` are the entire validation surface.
 
 ## Background
 
-The following contract points are the ones this skill's logic branches on. The **full field-level schema** for op files, param shapes, and recipe ops lives in `construct3-chef://docs` (`ops.md`, `recipe-reference.md`) — read it there; do not expect this skill to transcribe it.
+The following contract points are the ones this skill's logic branches on. The **full field-level schema** for op files, param shapes, and recipe ops lives in the `construct3-chef` server's `docs:///reference/ops` and `docs:///reference/recipe-reference` resources — read it there; do not expect this skill to transcribe it.
 
 **Op file structure.** One JSON file in the ops dir. Required fields: `description` (one-line string), `recipe` (a standard chef recipe). Optional: `params` (array, default `[]`).
 
@@ -88,7 +88,7 @@ Confirm which placement each param needs before finalizing the skeleton.
 
 Propose the complete op JSON (with a recipe skeleton noting where the recipe body should go). **Write the file only when the user explicitly agrees.**
 
-Placement of the recipe body: co-author it with `gvt-construct3:c3-implementer` or chef's `recipe-reference.md`. This skill places the `{{PARAM}}` tokens at the agreed positions — it does not design the recipe ops. The recipe is valid only after substitution, so placeholder content is fine at this stage; the dry-run in step 4 validates the post-substitution recipe.
+Placement of the recipe body: co-author it with `gvt-construct3:c3-implementer` or the `construct3-chef` server's `docs:///reference/recipe-reference` resource. This skill places the `{{PARAM}}` tokens at the agreed positions — it does not design the recipe ops. The recipe is valid only after substitution, so placeholder content is fine at this stage; the dry-run in step 4 validates the post-substitution recipe.
 
 If the ops directory does not exist, create it when writing the file.
 
@@ -129,9 +129,11 @@ This skill does not run either form with writes.
 
 ## Caveats
 
-**Chef version below 0.10.0.** `list-ops` and `apply-op` are absent; the skill cannot validate anything. The `minVersion: "0.10.0"` expects entry surfaces this to the audit. If the installed version is below 0.10.0, say so and stop.
+**Chef version below 0.10.0.** `list-ops` and `apply-op` are absent; the skill cannot validate anything. If the installed version is below 0.10.0, say so and stop.
 
-**Recipe-validation failure unrelated to the wrapper.** Chef validates the recipe post-substitution against the project's extracted state. If the project has never been extracted (or the extraction is stale), recipe ops that reference layout names, object classes, or other project entities will fail the recipe-validation guard — not because the op wrapper is wrong, but because the referenced entity doesn't appear in the extracted data. Confirm the project's extracted data is present and current before attributing a recipe-validation failure to the op file (chef produces the `extractedDir` when its server runs; see `construct3-chef://docs` for the extraction/sync model).
+**Chef version below 1.2.0.** The tools work, but this skill's `docs:///reference/ops` and `docs:///reference/recipe-reference` citations name resources that only exist from 1.2.0 — below it they fail with `McpError(InvalidParams)` rather than returning the schema. The `minVersion: "1.2.0"` expects entry surfaces both stop-conditions to the audit.
+
+**Recipe-validation failure unrelated to the wrapper.** Chef validates the recipe post-substitution against the project's extracted state. If the project has never been extracted (or the extraction is stale), recipe ops that reference layout names, object classes, or other project entities will fail the recipe-validation guard — not because the op wrapper is wrong, but because the referenced entity doesn't appear in the extracted data. Confirm the project's extracted data is present and current before attributing a recipe-validation failure to the op file (chef produces the `extractedDir` when its server runs; see the `construct3-chef` server's `docs:///reference/cli` resource for the extraction/sync model).
 
 **Op name is the filename.** Renaming the file changes the op name; the old name is gone from `list-ops` immediately (no stale registration). If an op disappears after a rename, `list-ops` shows the live set — reconcile by matching filenames to expected names.
 

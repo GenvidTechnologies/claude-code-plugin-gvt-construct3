@@ -1,11 +1,11 @@
 ---
 type: practice-note
 title: Verifying an MCP pin bump
-description: Why a pin-bump issue's tool/surface table is an assertion to test rather than ground truth; the mechanical checks that catch what the issue body gets wrong; how the resolveRootFolder mirror obligation is discharged and escalated once its dependency range moves; and why the explorer allow-list is not chef's READ_ONLY set.
-tags: [mcp, pin-bump, construct3-chef, c3-domain-manager, verification, reconcile-mcp-pin, resolve-root-folder, allow-list, adr-0007, adr-0009]
+description: Why a pin-bump issue's tool/surface table is an assertion to test rather than ground truth; the mechanical checks that catch what the issue body gets wrong; why a resource repath needs a live resources/list probe even when the tool surface is byte-identical; how the resolveRootFolder mirror obligation is discharged and escalated once its dependency range moves; and why the explorer allow-list is not chef's READ_ONLY set.
+tags: [mcp, pin-bump, construct3-chef, c3-domain-manager, verification, reconcile-mcp-pin, resolve-root-folder, allow-list, resource-surface, resources-list, adr-0007, adr-0009, adr-0013]
 status: stable
 stale_after: 2027-02-26
-generated: { by: process:maintain-wiki, at: 2026-08-26T00:00:00Z }
+generated: { by: process:maintain-wiki, at: 2026-09-01T00:00:00Z }
 sources:
   - id: claude-md
     resource: ../raw/claude-md-2026-08-18.md
@@ -23,6 +23,9 @@ sources:
   - id: reconciliation
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/9d77f5b/docs/tool-surface-reconciliation.md
     title: docs/tool-surface-reconciliation.md as of 9d77f5b, the last commit before it was retired into this page
+  - id: adr-0013
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/decisions/0013-addressing-the-chef-docs-resource-by-server-and-uri.md
+    title: ADR 0013 in the repo (living version)
 ---
 
 # Verifying an MCP pin bump
@@ -189,13 +192,30 @@ review that release notes would have talked us out of — and the review then fo
 nothing had moved.[^adr-0009]
 
 > **The reviewed baseline is now state the check depends on.** It currently stands at
-> **{0.5.1, 0.7.0}**, recorded in the provenance comment above `scanC3ProjectMarkers`
-> in `audit.mjs` and in ADR 0009. **A baseline that is not written down silently resets
-> the check to its most expensive form.**
+> **{0.5.1, 0.7.0, 0.8.0}**, recorded in the provenance comment above
+> `scanC3ProjectMarkers` in `audit.mjs` and in ADR 0009. **A baseline that is not
+> written down silently resets the check to its most expensive form.**
 
-**Part 2 will expire again**, and that is expected rather than a defect: `^0.7.0`
-currently admits only `0.7.0`, so the range is pinned in practice once more — until
-`mcp-utils 0.8.0` publishes. **A dm bump is not the only trigger.**[^adr-0009]
+**Part 2 expired again on 2026-09-01, exactly as predicted** — and the trigger was the
+one this page called out rather than the expected one. The previous revision said the
+range was pinned in practice "until `mcp-utils 0.8.0` publishes. **A dm bump is not the
+only trigger.**" Both halves fired at once: `mcp-utils 0.8.0` published, and **chef**
+moved `^0.7.0` → `^0.8.0` alongside dm. This is the **first chef-side trigger** of an
+obligation written for dm bumps.[^adr-0009]
+
+The ADR 0009 escalation was run for the chef `1.2.0` / dm `0.9.0` bump, with every
+`diff` exit status observed:
+
+| Check | Result |
+|---|---|
+| ADR 0007 part 1 — dm `dist/adapters/locations.js`, `0.8.0` ↔ `0.9.0` | **byte-identical** |
+| ADR 0007 part 2 — range moved `^0.7.0` → `^0.8.0` (both servers) | **fails procedurally** |
+| `dist/resolveRootFolder.js`, mcp-utils `0.7.0` ↔ `0.8.0` | **byte-identical** |
+| `dist/mcpError.js` — its only non-node import | **byte-identical** |
+| `diff -rq` over `dist/` (completeness) | only `exposeDocs.*`, `index.d.ts(.map)`, `index.js.map` differ — `index.js` itself identical, all **outside the closure** |
+
+**Verdict: PASS.** `audit.mjs`'s four mirror functions needed **no logic change**; only
+the baseline widened. Part 2 will expire again the moment `mcp-utils 0.9.0` publishes.
 
 ## The explorer allow-list is *not* chef's `READ_ONLY` set
 
@@ -203,7 +223,7 @@ The obvious mechanical check — diff chef's `READ_ONLY` tools against `c3-explo
 allow-list and add what is missing — is **wrong in both directions**, and wrong in a
 way that changes a **capability**, not just a doc.[^reconciliation]
 
-Measured at chef `1.1.0`: **24 `READ_ONLY` + 10 `MUTATE` + 2 unannotated**
+Measured at chef `1.2.0` (unchanged from `1.1.0`): **24 `READ_ONLY` + 10 `MUTATE` + 2 unannotated**
 (`generate-sids`, `regenerate`) = **36** `reg()` tools, while the explorer's chef
 allow-list holds **25**. Three deliberate divergences explain the gap:[^reconciliation]
 
@@ -246,6 +266,66 @@ The old scope stays **resolvable** (frozen, not unpublished), so a version probe
 against the stale package still "works" — **pack both old and new and diff their
 registration names** rather than trusting a "no change" claim.[^reconciliation]
 
+## A resource repath reaches past the tool lists too
+
+Everything above verifies **tools**. A server can leave its tool surface
+byte-identical and still ship a breaking change, because MCP **resources** are a
+separate capability that no tool-side check touches.
+
+The chef `1.1.0` → `1.2.0` bump is the worked example. `reg("…")` was **36 at both**
+versions with byte-identical name sets, and the `READ_ONLY`/`MUTATE` split was 25/11 at
+both — so every check in this page passes, and none of them sees the actual change:
+every `docs:///` resource name repathed when chef retired its flat `docs/` tier into a
+recursive `wiki/` bundle. `docs:///cli` became `docs:///reference/cli`; `docs:///TOC`
+became `docs:///index`.
+
+**The dangerous sentence in a bump issue is "no tool was added, removed, or renamed."**
+It is usually true and it reads as *nothing to reconcile*. The question to ask is **"did
+anything a consumer addresses by name move?"**, not "did the tool list change?"
+
+### Verify resource names against a live `resources/list`
+
+Not against the issue's rename table, and not only against the tarball.
+
+- The **issue's table** is an assertion, exactly like its tool table — this page's core
+  rule applies unchanged.
+- The **tarball** is better but is still a *derivation*: you must read the server's
+  `exposeDocs(...)` call for its `docsDir` and `recursive` options and then reproduce the
+  name computation (relative path, POSIX separators, `.md` stripped) in your head. Each
+  step is a place to be wrong.
+- A **live `resources/list`** skips all of that and returns the names the server actually
+  serves.
+
+Start the pinned server over stdio and speak MCP to it: send `initialize`, then the
+`notifications/initialized` notification, then `resources/list`, reading newline-delimited
+JSON-RPC from stdout. A throwaway Node script parameterised by package spec is enough —
+scratchpad, not the repo, per `/gvt-dev:build-probe`.
+
+Measured this way on 2026-09-01, before rewriting any reference:
+
+| Pinned server | `resources/list` entries |
+|---|---|
+| `@genvidtech/construct3-chef@1.2.0` | **51** — 50 documents under `wiki/` plus a static `readme` |
+| `@genvidtech/c3-domain-manager@0.9.0` | **37** |
+
+Both figures matched the counts the bump issues claimed, which is worth noting in the
+other direction: **the probe is cheap enough that confirming a correct issue costs
+almost nothing**, and it is the only thing that would have caught a wrong one before 26
+citations were rewritten against it. The same run also confirmed the four old flat stems
+(`cli`, `ops`, `recipe-reference`, `TOC`) were **gone**, which a "names were added"
+reading of the issue would not have established.
+
+Two riders worth carrying forward:
+
+- **`resourceTemplates` came back empty on both servers.** The registered
+  `docs:///{+path}` template's `list` callback expands into concrete `resources/list`
+  entries rather than surfacing as a template there. Don't read an empty
+  `resourceTemplates` as "no template registered".
+- **Both bundled servers register the `docs` scheme.** chef serves
+  `docs:///reference/cli`; c3-domain-manager serves
+  `docs:///reference/domain-architecture`. A resource is therefore only addressable as
+  the **pair** — server plus URI — which is what ADR 0013 makes normative.[^adr-0013]
+
 ## The count anchors
 
 **These totals are the anchors the *next* bump greps against to sanity-check its own
@@ -258,9 +338,9 @@ in `plugin/.claude-plugin/plugin.json`'s `mcpServers`.
 
 | Server | Idiom | Location | Count |
 |---|---|---|---|
-| construct3-chef | `reg("…")` | `dist/mcp/server.js` | **36** at `1.1.0` — was **34** at `1.0.0`, **30** stable `0.9.0` → `0.11.2` |
+| construct3-chef | `reg("…")` | `dist/mcp/server.js` | **36** at `1.2.0` (unchanged from `1.1.0`) — was **34** at `1.0.0`, **30** stable `0.9.0` → `0.11.2` |
 | construct3-chef | + `list-ops` from `opsRegistry.js` | — | **37 total** — was **35**, **31** |
-| c3-domain-manager | `registerTool` | — | **14** at `0.8.0` (unchanged from `0.7.0`; was **13** before) |
+| c3-domain-manager | `registerTool` | — | **14** at `0.9.0` (unchanged from `0.8.0` and `0.7.0`; was **13** before) |
 
 **Grep `reg(` in `server.js`, not `registerTool(`.** A bare `registerTool(` grep barely
 matches chef — only `list-ops` and the dynamic `op-<name>` wrapper use that idiom — so it
@@ -292,6 +372,9 @@ dependency range actually moves.
 
 [^reconciliation]: `docs/tool-surface-reconciliation.md` (retired; its content now lives in this page) — the C3-specific
 reconciliation anchors, the read/mutate split, and the scope-rename categories.
+
+[^adr-0013]: ADR 0013 on addressing the chef docs resource by server and `docs:///`
+URI — why the pair, not the URI alone, is the addressable identity.
 
 ## Related
 

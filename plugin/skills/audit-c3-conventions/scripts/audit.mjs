@@ -466,16 +466,21 @@ export function classifyDiscovery({
   return { fires: false, reason: matches.length === 1 ? 'single' : 'none' };
 }
 
-// Mirrors c3-domain-manager's (@genvidtech/mcp-utils@0.7.0) resolveRootFolder
+// Mirrors c3-domain-manager's (@genvidtech/mcp-utils@0.8.0) resolveRootFolder
 // discovery: a depth-1 scan of repoRoot's child directories for a
 // `project.c3proj` marker. Ground-truthed fidelity fact: upstream's scan does
 // NO name-based filtering — `node_modules` and dot-directories are scanned
 // like any other child dir — so this deliberately does not exclude them
 // either (see the regression-lock test in audit.test.mjs).
-// Reviewed baseline: {0.5.1, 0.7.0}. `resolveRootFolder.js` and its only import
-// `mcpError.js` are byte-identical across those two, so the dm 0.7.0 -> 0.8.0
-// bump (which moved the range ^0.5.1 -> ^0.7.0) required no change here. See
-// ADR 0009.
+// Reviewed baseline: {0.5.1, 0.7.0, 0.8.0}. `resolveRootFolder.js` and its only
+// import `mcpError.js` are byte-identical across all three, so the dm 0.7.0 ->
+// 0.8.0 bump (which moved the range ^0.5.1 -> ^0.7.0) required no change here.
+// The dm 0.8.0 -> 0.9.0 bump moved the range again (^0.7.0 -> ^0.8.0) and also
+// required no change: the closure diff was byte-identical, and `diff -rq` over
+// dist/ showed only exposeDocs.*, index.d.ts(.map) and index.js.map differing —
+// all outside the mirrored closure. Note that bump was the first triggered by a
+// *construct3-chef* release rather than a dm one; chef moved the same range.
+// See ADR 0009.
 export async function scanC3ProjectMarkers(repoRoot) {
   const rootHasMarker = await fileExists(join(repoRoot, 'project.c3proj'));
   const childDirsWithMarker = [];

@@ -22,19 +22,19 @@ Currently one field matters for cross-tool coordination:
 | ----- | ------- | ------- |
 | `extractedDir` | `"extracted"` | Directory where construct3-chef writes its read surface (DSL files, extracted TypeScript, layout summaries, indexes). Must resolve inside the project root. |
 
-For the authoritative list of all fields and the full CLI reference (`--project-dir`, etc.), see the `construct3-chef://docs` resource — specifically the `cli.md` "Configuration file" section.
+For the authoritative list of all fields and the full CLI reference (`--project-dir`, etc.), see the `construct3-chef` server's `docs:///reference/cli` resource — specifically its "Configuration file" section.
 
 ### `domain-config.json` (required)
 
-Placed at the **C3 project root** (which is the workspace root for the standard single-project layout, or the project subdirectory for non-rooted repos — see below). This file is **required** by c3-domain-manager; the server errors on startup without it. Its content is your project's DDD domain topology (domains, shared subdomains, overrides, relationships) — that schema is project-specific and documented in c3-domain-manager's own `domain-architecture.md`, not here.
+Placed at the **C3 project root** (which is the workspace root for the standard single-project layout, or the project subdirectory for non-rooted repos — see below). This file is **required** by c3-domain-manager; the server errors on startup without it. Its content is your project's DDD domain topology (domains, shared subdomains, overrides, relationships) — that schema is project-specific and documented in the `c3-domain-manager` server's `docs:///reference/domain-architecture` MCP resource, not here.
 
 ## Why the Bundled Servers Work With No Launch Flags
 
 The plugin declares both servers in `plugin.json` as bare `server` invocations:
 
 ```json
-"construct3-chef": { "command": "npx", "args": ["-y", "@genvidtech/construct3-chef@1.1.0", "server"] }
-"c3-domain-manager": { "command": "npx", "args": ["-y", "@genvidtech/c3-domain-manager@0.8.0", "server"] }
+"construct3-chef": { "command": "npx", "args": ["-y", "@genvidtech/construct3-chef@1.2.0", "server"] }
+"c3-domain-manager": { "command": "npx", "args": ["-y", "@genvidtech/c3-domain-manager@0.9.0", "server"] }
 ```
 
 No `--project-dir`, `--config`, or `--extracted` flags are passed. This works because Claude Code launches plugin-declared MCP servers with cwd set to the workspace root, and both servers resolve configuration from cwd:
@@ -92,7 +92,7 @@ Resolve ambiguity with an explicit `--project-dir` or `C3_PROJECT_DIR`.
   "mcpServers": {
     "construct3-chef": {
       "command": "npx",
-      "args": ["-y", "@genvidtech/construct3-chef@1.1.0", "server", "--project-dir", "game"]
+      "args": ["-y", "@genvidtech/construct3-chef@1.2.0", "server", "--project-dir", "game"]
     }
   }
 }
@@ -112,5 +112,5 @@ Both servers resolve `extracted/` relative to **their own project root**. If you
 
 ## External References
 
-- **construct3-chef CLI and config fields** (`--project-dir`, `extractedDir`, all other options): `construct3-chef://docs` → `cli.md`, "Configuration file" section.
-- **c3-domain-manager domain topology schema** (`domains`, `sharedSubdomains`, `overrides`, `relationships`): c3-domain-manager's `domain-architecture.md`.
+- **construct3-chef CLI and config fields** (`--project-dir`, `extractedDir`, all other options): the `construct3-chef` server's `docs:///reference/cli` resource, "Configuration file" section.
+- **c3-domain-manager domain topology schema** (`domains`, `sharedSubdomains`, `overrides`, `relationships`): the `c3-domain-manager` server's `docs:///reference/domain-architecture` resource.

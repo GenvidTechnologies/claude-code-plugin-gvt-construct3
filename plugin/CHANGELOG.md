@@ -26,6 +26,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   its own pages. **The prose content of the docs is unchanged.**
 
 ### Changed
+- **BREAKING — the plugin now requires `construct3-chef` ≥ `1.2.0`** (was `≥ 1.0.0`),
+  and all four skills raise their declared `minVersion` to match
+  (`audit-c3-conventions`, `author-navigation-patterns`, `build-reference`,
+  `create-c3-op`). `audit-c3-conventions` **fails** against an older chef rather than
+  warning. The floor moves because the plugin now cites chef's documentation resource
+  by its path-shaped `docs:///` names, which exist only from `1.2.0`; below that they
+  fail with `McpError(InvalidParams)` instead of resolving. If you pin chef yourself,
+  bump it before taking this release.
+- **Pinned MCP servers bumped: `construct3-chef` `1.1.0` → `1.2.0`, and
+  `c3-domain-manager` `0.8.0` → `0.9.0`.** Neither release adds, removes, or renames a
+  single MCP **tool** — verified by packing both versions of each server — so
+  `c3-explorer`'s `tools:` allow-list is unchanged. What moved is each server's
+  `docs:///` **resource** surface: both retired a flat `docs/` tier into a recursive
+  `wiki/` bundle, so every served document is now addressed by its real relative path
+  rather than a bare stem.
+- **The plugin's citations of chef's documentation resource were malformed and are now
+  corrected** (#86). Every reference was written as `construct3-chef://docs`, which
+  transposes the server name and the URI scheme and **has never resolved** — 28
+  occurrences across 13 shipped files and the dev workspace. They now name the pair:
+  the `construct3-chef` server plus a `docs:///<path>` URI (for example
+  `docs:///reference/recipe-reference`). **If you copied `construct3-chef://docs` into
+  your own agents, skills, or docs, grep for that exact string — it does not work
+  there either.** The two agents differ deliberately: `c3-implementer` is told to read
+  the resource with `ReadMcpResourceTool`, while `c3-explorer` — whose hard `tools:`
+  allow-list contains no MCP-resource tool — is told the resource is out of its reach
+  and to hand the question to its orchestrator, rather than being handed an
+  instruction it cannot execute. Recorded as ADR 0013, which amends ADR 0010's link
+  form while leaving its capability-not-symbol rule intact.
+- **`c3-domain-manager`'s schema doc is cited the same way** — `domain-architecture.md`
+  becomes the `c3-domain-manager` server's `docs:///reference/domain-architecture`
+  resource. Both bundled servers register the `docs` scheme, so every citation names
+  its server; a bare `docs:///…` URI would not say which server it addresses.
 - **`docs/c3/README.md` is now `docs/c3/index.md`** — the file is unchanged apart
   from the rename and the fixes below; it remains both the bundle index and the doc
   table. If you deep-link `docs/c3/README.md` from your own docs, repoint it.

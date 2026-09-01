@@ -71,7 +71,7 @@ runner only.
 
 e.g. `author-navigation-patterns`. Mirror the tool's algorithm only against its
 **documented contract**, defer the field-level schema to the tool's own docs
-(`construct3-chef://docs`), and treat the **tool's own output as the authoritative
+(the `construct3-chef` server's `docs:///reference/cli` resource), and treat the **tool's own output as the authoritative
 validator** (`navigation-graph`). Any bundled helper script is a fast *preview*
 that must agree with — never replace — that output. Pin the mirrored logic to
 ground truth from the package source (see

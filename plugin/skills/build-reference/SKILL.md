@@ -16,8 +16,8 @@ metadata:
     mcp:
       - server: construct3-chef
         package: "@genvidtech/construct3-chef"
-        minVersion: "0.9.0"
-        reason: The `search-docs` tool and the `c3-reference` cache contract (ReferenceIndexSchema, loadReferenceCache) landed in 0.9.0 (construct3-chef#87).
+        minVersion: "1.2.0"
+        reason: The `search-docs` tool and the `c3-reference` cache contract (ReferenceIndexSchema, loadReferenceCache) landed in 0.9.0 (construct3-chef#87); the floor is 1.2.0 because this skill cites the path-shaped docs:///reference/cli resource, which exists only from 1.2.0 (ADR 0013).
 ---
 
 # Build Reference
@@ -48,8 +48,8 @@ present and current — say so and stop.
 
 ## What it produces (and what it must NOT)
 
-The cache schema (`ReferenceIndexSchema`) is **owned by construct3-chef** — see
-`construct3-chef://docs` and chef's `src/c3/c3Reference.ts`. In brief, `index.json`
+The cache schema (`ReferenceIndexSchema`) is **owned by construct3-chef** — see the
+`construct3-chef` server's `docs:///reference/cli` resource and chef's `src/c3/c3Reference.ts`. In brief, `index.json`
 is `{ schemaVersion, manualVersion, generatedAt, aces?, chunks? }` where each ACE is
 `{ source, objectClass, kind, id, scriptName?, params:[{name,type}], description?,
 canonicalUrl? }` and each chunk is `{ title, text, canonicalUrl, category }`

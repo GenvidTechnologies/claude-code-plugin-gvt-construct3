@@ -15,8 +15,8 @@ metadata:
     mcp:
       - server: construct3-chef
         package: "@genvidtech/construct3-chef"
-        minVersion: "1.0.0"
-        reason: Recipe tools, construct3-chef://docs (the canonical tooling reference), and the bundled-.c3addon validation surface (validate-addons)
+        minVersion: "1.2.0"
+        reason: Recipe tools, the construct3-chef server's docs:///index tooling reference, and the bundled-.c3addon validation surface (validate-addons). The floor is 1.2.0 because the path-shaped docs:/// resource names this plugin cites exist only from 1.2.0 (ADR 0013).
       - server: c3-domain-manager
         package: "@genvidtech/c3-domain-manager"
         minVersion: "0.6.1"

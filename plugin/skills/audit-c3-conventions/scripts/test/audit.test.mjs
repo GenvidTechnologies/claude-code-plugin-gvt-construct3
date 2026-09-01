@@ -7,7 +7,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { promises as fs } from 'node:fs';
-import { join, resolve, basename } from 'node:path';
+import { join, resolve, dirname, basename } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 
 // ---- helpers ----------------------------------------------------------------
@@ -266,6 +267,17 @@ description: No expects here
   const fm = extractFrontmatter(src);
   assert.ok(fm);
   assert.equal(fm.metadata?.expects, undefined);
+});
+
+test('frontmatter: reason scalar round-trips a docs:/// URI', async () => {
+  const skillPath = resolve(dirname(fileURLToPath(import.meta.url)), '../../SKILL.md');
+  const src = await fs.readFile(skillPath, 'utf8');
+  const fm = extractFrontmatter(src);
+  assert.ok(fm, 'frontmatter should be parsed');
+  assert.ok(
+    fm.metadata?.expects?.mcp?.[0]?.reason?.includes('docs:///'),
+    'mcp[0].reason should include a docs:/// URI',
+  );
 });
 
 // ---- evaluateFile / evaluateConfig tests ------------------------------------
