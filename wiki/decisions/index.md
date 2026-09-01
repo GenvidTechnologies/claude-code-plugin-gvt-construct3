@@ -6,6 +6,12 @@ ADR for full rationale; the issue linked in each record carries the original con
 These are **historical records** — sweep the living docs, never the ADRs. A decision that
 is genuinely reversed earns a superseding record rather than an edit in place.
 
+Each row below mirrors its record's frontmatter `description` **verbatim**. When a later
+record amends an earlier one, the annotation is **appended after** the mirrored text, never
+spliced into it — editing the mirrored span would make this index misquote the record it
+points at, and correcting it "properly" would mean editing an ADR in place. Neither is
+available, so the amendment goes outside the quote.
+
 > New records are **not** indexed automatically. Every `gvt-dev` self-indexer writes to a
 > hard-coded `docs/TOC.md` and skips silently when it is absent, and the audit's orphan
 > scan is inert against an `index.md`-named index — so nothing will tell you a row is
@@ -23,5 +29,6 @@ is genuinely reversed earns a superseding record rather than an edit in place.
 * [0010. `docs/c3` Links Out to chef Generically and Never Names chef's Internal Symbols](0010-linking-out-generically-instead-of-naming-chef-symbols.md) - `docs/c3` refers to construct3-chef by *capability* and links to `construct3-chef://docs`; it never names chef's functions, modules, or MCP tools — not even correct ones, since a correct name can rot into confident wrongness undetected.
 * [0011. A `docs/c3` Doc's Provenance Note Is Part of the Cost of Moving a Fact Into It](0011-a-docs-provenance-note-is-part-of-the-move-cost.md) - A fact isn't relocated between `docs/c3` docs on topical fit alone; the target document's ADR 0008 provenance note (does it carve out runtime behaviour, or assert blanket sample verification?) is part of the move's cost.
 * [0012. Retire `docs/` into the `wiki/` Bundle, Accepting the Audit-Tooling Residue](0012-retiring-docs-into-the-wiki-bundle.md) - `docs/` is retired into the `wiki/` bundle behind four `paths` overrides; the audit residue that no override can reach is accepted and named site by site rather than counted.
+* [0013. Address the chef Docs Resource by Server and `docs:///` URI](0013-addressing-the-chef-docs-resource-by-server-and-uri.md) - A doc or agent body names chef's documentation resource as the pair (`construct3-chef` server, `docs:///<path>` URI) — never the malformed `construct3-chef://docs`, and never the `@server:protocol://resource` mention form, which only resolves in human-typed input.
 
 See the [wiki index](../index.md) for the rest of the bundle.
