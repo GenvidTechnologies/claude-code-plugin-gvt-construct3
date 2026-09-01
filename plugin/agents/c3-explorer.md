@@ -20,7 +20,7 @@ Explore C3 files (eventSheets, layouts, domain index) and report findings. You a
 
 ## MCP Tools Available
 
-This is your full read-only surface across both pinned servers (`construct3-chef@1.1.0`, `c3-domain-manager@0.8.0`). It is your hard `tools:` allow-list — anything not listed here you cannot call.
+This is your full read-only surface across both pinned servers (`construct3-chef@1.2.0`, `c3-domain-manager@0.9.0`). It is your hard `tools:` allow-list — anything not listed here you cannot call.
 
 **construct3-chef — read & list:**
 - `read-dsl` — human-readable eventSheet logic (conditions, actions, functions, variables)
