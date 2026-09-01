@@ -16,8 +16,8 @@ metadata:
     mcp:
       - server: construct3-chef
         package: "@genvidtech/construct3-chef"
-        minVersion: "0.9.0"
-        reason: The `search-docs` tool and the `c3-reference` cache contract (ReferenceIndexSchema, loadReferenceCache) landed in 0.9.0 (construct3-chef#87).
+        minVersion: "1.2.0"
+        reason: The `search-docs` tool and the `c3-reference` cache contract (ReferenceIndexSchema, loadReferenceCache) landed in 0.9.0 (construct3-chef#87); the floor is 1.2.0 because this skill cites the path-shaped docs:///reference/cli resource, which exists only from 1.2.0 (ADR 0013).
 ---
 
 # Build Reference

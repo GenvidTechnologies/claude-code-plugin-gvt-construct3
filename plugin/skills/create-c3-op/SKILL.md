@@ -14,8 +14,8 @@ metadata:
     mcp:
       - server: construct3-chef
         package: "@genvidtech/construct3-chef"
-        minVersion: "0.10.0"
-        reason: User-defined ops (the ops/ directory, list-ops and apply-op CLI/MCP surfaces, OpTemplate substitution) landed in 0.10.0 (construct3-chef #89). The skill is inert below this version.
+        minVersion: "1.2.0"
+        reason: User-defined ops (the ops/ directory, list-ops and apply-op CLI/MCP surfaces, OpTemplate substitution) landed in 0.10.0 (construct3-chef #89), below which the skill is inert; the floor is 1.2.0 because this skill cites the path-shaped docs:///reference/ops and docs:///reference/recipe-reference resources, which exist only from 1.2.0 (ADR 0013).
 ---
 
 # Create C3 Op
@@ -129,7 +129,9 @@ This skill does not run either form with writes.
 
 ## Caveats
 
-**Chef version below 0.10.0.** `list-ops` and `apply-op` are absent; the skill cannot validate anything. The `minVersion: "0.10.0"` expects entry surfaces this to the audit. If the installed version is below 0.10.0, say so and stop.
+**Chef version below 0.10.0.** `list-ops` and `apply-op` are absent; the skill cannot validate anything. If the installed version is below 0.10.0, say so and stop.
+
+**Chef version below 1.2.0.** The tools work, but this skill's `docs:///reference/ops` and `docs:///reference/recipe-reference` citations name resources that only exist from 1.2.0 — below it they fail with `McpError(InvalidParams)` rather than returning the schema. The `minVersion: "1.2.0"` expects entry surfaces both stop-conditions to the audit.
 
 **Recipe-validation failure unrelated to the wrapper.** Chef validates the recipe post-substitution against the project's extracted state. If the project has never been extracted (or the extraction is stale), recipe ops that reference layout names, object classes, or other project entities will fail the recipe-validation guard — not because the op wrapper is wrong, but because the referenced entity doesn't appear in the extracted data. Confirm the project's extracted data is present and current before attributing a recipe-validation failure to the op file (chef produces the `extractedDir` when its server runs; see the `construct3-chef` server's `docs:///reference/cli` resource for the extraction/sync model).
 
