@@ -15,6 +15,37 @@ before. If a past entry itself needs correcting, add a new entry that says
 so; never edit or remove the old one in place. See `docs/wiki-schema.md` for
 the full maintenance schema.
 
+## 2026-09-01
+
+* **Update**: `pin-bump-verification.md` gains *"A resource repath reaches past the tool
+  lists too"*. Every check the page carried verified **tools**; the chef `1.1.0` → `1.2.0`
+  bump changed **no tool at all** — `reg()` 36 at both versions with byte-identical name
+  sets, `READ_ONLY`/`MUTATE` 25/11 at both — while repathing every `docs:///` **resource**
+  name. So the whole page passed and saw nothing. The new section names the tell (a bump
+  issue's "no tool was added, removed, or renamed" reads as *nothing to reconcile*, and is
+  the wrong question) and prescribes verifying resource names against a **live
+  `resources/list`** rather than the issue's rename table or a tarball derivation, since
+  the derivation requires reproducing `exposeDocs`'s name computation by hand. Records the
+  measured figures (chef `1.2.0` → 51 entries, c3-domain-manager `0.9.0` → 37), the empty
+  `resourceTemplates` rider, and that both bundled servers register the `docs` scheme —
+  which is why a resource is only addressable as the server-plus-URI pair.
+
+  Not driven by a `raw/` capture: the facts come from the #86/#88/#89/#91 branch, where
+  the probe ran as a gate before 26 citations were rewritten against those names. The
+  probe confirmed issue claims that turned out **correct**, which is the point worth
+  keeping — it is cheap enough that confirming a right issue costs almost nothing, and it
+  is the only thing that would have caught a wrong one in time. `sources` gains ADR 0013,
+  and the frontmatter `description` and `tags` follow the topic's widened shape.
+
+* **Correction recorded, not edited**: the same page's part-2 expiry prediction — "until
+  `mcp-utils 0.8.0` publishes. **A dm bump is not the only trigger.**" — **fired**, and by
+  the trigger it flagged rather than the expected one. `mcp-utils 0.8.0` published *and*
+  **chef** moved `^0.7.0` → `^0.8.0` alongside dm, making this the first **chef-side**
+  trigger of an obligation written for dm bumps. The prediction is replaced by the
+  discharge record (verdict PASS, every `diff` exit status observed) and the reviewed
+  baseline widens to `{0.5.1, 0.7.0, 0.8.0}` in both homes — this page and `audit.mjs`'s
+  provenance comment.
+
 ## 2026-08-27
 
 * **Migration**: `docs/` **retired entirely** into this bundle (#90), reaching the
