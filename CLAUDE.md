@@ -70,10 +70,29 @@ There is no build step, no `package.json`, no lint config — plain ESM `.mjs` r
 > relative to `plugin/`, so from the repo root it matches nothing, prints
 > `tests 0 / pass 0 / fail 0`, and **exits 0** — a green run that verified nothing. The same
 > glob is embedded in `.gvt-agent.json`'s `commands.validate`, so any wrapper or agent that
-> loses the working directory inherits the trap. **Confirm a non-zero test count** (currently
-> 174) rather than reading exit 0 as a pass. Note the shell's working directory also persists
-> between tool calls, so a `cd plugin` in one command silently changes where the *next* one
-> runs — which is how this usually happens.
+> loses the working directory inherits the trap. **Confirm a non-zero test count** (175 on
+> `main` at `c02aab4` — an anchor that drifts, so treat a mismatch as "re-derive", not
+> "fail") rather than reading exit 0 as a pass. Note the shell's working directory also
+> persists between tool calls, so a `cd plugin` in one command silently changes where the
+> *next* one runs — which is how this usually happens.
+>
+> **The same persistence has an inverse form that bites git, and one half of it is also
+> silent.** Once the shell is *inside* `plugin/`, a path written repo-root-relative no
+> longer resolves — and the two shapes fail very differently:
+>
+> | From inside `plugin/` | Result |
+> |---|---|
+> | `git commit plugin/CHANGELOG.md …` | `error: pathspec … did not match any file(s) known to git`, **exit 1** — loud, and safe |
+> | `git diff --name-only … -- 'plugin/skills/*/…'` | **empty output, exit 0** |
+>
+> The second is the dangerous one: empty output from a *filtered* `git diff` is
+> indistinguishable from "nothing matched the filter" — which is exactly what a
+> scope check like *"the diff touches nothing outside `scripts/test/`"* is hoping to
+> see. It reads as a pass and proves nothing, the same fail-open shape as the test
+> glob above pointing the other way. Prefer absolute paths, or `cd` back to the repo
+> root before any `git` command carrying a pathspec. When a filtered `git` command
+> returns nothing, confirm the path exists from the current directory before
+> believing the emptiness.
 
 ## Components
 

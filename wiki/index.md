@@ -34,6 +34,7 @@ maintenance rules.
 
 * [Verifying docs/c3 against construct3-sample](verifying-against-construct3-sample.md) - How a C3 platform fact in plugin/docs/c3/ is proved against the editor-validated construct3-sample project, how its provenance is cited, and the seven traps that each shipped a wrong doc or came one decision from it.
 * [Verifying an MCP pin bump](pin-bump-verification.md) - Why a pin-bump issue's tool/surface table is an assertion to test rather than ground truth; the mechanical checks that catch what the issue body gets wrong; how the resolveRootFolder mirror obligation is discharged and escalated once its dependency range moves; and why the explorer allow-list is not chef's READ_ONLY set.
+* [Verifying a pledged acceptance criterion](verifying-a-pledged-criterion.md) - How a criterion's own check goes wrong — a grep standing in for coverage, a recount standing in for a diff, and a hand-guessed mutation standing in for a discriminating one — with the measurement that settles each.
 * [Grounding a claim in chef's package source](grounding-in-chef-source.md) - How to answer a design question about construct3-chef or c3-domain-manager from the pinned package's compiled source rather than from memory or a README — and the three failure shapes that recipe exists to prevent.
 
 ## Maintainer procedures
