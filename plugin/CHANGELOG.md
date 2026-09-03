@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **`audit-c3-conventions` now has direct unit tests for its two shared
+  helpers.** `scripts/lib/frontmatter.mjs` and `scripts/lib/config-resolve.mjs`
+  are byte-identical copies of `gvt-dev`'s, and `gvt-dev`'s two test files for
+  them are now mirrored here verbatim, plus a sibling
+  `frontmatter-branches.test.mjs` for locally-authored branch cases. The mirrors
+  are kept `sha256`-identical to upstream rather than appended to, so each stays
+  diffable against its original — see ADR 0014. Suite goes 175 → 197 tests;
+  `config-resolve.mjs` reaches 100% line and branch coverage, `frontmatter.mjs`
+  97.83% / 90.91%. Test-only; no runtime behaviour changes. (#96)
 - **The agents now read a consuming repo's LLM-wiki.** If the repo's
   `.gvt-agent.json` declares a `wiki` block (`wikiDir` / `rawDir`, as written by
   `/gvt-dev:maintain-wiki`), `c3-explorer` and `c3-implementer` look there for
