@@ -316,3 +316,17 @@ schema's two-bundles note forbids folding it in here.
   by `raw/claude-md-2026-08-18.md`. `CLAUDE.md` was slimmed to repo facts,
   commands, and a pointer index in the same pass; no rule was dropped, and the
   pre-migration text is preserved verbatim in the capture.
+
+* **Creation**: `verifying-a-pledged-criterion.md` — from the #96 retro. Three
+  ways a criterion's *check* went wrong in one session, each a cheap proxy
+  standing in for the measurement the row asserts: a grep for an import name
+  standing in for coverage (the `parseYaml` premise, false when written and the
+  basis of a would-be-vacuous probe); a recount standing in for a diff (a floor
+  count that swept prose and reported 5 where the row asserts 4); and a
+  hand-guessed mutation standing in for a discriminating one (two guesses failed;
+  coverage named the surface immediately). Also records the counterpart limits —
+  coverage is not the criterion, and an uncovered line may be unreachable rather
+  than a gap. `CLAUDE.md` gained the inverse form of its `cd plugin` trap in the
+  same pass: a repo-root-relative pathspec run from inside `plugin/` makes a
+  filtered `git diff` return empty and exit 0, which reads as a passing scope
+  check.
