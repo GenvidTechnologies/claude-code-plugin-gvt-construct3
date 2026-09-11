@@ -74,6 +74,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are **unaffected** — no doc was moved, and no heading anchor changed.
 
 ### Fixed
+- **`scripts/audit.mjs`'s header comment stated MCP version floors that its own
+  frontmatter contradicts** (#97). The comment claimed `construct3-chef >= 0.4.0` and
+  `c3-domain-manager >= 0.1.1`, while `SKILL.md`'s `metadata.expects.mcp[].minVersion`
+  declares `1.2.0` and `0.6.1`. Documentation-only — the script reads each floor from
+  the frontmatter at run time (`entry.minVersion`, enforced via `semverGte`) and
+  enforces the correct values, so the audit stayed green throughout and is
+  structurally unable to detect a wrong comment. Rather than reset the numbers — they
+  had already gone stale across **two** pin bumps by the same mechanism — the comment
+  now names `metadata.expects.mcp` as the source of truth and states no version of its
+  own, closing the drift surface rather than resetting it (ADR 0002). Two further
+  defects in the same block were corrected alongside it: the MCP probe was listed as a
+  *peer* of the `expects` walk when `evaluateMcp` in fact dispatches *inside* it, and
+  the `1b.` discovery-ambiguity / `1c.` root-divergence checks were missing from the
+  "Checks:" list altogether despite being one of the two deliberate baked-in exceptions
+  (ADR 0006). **No floor moved and no runtime behaviour changed** — in particular
+  `c3-domain-manager`'s floor stays deliberately below its pin, so this is not a
+  breaking change for consumers.
 - **The C3 platform reference stated one production project's house conventions as Construct 3
   rules, and named that project's sheets, layouts and helpers** (#70) — the last of the
   four-issue de-Burbanking family (#69, #72, #76). In

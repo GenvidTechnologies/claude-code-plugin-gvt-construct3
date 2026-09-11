@@ -1,12 +1,18 @@
 #!/usr/bin/env node
 // Validates the consuming repo against the gvt-construct3 plugin's convention
 // contract. Checks:
-//   1. C3-project marker (project.c3proj present, or .gvt-agent.json
-//      features.c3 === true, or paths.c3project pointing at an existing file)
-//      — the legacy `.genvid-agent.json` name is still accepted as a fallback
-//   2. MCP servers reachable at minimum versions (construct3-chef >= 0.4.0,
-//      c3-domain-manager >= 0.1.1) — probed via `npx -y <package> --version`
-//   3. Walk plugin skills/agents metadata.expects (files, config, tools, mcp)
+//   1.  C3-project marker (project.c3proj present, or .gvt-agent.json
+//       features.c3 === true, or paths.c3project pointing at an existing file)
+//       — the legacy `.genvid-agent.json` name is still accepted as a fallback
+//   1b. Discovery ambiguity (bespoke, advisory `warning`) — 2+ sibling dirs
+//       carrying project.c3proj, which aborts c3-domain-manager's bare-args
+//       auto-discovery; suppressed by an explicit root pin
+//   1c. Root divergence (bespoke, advisory `info`) — the paths.c3project root
+//       differs from the one bare-args discovery would pick
+//   2.  Walk plugin skills/agents metadata.expects (files, config, tools, mcp).
+//       An `mcp` entry's minVersion is probed via `npx -y <package> --version`;
+//       this file states no floors of its own — each component's
+//       `metadata.expects.mcp` frontmatter is the source of truth (ADR 0002).
 //
 // Read-only — no --fix / migration mode.
 //
@@ -506,7 +512,7 @@ export async function scanC3ProjectMarkers(repoRoot) {
 export function resolveDiscoveryPick({ repoRoot, rootHasMarker, childDirsWithMarker }) {
   if (rootHasMarker) return repoRoot;
   const matches = childDirsWithMarker ?? [];
-  if (matches.length >= 2) return null; // ambiguous — item 2 must NOT fire here (item 1's warning owns this)
+  if (matches.length >= 2) return null; // ambiguous — root-divergence must NOT fire here (the ambiguity warning owns this)
   if (matches.length === 1) return join(repoRoot, matches[0]);
   return repoRoot; // 0 matches — cwd fallback
 }

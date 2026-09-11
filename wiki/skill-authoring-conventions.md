@@ -1,8 +1,8 @@
 ---
 type: practice-note
 title: Skill authoring conventions
-description: Frontmatter keys are fixed; scripts split a pure lib from a thin I/O CLI with tests at a path validation actually globs; and remediation prose must never describe a check the script does not yet implement.
-tags: [skills, frontmatter, scripts, testing, grounding]
+description: Frontmatter keys are fixed; scripts split a pure lib from a thin I/O CLI with tests at a path validation actually globs; remediation prose must never describe a check the script does not yet implement; and prose must never restate a value a declarative source already owns.
+tags: [skills, frontmatter, scripts, testing, grounding, drift]
 status: stable
 stale_after: 2027-08-18
 generated: { by: process:maintain-wiki, at: 2026-08-18T00:00:00Z }
@@ -107,6 +107,37 @@ When you add or edit an "Act on findings" bullet, verify each remediation path
 against the checks actually present in `audit.mjs`. If a remediation only works
 once a not-yet-written check exists, it belongs in the **issue/plan** for that
 check, not in the shipped skill.
+
+## Prose must not restate a value a declarative source owns
+
+The sibling of the rule above: that one is prose describing a check that does
+not exist, this one is prose *duplicating* a value that does. A comment or
+doc that restates a number the code reads from somewhere else has no mechanism
+keeping the two in step — nothing validates comment prose, so every automated
+gate stays green while the copy rots.
+
+**The `expects` contract is the case that keeps recurring.** Floors live in each
+component's `metadata.expects.mcp[].minVersion`, and `audit.mjs` reads them at
+run time ([ADR 0002](/decisions/0002-data-driven-audit-contract.md) — the
+frontmatter is the source of truth). `audit.mjs`'s own header comment restated
+them anyway, and went stale across **two** pin bumps before anyone noticed; the
+audit passed throughout, because it reads the frontmatter and is structurally
+unable to detect a wrong comment (#97).
+
+**The discriminator is who reads the number, not whether duplication feels
+untidy.** Both answers are legitimate:
+
+| Site | Ruling |
+|---|---|
+| `plugin/CONVENTIONS.md` | **Restate it.** This is the consumer-facing contract — the number *is* the deliverable, and a consumer cannot resolve a pointer into frontmatter they have not installed. Accept the maintenance cost; #32 is the precedent for paying it. |
+| `audit.mjs`'s header comment | **Point at the frontmatter.** The reader is a maintainer with `SKILL.md` in the same directory; the number buys nothing and drifts. |
+
+So do not "make the prose consistent" by sweeping numbers *into* sites that
+deliberately have none — that manufactures drift surfaces rather than closing
+them. `SKILL.md`'s `description` and `CONVENTIONS.md`'s narrative mention of
+minimum versions are already drift-proof precisely because they name no version.
+
+Note this section states no version numbers of its own, for the same reason.
 
 [^claude-md]: CLAUDE.md, "Components", "Commands", and "Conventions for editing
 this repo".
