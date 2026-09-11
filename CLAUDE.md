@@ -70,8 +70,8 @@ There is no build step, no `package.json`, no lint config — plain ESM `.mjs` r
 > relative to `plugin/`, so from the repo root it matches nothing, prints
 > `tests 0 / pass 0 / fail 0`, and **exits 0** — a green run that verified nothing. The same
 > glob is embedded in `.gvt-agent.json`'s `commands.validate`, so any wrapper or agent that
-> loses the working directory inherits the trap. **Confirm a non-zero test count** (175 on
-> `main` at `c02aab4` — an anchor that drifts, so treat a mismatch as "re-derive", not
+> loses the working directory inherits the trap. **Confirm a non-zero test count** (197 on
+> `main` at `78a646d` — an anchor that drifts, so treat a mismatch as "re-derive", not
 > "fail") rather than reading exit 0 as a pass. Note the shell's working directory also
 > persists between tool calls, so a `cd plugin` in one command silently changes where the
 > *next* one runs — which is how this usually happens.
