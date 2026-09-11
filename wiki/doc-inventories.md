@@ -1,7 +1,7 @@
 ---
 type: practice-note
 title: Doc inventories, ADRs, and the changelog
-description: Which hand-maintained inventories a new skill, a new docs/c3 doc, or even a new section must be added to; how to scope an absence criterion and why every such row needs auditing; the intra-repo anchor checker — plus why ADRs are never rewritten and why a pure content correction still earns a CHANGELOG entry.
+description: Which hand-maintained inventories a new skill, a new docs/c3 doc, or even a new section must be added to; how to scope an absence criterion and why every such row needs auditing; the intra-repo anchor checker — plus why ADRs are never rewritten, why a pure content correction still earns a CHANGELOG entry, and why a link inside the shipped plugin subtree must never escape it.
 tags: [docs, inventories, changelog, adr, drift]
 status: stable
 stale_after: 2027-08-18
@@ -144,6 +144,37 @@ down, and #72's plan omitted it until review.
 
 Say **what was wrong, what it is now, and what a reader who believed the old text
 should go re-check.**
+
+## A link inside `plugin/` must not escape `plugin/`
+
+The marketplace installs `plugin/` **on its own** — the catalog entry is a
+`git-subdir` source with `path: "plugin"`. A consumer's checkout therefore has no
+repo root, no `wiki/`, and no sibling of `plugin/` at all. So a relative link that
+climbs out (`../wiki/decisions/0002-*.md`, `../CLAUDE.md`) resolves fine in this
+repo, survives review, and is **dead for every consumer who installs the plugin**.
+
+Link outside the subtree with an **absolute `https://` URL**, or don't link at all.
+Every link in `plugin/CHANGELOG.md` today is absolute — the convention is already
+in force, it had just never been written down.
+
+**ADRs are the trap.** They read like in-repo docs and are cited constantly, but
+they live in `wiki/decisions/` — *outside* the shipped subtree. Cite one from
+shipped text as plain prose (`ADR 0002`) or as an absolute URL; the existing
+entries do the former. A `../wiki/decisions/…` link is the natural thing to write
+and the wrong thing to ship.
+
+> **Precedent.** #97's CHANGELOG entry was drafted with
+> `[ADR 0002](../wiki/decisions/0002-data-driven-audit-contract.md)` and caught
+> only by checking how sibling entries cite ADRs — nothing in the repo forbade it,
+> and no validator looks at link targets.
+
+**This is *stricter* than the equivalent wiki-bundle rule, not the same rule
+twice.** [`wiki-schema.md`](/wiki-schema.md) also discusses links escaping a
+bundle root, but rules them a *"deliberate, documented trade-off"* — tolerable
+because OKF consumers **must tolerate broken links** (§6.1). The shipped plugin
+has no such clause and no such reader: its audience is an end user of a released
+artifact, for whom a dead link is simply a defect. Don't carry the wiki bundle's
+permission across to `plugin/`.
 
 ## An "absence" criterion must be scoped to the surface where the defect lived
 
