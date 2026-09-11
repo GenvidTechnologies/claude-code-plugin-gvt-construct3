@@ -16,7 +16,7 @@ sources:
     title: CLAUDE.md in the repo (living version)
   - id: triage
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/process/issue-triage.md
-    title: docs/issue-triage.md in the repo (living version)
+    title: wiki/process/issue-triage.md in the repo (living version)
 ---
 
 # Deferring an issue upstream

@@ -9,7 +9,7 @@ generated: { by: process:maintain-wiki, at: 2026-08-26T00:00:00Z }
 sources:
   - id: triage
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/process/issue-triage.md
-    title: docs/issue-triage.md in the repo (living version)
+    title: wiki/process/issue-triage.md in the repo (living version)
 ---
 
 # Issue triage conventions
@@ -18,7 +18,7 @@ This repo uses the **flat-label variant**: GitHub's default category labels, wit
 **no** `type:` / `priority/` / `area:` scheme, plus two repo-specific labels
 (`triaged`, `blocked-upstream`).[^triage]
 
-> **The living contract is [`docs/issue-triage.md`](/process/issue-triage.md)**, which
+> **The living contract is [`wiki/process/issue-triage.md`](/process/issue-triage.md)**, which
 > `/gvt-dev:triage-issues` reads directly, together with the `bugTracker` block in
 > `.gvt-agent.json` (which holds the access mechanics — fetch queries and label names).
 > This page carries the conventions and the *why*; it deliberately does **not**
@@ -108,7 +108,7 @@ code was written.
 Don't recommend skipping triage on size alone. *(Workspace practice, recorded from
 prior triage runs rather than from the captured doc.)*
 
-[^triage]: `docs/issue-triage.md` — issue triage conventions for this repo.
+[^triage]: `wiki/process/issue-triage.md` — issue triage conventions for this repo.
 
 ## Related
 
