@@ -1,7 +1,7 @@
 ---
 type: practice-note
 title: Doc inventories, ADRs, and the changelog
-description: Which hand-maintained inventories a new skill, a new docs/c3 doc, or even a new section must be added to; how to scope an absence criterion and why every such row needs auditing; the intra-repo anchor checker — plus why ADRs are never rewritten, why a pure content correction still earns a CHANGELOG entry, and why a link inside the shipped plugin subtree must never escape it.
+description: Which hand-maintained inventories a new skill, a new docs/c3 doc, or even a new section must be added to; how to scope an absence criterion and why every such row needs auditing; why a discovery sweep must be as broad as the defect class it describes; the intra-repo anchor checker — plus why ADRs are never rewritten, why a pure content correction still earns a CHANGELOG entry, and why a link inside the shipped plugin subtree must never escape it.
 tags: [docs, inventories, changelog, adr, drift]
 status: stable
 stale_after: 2027-08-18
@@ -214,6 +214,40 @@ time passes it. It only became unsatisfiable once the CHANGELOG task ran, i.e.
 **the plan's own later work falsified its own earlier criterion**. That is a
 distinct failure from a row that decayed or was born wrong, and no gate before
 execution can catch it.
+
+## A discovery sweep must be as broad as the defect class it describes
+
+The two rules above police a criterion that is too **broad** — an absence row
+falsified by the change's own release notes. The inverse failure lands earlier and
+is quieter: a **discovery** sweep narrower than the defect class its own prose
+defines. It does not produce a false red; it produces a **short list that looks
+complete**, and the issue gets filed at the wrong size.
+
+> **Precedent.** #93 defined its defect class in prose as *"display text names the
+> retired path while the pointer beside it is correct"* — and then verified with a
+> **frontmatter-scoped** grep (`^\s*(title|resource):.*docs/`). That found 2 sites.
+> The class as written also covers body **link text** and **footnote labels**, which
+> the grep structurally cannot reach: the true count was **4**. One of the two misses
+> was the footnote label of the *very `sources` entry* the issue was fixing, a screen
+> below it in the same file. Both were found at planning, and scope was widened before
+> any edit.
+
+The tell is one question, asked of the sweep rather than of the result: **does the
+corpus this command searches match the corpus my problem statement describes?** A
+frontmatter grep answers a question about frontmatter. If the prose says *"a reader
+goes looking and finds nothing"*, the corpus is every place a reader reads — body
+prose, link text, footnote labels, and frontmatter alike.
+
+Two riders, both from #93:
+
+- **A narrow sweep also under-counts the look-alikes**, so the do-not-touch list is
+  filed short too. #93 catalogued 4 correct entries under a heading claiming five;
+  the real figure in the `docs/issue-triage` family was 7 once body sites were
+  included. A widened sweep has to re-derive *both* columns, not just the defect one.
+- **The fix is to widen the sweep, never to narrow the prose.** Rewriting the
+  problem statement to match what the grep happened to cover makes the two agree
+  while leaving the defect in the tree — the documentation equivalent of shrinking a
+  verifier's field of view until it passes.
 
 ## The intra-repo anchor checker
 
