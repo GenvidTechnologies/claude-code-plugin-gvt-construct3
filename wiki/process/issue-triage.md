@@ -16,7 +16,7 @@ A single category label per issue, drawn from the existing flat set:
   scripts, agent frontmatter that fails to load).
 - `enhancement` — a new skill, agent capability, audit check, or improvement.
 - `documentation` — a docs-only gap or fix, including the `plugin/docs/c3/`
-  platform reference and the dev-workspace `docs/`.
+  platform reference and the dev-workspace `wiki/`.
 - `question` — a request for information or clarification (doubles as the
   needs-info signal — see Required fields).
 
