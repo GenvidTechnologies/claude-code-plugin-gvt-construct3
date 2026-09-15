@@ -34,7 +34,7 @@ The plugin declares both servers in `plugin.json` as bare `server` invocations:
 
 ```json
 "construct3-chef": { "command": "npx", "args": ["-y", "@genvidtech/construct3-chef@1.2.0", "server"] }
-"c3-domain-manager": { "command": "npx", "args": ["-y", "@genvidtech/c3-domain-manager@0.9.0", "server"] }
+"c3-domain-manager": { "command": "npx", "args": ["-y", "@genvidtech/c3-domain-manager@0.10.1", "server"] }
 ```
 
 No `--project-dir`, `--config`, or `--extracted` flags are passed. This works because Claude Code launches plugin-declared MCP servers with cwd set to the workspace root, and both servers resolve configuration from cwd:
