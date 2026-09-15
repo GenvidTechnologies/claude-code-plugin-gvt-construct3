@@ -260,7 +260,7 @@ splits into three categories that must be handled differently:[^reconciliation]
 |---|---|
 | **Functional — must migrate** | the `plugin.json` pins **and** every skill's `metadata.expects.mcp.package`, which drives the audit's version probe. Also revisit each `minVersion` floor: the new scope's first-published version may exceed the old floor, so it is a deliberate keep-vs-raise call, not an automatic copy. |
 | **Live prose — should migrate** | version and scope mentions in agent bodies, `plugin/CONVENTIONS.md`, `plugin/docs/c3/toolchain-config.md`, `CLAUDE.md`, and the grounding/reconciliation docs, whose `npm pack` commands must name the live scope. |
-| **Historical records — must NOT rewrite** | past `plugin/CHANGELOG.md` entries and `docs/decisions/*.md`. They record the scope that *shipped at the time*; rewriting them falsifies history. Only the new `[Unreleased]` entry names the new scope. |
+| **Historical records — must NOT rewrite** | past `plugin/CHANGELOG.md` entries and `wiki/decisions/*.md`. They record the scope that *shipped at the time*; rewriting them falsifies history. Only the new `[Unreleased]` entry names the new scope. |
 
 The old scope stays **resolvable** (frozen, not unpublished), so a version probe
 against the stale package still "works" — **pack both old and new and diff their

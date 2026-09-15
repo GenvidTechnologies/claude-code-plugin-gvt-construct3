@@ -20,7 +20,7 @@ that **consumes** the `gvt-dev` plugin.[^adr-0004]
 | Tree | Role | Owns |
 | --- | --- | --- |
 | **`plugin/`** | the **shipped artifact** | `plugin/.claude-plugin/plugin.json` (the manifest), `plugin/agents/`, `plugin/skills/`, `plugin/docs/c3/`, `plugin/CONVENTIONS.md`, `plugin/CHANGELOG.md` |
-| **repo root** | the **dev workspace** consuming `gvt-dev` | `.gvt-agent.json` (`paths.plugin_root`, `commands.validate`, `repo.*`), `docs/`, `wiki/`, this repo's `CLAUDE.md` |
+| **repo root** | the **dev workspace** consuming `gvt-dev` | `.gvt-agent.json` (`paths.plugin_root`, `commands.validate`, `repo.*`), `wiki/`, this repo's `CLAUDE.md` |
 
 The marketplace installs the `plugin/` subtree, so **`${CLAUDE_PLUGIN_ROOT}`
 resolves to `plugin/`**, not to the repo root.
@@ -70,7 +70,7 @@ since are a **single-value `source.ref` bump** in the catalog.[^adr-0004]
   `plugin/CHANGELOG.md`, and keeps the catalog entry on its `git-subdir` source.[^adr-0004]
 - **This repo is in `gvt-dev` MIGRATED state** (it has `.gvt-agent.json`), so
   `audit-conventions --fix` does **not** run the greenfield scaffolder here. The
-  `.gvt-agent.json` and `docs/TOC.md` were hand-tuned — prefer editing them by hand
+  `.gvt-agent.json` and `wiki/index.md` were hand-tuned — prefer editing them by hand
   over a blanket fixer run.[^adr-0004]
 
 ## Why this page carries no `stale_after`
