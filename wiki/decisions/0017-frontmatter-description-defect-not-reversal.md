@@ -36,9 +36,10 @@ revision of the other. Git provenance cannot adjudicate this; only the body can.
 description was **never** true of the record it summarizes — it is *born wrong*, not
 *decayed*.
 
-That left a rule with no branch for this case. `doc-inventories.md:339` says to leave
-`wiki/decisions/` untouched **when a rename or refactor lands**, and to add a
-**superseding** record **if a decision is genuinely reversed**. `CLAUDE.md` states the
+That left a rule with no branch for this case. `doc-inventories.md` § *ADRs are
+historical records — don't retroactively rewrite them* says to leave `wiki/decisions/`
+untouched **when a rename or refactor lands**, and to add a **superseding** record **if
+a decision is genuinely reversed**. `CLAUDE.md` states the
 same rule more tersely. A summary that contradicted its own body on the day it was
 written is neither of those things, and the three available instincts were all bad:
 mirror the wrong text verbatim and propagate the misstatement into the index; leave the
