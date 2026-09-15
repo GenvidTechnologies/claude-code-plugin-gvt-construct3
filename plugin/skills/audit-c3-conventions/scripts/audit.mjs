@@ -478,15 +478,38 @@ export function classifyDiscovery({
 // NO name-based filtering — `node_modules` and dot-directories are scanned
 // like any other child dir — so this deliberately does not exclude them
 // either (see the regression-lock test in audit.test.mjs).
-// Reviewed baseline: {0.5.1, 0.7.0, 0.8.0}. `resolveRootFolder.js` and its only
-// import `mcpError.js` are byte-identical across all three, so the dm 0.7.0 ->
-// 0.8.0 bump (which moved the range ^0.5.1 -> ^0.7.0) required no change here.
-// The dm 0.8.0 -> 0.9.0 bump moved the range again (^0.7.0 -> ^0.8.0) and also
-// required no change: the closure diff was byte-identical, and `diff -rq` over
-// dist/ showed only exposeDocs.*, index.d.ts(.map) and index.js.map differing —
-// all outside the mirrored closure. Note that bump was the first triggered by a
-// *construct3-chef* release rather than a dm one; chef moved the same range.
-// See ADR 0009.
+// Reviewed baseline: {0.5.1, 0.7.0, 0.8.0, 0.10.0}. `resolveRootFolder.js` and
+// its only import `mcpError.js` are byte-identical across the first three, so the
+// dm 0.7.0 -> 0.8.0 bump (which moved the range ^0.5.1 -> ^0.7.0) required no
+// change here. The dm 0.8.0 -> 0.9.0 bump moved the range again (^0.7.0 ->
+// ^0.8.0) and also required no change: the closure diff was byte-identical, and
+// `diff -rq` over dist/ showed only exposeDocs.*, index.d.ts(.map) and
+// index.js.map differing — all outside the mirrored closure. Note that bump was
+// the first triggered by a *construct3-chef* release rather than a dm one; chef
+// moved the same range.
+//
+// The dm 0.9.0 -> 0.10.1 bump moved the range to ^0.10.0 and is the FIRST whose
+// closure diff came back NON-identical: mcp-utils 0.10.0 refactored the file so a
+// new plural `resolveRootFolders` owns the discovery walk and the singular
+// `resolveRootFolder` is a thin narrowing wrapper over it. The mirror still needs
+// no logic change, but that conclusion now rests on semantic equivalence rather
+// than byte-identity, established by decomposing the diff:
+//   - the walk body (scan, prune, depth-1 collection) is identical except that it
+//     returns `{paths: [...]}` where it used to return `{path: ...}`;
+//   - NO name-based filtering was added, so this mirror's deliberate inclusion of
+//     `node_modules` and dot-directories remains faithful (regression-locked in
+//     audit.test.mjs);
+//   - the singular narrows 1 path to `{path, source}` and >=2 to the ambiguity
+//     `mcpError`, whose message is byte-identical to the old one;
+//   - `mcpError.js` is still byte-identical, and the one differing sibling
+//     (`walkFiles.js`) is outside the import closure — which is only node:fs,
+//     node:path and mcpError.js.
+// Note dm's ADAPTER also changed for the first time (locations.js gained
+// multi-root discovery: resolveProjectRoots, deriveProjectId, buildRegistry), so
+// ADR 0007 part 1 failed too. That surface is dm's plural/multi-project path; the
+// plugin configures one single-project `server` invocation, so only the singular
+// semantics mirrored here are exercised.
+// See ADR 0009, and ADR 0015 for this non-identical-closure escalation.
 export async function scanC3ProjectMarkers(repoRoot) {
   const rootHasMarker = await fileExists(join(repoRoot, 'project.c3proj'));
   const childDirsWithMarker = [];

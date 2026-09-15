@@ -183,6 +183,32 @@ examples the audit's parser correctly ignores.
 > different number, the **measured** value is authoritative — record the delta as a
 > finding, don't edit this table to match.
 
+### Re-run the audit after editing `wiki/`, and compare against this table
+
+The table above says what the residue *should* be; nothing currently tells a contributor
+to **check** it. Adding or editing a page under `wiki/` can move these figures — a new
+bundle-absolute link moves the broken-link count, and a new page outside
+`hygiene.excludePaths` moves `scanned`. That change is invisible in the authoring PR and
+surfaces later, in someone else's unrelated audit run, as residue they did not cause.
+
+So before opening a PR that touches `wiki/`, run the audit and diff the four signals
+against this table:
+
+```
+node ~/.claude/plugins/cache/gvt-plugins/gvt-dev/<version>/skills/audit-conventions/scripts/audit.mjs
+```
+
+Unchanged figures are the expected outcome and cost one command. A **moved** figure is
+not automatically a defect — it may be the legitimate consequence of the page you just
+added — but it must be *noticed*, and either explained in the PR or folded into this
+table as part of the same change.
+
+Worked example (2026-09-15, #107): a branch that added `wiki/decisions/0015-*.md` and
+edited `wiki/pin-bump-verification.md` re-ran clean at **79 / 81 / `scanned 19` / exit 0**
+— identical to the 4.24.0 baseline, because `wiki/decisions/` sits in
+`hygiene.excludePaths` and the edits added no bundle-absolute links. The check cost one
+command and converted an assumption into a fact.
+
 **These numbers are pinned to a gvt-dev version and will move.** When #421 lands the
 broken-link count goes to 0; when #390 lands the Practice Coverage row returns from
 `Environment … partial adoption` to `adopted` and `run-retro` resumes detecting the wiki.

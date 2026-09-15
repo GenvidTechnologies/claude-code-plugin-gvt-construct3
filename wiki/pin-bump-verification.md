@@ -2,10 +2,10 @@
 type: practice-note
 title: Verifying an MCP pin bump
 description: Why a pin-bump issue's tool/surface table is an assertion to test rather than ground truth; the mechanical checks that catch what the issue body gets wrong; why a resource repath needs a live resources/list probe even when the tool surface is byte-identical; how the resolveRootFolder mirror obligation is discharged and escalated once its dependency range moves; and why the explorer allow-list is not chef's READ_ONLY set.
-tags: [mcp, pin-bump, construct3-chef, c3-domain-manager, verification, reconcile-mcp-pin, resolve-root-folder, allow-list, resource-surface, resources-list, adr-0007, adr-0009, adr-0013]
+tags: [mcp, pin-bump, construct3-chef, c3-domain-manager, verification, reconcile-mcp-pin, resolve-root-folder, allow-list, resource-surface, resources-list, adr-0007, adr-0009, adr-0013, adr-0015]
 status: stable
-stale_after: 2027-02-26
-generated: { by: process:maintain-wiki, at: 2026-09-01T00:00:00Z }
+stale_after: 2027-03-15
+generated: { by: process:plan-task, at: 2026-09-15T00:00:00Z }
 sources:
   - id: claude-md
     resource: ../raw/claude-md-2026-08-18.md
@@ -26,6 +26,9 @@ sources:
   - id: adr-0013
     resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/decisions/0013-addressing-the-chef-docs-resource-by-server-and-uri.md
     title: ADR 0013 in the repo (living version)
+  - id: adr-0015
+    resource: https://github.com/GenvidTechnologies/claude-code-plugin-gvt-construct3/blob/main/wiki/decisions/0015-discharging-the-mirror-when-the-closure-diff-is-not-identical.md
+    title: ADR 0015 in the repo (living version)
 ---
 
 # Verifying an MCP pin bump
@@ -192,9 +195,13 @@ review that release notes would have talked us out of — and the review then fo
 nothing had moved.[^adr-0009]
 
 > **The reviewed baseline is now state the check depends on.** It currently stands at
-> **{0.5.1, 0.7.0, 0.8.0}**, recorded in the provenance comment above
-> `scanC3ProjectMarkers` in `audit.mjs` and in ADR 0009. **A baseline that is not
-> written down silently resets the check to its most expensive form.**
+> **{0.5.1, 0.7.0, 0.8.0, 0.10.0}**, recorded in the provenance comment above
+> `scanC3ProjectMarkers` in `audit.mjs`, in ADR 0009, and — for `0.10.0` — in ADR 0015.
+> **A baseline that is not written down silently resets the check to its most expensive
+> form.** Note the members were not all admitted by the same standard: the first three
+> are byte-identical to one another, while `0.10.0` is **semantically equivalent but
+> textually different**. Diffing it against `0.8.0` returns a dirty result that was
+> already adjudicated — see ADR 0015.
 
 **Part 2 expired again on 2026-09-01, exactly as predicted** — and the trigger was the
 one this page called out rather than the expected one. The previous revision said the
@@ -215,7 +222,44 @@ The ADR 0009 escalation was run for the chef `1.2.0` / dm `0.9.0` bump, with eve
 | `diff -rq` over `dist/` (completeness) | only `exposeDocs.*`, `index.d.ts(.map)`, `index.js.map` differ — `index.js` itself identical, all **outside the closure** |
 
 **Verdict: PASS.** `audit.mjs`'s four mirror functions needed **no logic change**; only
-the baseline widened. Part 2 will expire again the moment `mcp-utils 0.9.0` publishes.
+the baseline widened.
+
+### When the closure diff itself comes back dirty — the ADR 0015 escalation
+
+Every discharge above ended in byte-identity, which is why ADR 0009 states it as the
+pass condition. **The dm `0.9.0` → `0.10.1` bump (#107) is the first where it did not
+hold** — and all three rungs failed at once:
+
+| Check | Result |
+|---|---|
+| ADR 0007 part 1 — dm `dist/adapters/locations.js`, `0.9.0` ↔ `0.10.1` | **FAILS** — gained `resolveProjectRoots`, `deriveProjectId`, `deriveUniqueProjectIds`, `buildRegistry` |
+| ADR 0007 part 2 — range moved `^0.8.0` → `^0.10.0`; mcp-utils `0.9.0` **and** `0.10.0` published | **FAILS procedurally** |
+| ADR 0009 step 2 — `dist/resolveRootFolder.js`, mcp-utils `0.8.0` ↔ `0.10.0` | **FAILS — first dirty closure diff** |
+
+The cause was a refactor: mcp-utils `0.10.0` added a plural `resolveRootFolders` owning
+the discovery walk, and reimplemented the singular as a narrowing wrapper. **Decompose
+along the four axes the mirror actually depends on** rather than judging the diff's
+size:[^adr-0015]
+
+| Axis | Finding at `0.8.0` ↔ `0.10.0` |
+|---|---|
+| Discovery walk (scan, prune, depth-1 collection) | **identical** except `{path: x}` → `{paths: [x]}` |
+| **Filtering policy** — was a name-based exclusion added? | **none** — the mirror's deliberate inclusion of `node_modules` and dot-dirs stays faithful |
+| Narrowing — 1 → success shape, ≥2 → ambiguity error | same, with a **byte-identical error message** |
+| Closure boundary | imports are `node:fs`, `node:path`, `./mcpError.js`; `mcpError.js` **byte-identical**; the differing `walkFiles.js` is **outside** the closure |
+
+**Verdict: PASS**, on semantic equivalence rather than byte-identity. Check the
+filtering axis explicitly — it was previously implied by byte-identity, and is easiest
+to lose at exactly the moment it starts to matter.
+
+**dm's adapter failing part 1 did not widen the scope**, and it is worth being precise
+why: what `locations.js` gained is dm's **plural, multi-project** path, and the plugin
+declares one `server` invocation with no `--project`. Only the singular path is
+exercised. Were that to change, the mirror's ambiguity semantics would genuinely be in
+question — in the plural path two marker-bearing siblings are a **success returning
+both**, not the `mcpError` the mirror reports as a discovery-ambiguity finding.
+
+Part 2 will expire again the moment `mcp-utils 0.11.0` publishes.
 
 ## The explorer allow-list is *not* chef's `READ_ONLY` set
 
@@ -307,20 +351,41 @@ Measured this way on 2026-09-01, before rewriting any reference:
 |---|---|
 | `@genvidtech/construct3-chef@1.2.0` | **51** — 50 documents under `wiki/` plus a static `readme` |
 | `@genvidtech/c3-domain-manager@0.9.0` | **37** |
+| `@genvidtech/c3-domain-manager@0.10.1` | **40** — re-probed 2026-09-15 (#107) |
 
-Both figures matched the counts the bump issues claimed, which is worth noting in the
-other direction: **the probe is cheap enough that confirming a correct issue costs
-almost nothing**, and it is the only thing that would have caught a wrong one before 26
-citations were rewritten against it. The same run also confirmed the four old flat stems
+Both 2026-09-01 figures matched the counts the bump issues claimed, which is worth
+noting in the other direction: **the probe is cheap enough that confirming a correct
+issue costs almost nothing**, and it is the only thing that would have caught a wrong
+one before 26 citations were rewritten against it.
+
+**And at the very next bump it caught one.** #107 asserted *"Resource surface:
+unchanged since 0.9.0 — no `docs:///` URI was added, renamed, or removed in 0.10.0 or
+0.10.1."* The probe returned **40** against 0.9.0's 37. Three URIs were **added**
+(`docs:///acceptance-criteria-failure-modes`,
+`docs:///decisions/0028-mcp-server-multi-project-support`,
+`docs:///decisions/0029-txid-rejection-diagnostics`); the removal-direction set
+difference was empty, so nothing moved and no citation reconciliation was owed. The
+issue's *conclusion* survived; its *argument* did not. Note this is the inverse of the
+chef `1.2.0` case above — there the tool surface was identical and the resources
+repathed; here the resources were claimed identical and had grown. **Run the probe in
+both directions rather than trusting either claim.** The same run also confirmed the four old flat stems
 (`cli`, `ops`, `recipe-reference`, `TOC`) were **gone**, which a "names were added"
 reading of the issue would not have established.
 
 Two riders worth carrying forward:
 
-- **`resourceTemplates` came back empty on both servers.** The registered
-  `docs:///{+path}` template's `list` callback expands into concrete `resources/list`
-  entries rather than surfacing as a template there. Don't read an empty
-  `resourceTemplates` as "no template registered".
+- **`resourceTemplates` — this rider is DISPUTED; re-measure before relying on it.**
+  As recorded on 2026-09-01 it read: *"came back empty on both servers"*, on the
+  reasoning that the registered `docs:///{+path}` template's `list` callback expands
+  into concrete `resources/list` entries rather than surfacing as a template. A
+  `resources/templates/list` probe on 2026-09-15 (#107) instead returned **1** for
+  c3-domain-manager at **both `0.9.0` and `0.10.1`** — including the very version the
+  original rider was measured against, so this is a **measurement conflict, not a
+  change introduced by a bump**. The two runs likely asked different questions (an
+  `initialize` capability field vs. an explicit `resources/templates/list` call), but
+  that was not established, so neither figure is retired here. **What survives
+  unchanged is the actionable half:** don't read an empty `resourceTemplates` as "no
+  template registered" — the expansion behaviour is real either way.
 - **Both bundled servers register the `docs` scheme.** chef serves
   `docs:///reference/cli`; c3-domain-manager serves
   `docs:///reference/domain-architecture`. A resource is therefore only addressable as
@@ -340,7 +405,15 @@ in `plugin/.claude-plugin/plugin.json`'s `mcpServers`.
 |---|---|---|---|
 | construct3-chef | `reg("…")` | `dist/mcp/server.js` | **36** at `1.2.0` (unchanged from `1.1.0`) — was **34** at `1.0.0`, **30** stable `0.9.0` → `0.11.2` |
 | construct3-chef | + `list-ops` from `opsRegistry.js` | — | **37 total** — was **35**, **31** |
-| c3-domain-manager | `registerTool` | — | **14** at `0.9.0` (unchanged from `0.8.0` and `0.7.0`; was **13** before) |
+| c3-domain-manager | `registerProjectTool` + one direct `registerTool` | `dist/mcp/server.js` | **15** at `0.10.1` — was **14** at `0.7.0` → `0.9.0`, **13** before |
+
+> **dm changed its registration idiom at `0.10.0` — a bare `registerTool(` grep now
+> returns 2, not 15.** Per-project tools register through a `registerProjectTool(name, …)`
+> wrapper; only `list-projects` still calls `server.registerTool` directly, because it is
+> the one tool exempt from the `project` selector. Count
+> `registerProjectTool("…"` **plus** `server.registerTool("…"` and union the names. This
+> is the dm-side instance of the silent-zero rule below — the surface **grew** by one
+> while the old grep appeared to show it collapsing to 2.
 
 **Grep `reg(` in `server.js`, not `registerTool(`.** A bare `registerTool(` grep barely
 matches chef — only `list-ops` and the dynamic `op-<name>` wrapper use that idiom — so it
@@ -375,6 +448,10 @@ reconciliation anchors, the read/mutate split, and the scope-rename categories.
 
 [^adr-0013]: ADR 0013 on addressing the chef docs resource by server and `docs:///`
 URI — why the pair, not the URI alone, is the addressable identity.
+
+[^adr-0015]: ADR 0015 on discharging the mirror when the closure diff is *not*
+byte-identical — the four-axis decomposition, and byte-identity demoted from the pass
+condition to a fast path.
 
 ## Related
 

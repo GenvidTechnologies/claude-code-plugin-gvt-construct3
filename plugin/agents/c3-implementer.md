@@ -60,9 +60,9 @@ accuracy, not capability gating.)
 
 To author or fix an op *wrapper* (params + `{{PARAM}}` placement) and dry-run-validate it before applying, use the `/gvt-construct3:create-c3-op` skill.
 
-## Domain-config maintenance (c3-domain-manager @0.9.0)
+## Domain-config maintenance (c3-domain-manager @0.10.1)
 
-The domain-manager server (pinned `@0.9.0`) exposes write tools for the
+The domain-manager server (pinned `@0.10.1`) exposes write tools for the
 project's domain taxonomy, plus the `validate-editor` read diagnostic. The
 *capability* is generic, but the **content is project-specific** — which file
 maps to which domain is a fact that lives in the consuming repo, not here. Treat
@@ -77,6 +77,30 @@ taxonomy decisions.
 After moving or renaming C3 files, a domain override may go stale — `c3-explorer`'s
 `list-stale-overrides` surfaces these; fix with `remove-overrides` (or `set-overrides`)
 then `regenerate`.
+
+### Optimistic concurrency: pass the `txId` you read
+
+`set-overrides` and `remove-overrides` both take a **`txId`** for optimistic
+concurrency — the write is rejected unless the token matches the project's current
+one. **Always read it back from `get-state` immediately before the write; never
+construct or increment one yourself.**
+
+Since `@0.10.0` the token is a **composite `<projectId>:<n>` string**, not a bare
+integer, and both tools type it as a `string` in their input schemas. A client that
+passes a number is now rejected at *schema validation* — before the concurrency
+comparison runs — so the failure surfaces as a type error rather than as a stale-token
+message. Treating the token as opaque is what keeps this working across either shape.
+
+A rejection tells you which of two things went wrong, and they need different
+responses:
+
+- **Stale token** — someone else wrote since you read. Re-read `get-state` and retry.
+- **Malformed token** (`Invalid txId '<sent>' — …`) — your token *generator* is wrong.
+  Retrying cannot help; fix the caller. Before `@0.10.1` this case rendered as a stale
+  message, which sent callers into a retry loop that could never succeed.
+
+Note this is **c3-domain-manager's** `txId`. `construct3-chef`'s recipe and addon
+tools carry their own, unrelated `txId`, unaffected by the composite form above.
 
 `validate-editor` (READ_ONLY) re-walks `eventSheets/` fresh (never the cached
 domain index) and reports what the C3 editor would reject — a useful
