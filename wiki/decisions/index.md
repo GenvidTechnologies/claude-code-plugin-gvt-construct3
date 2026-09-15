@@ -36,4 +36,6 @@ available, so the amendment goes outside the quote.
 
 * [0016. The Residue Table Carries Invariants; Concrete Figures Live in One Dated Measurement](0016-residue-table-carries-invariants-not-figures.md) - The expected-audit-residue table states invariants and derivations rather than fixed counts; the one concrete measurement lives in a single dated worked example, so a re-measure updates one site instead of three.
 
+* [0017. A Frontmatter `description` That Contradicts Its Own Body Is a Defect, Not a Reversal](0017-frontmatter-description-defect-not-reversal.md) - An index row misquoting its record is repaired on whichever side is wrong; when a record's own frontmatter description contradicts the body it summarizes, that is a metadata defect correctable in place, not a decision reversal earning a superseding record — and the licence extends to misstatement only, never to style.
+
 See the [wiki index](../index.md) for the rest of the bundle.
