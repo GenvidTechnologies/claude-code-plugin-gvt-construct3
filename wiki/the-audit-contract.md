@@ -4,8 +4,8 @@ title: The convention contract and the audit
 description: How audit-c3-conventions validates a consuming repo — the data-driven expects model, the two checks deliberately baked into the script, the presence-vs-content validation boundary, base project resolution, and the audit residue this repo expects on every run as known cost rather than regression.
 tags: [audit, expects, contract, discovery, adr-0002, adr-0005, adr-0006]
 status: stable
-stale_after: 2027-02-27
-generated: { by: process:maintain-wiki, at: 2026-08-18T00:00:00Z }
+stale_after: 2027-03-15
+generated: { by: process:maintain-wiki, at: 2026-09-15T00:00:00Z }
 sources:
   - id: claude-md
     resource: ../raw/claude-md-2026-08-18.md
@@ -151,15 +151,15 @@ this bundle ([ADR 0012](/decisions/0012-retiring-docs-into-the-wiki-bundle.md)),
 reports a stable set of findings that are **known cost, not regression**. Subtract these
 before treating any output as a problem.
 
-Measured against **gvt-dev 4.22.0**:
+Measured against **gvt-dev 4.24.0**:
 
 | Signal | Expected | Cause |
 |---|---|---|
-| broken-link warnings | **one per intra-wiki bundle-absolute link** — 76 today | `scanBrokenLinks` resolves a bundle-absolute `](/page.md)` against the repo root instead of the bundle root — gvt-dev #421. One per intra-wiki link; all false. |
+| broken-link warnings | **one per intra-wiki bundle-absolute link** — deliberately no fixed count; the invariant below is the baseline | `scanBrokenLinks` resolves a bundle-absolute `](/page.md)` against the repo root instead of the bundle root — gvt-dev #421. One per intra-wiki link; all false. |
 | retired-token findings | **8** | The four deliberate retired-token citations this repo carries on purpose, each emitted twice because `scanRetiredTokens` unions the docs-root and wiki-dir walks and this repo's overrides make them the same directory. No upstream issue filed. |
 | orphaned-doc findings | **0** | **Not a pass.** `scanOrphanedDocs` looks for a `TOC.md` inside the docs root; this bundle's index is `index.md`, so the scanner returns empty on its first line. It is inert, not satisfied — index completeness is checked by hand. |
 | exit code | **0** | Only `error` severity moves the exit code; everything above is `warning` or `info`. |
-| scanned line | `scanned 18 file(s) under wiki/, CLAUDE.md` | `resolveDocsRoot` derives the docs-tier root from the `docs/TOC.md` override, so the scanners walk `wiki/`. |
+| scanned line | `scanned 19 file(s) under wiki/, CLAUDE.md` | `resolveDocsRoot` derives the docs-tier root from the `docs/TOC.md` override, so the scanners walk `wiki/`. The figure is one per `.md` under `wiki/` sitting outside `hygiene.excludePaths`, plus `CLAUDE.md` — currently 18 + 1. |
 
 **A fixed count is the wrong baseline here, and the right one is an invariant.** The
 warning total moves every time anyone adds or removes an intra-wiki link, so pinning a
@@ -173,15 +173,53 @@ grep -rho '](/[a-z0-9][a-z0-9./-]*\.md)' wiki/ | wc -l   # minus any inside back
 ```
 
 **A regression is a broken-link warning with no matching `](/…)` link, or a `](/…)` link
-with no matching warning** — either means something other than #421 is at work. Verified
-exact at the time of writing: 76 warnings, 78 raw matches, 2 of which are backticked prose
-examples the audit's parser correctly ignores.
+with no matching warning** — either means something other than #421 is at work.
 
-> **The `scanned` figure is the one to re-measure rather than trust.** It depends on the
-> audit's internal declared-expectation-path resolution rather than a file count, so it
-> was not independently derivable when this section was written. If a run reports a
-> different number, the **measured** value is authoritative — record the delta as a
-> finding, don't edit this table to match.
+**The concrete pair is recorded once, in the dated worked example below, rather than
+restated here.** Two of the raw matches are backticked prose examples the audit's parser
+correctly ignores, so the warning count runs two short of the raw count — that *offset* is
+the stable fact, not either number on its own.
+
+> **The `scanned` figure is derivable, and the last move in it is accounted for.** This
+> section previously treated the number as opaque — as depending on the audit's internal
+> declared-expectation-path resolution rather than on a file count. That was wrong, and it
+> was wrong for a mundane reason: the count behind it included only top-level `wiki/*.md`
+> and missed `wiki/process/`. Counting every `.md` under `wiki/` that sits outside
+> `hygiene.excludePaths`, plus `CLAUDE.md`, reproduces the reported figure exactly.
+>
+> The move from 18 to 19 happened at `9f1e107` (2026-09-03, #100), which added
+> `wiki/verifying-a-pledged-criterion.md` — **the wiki corpus grew by one page, and the
+> gvt-dev 4.22.0 → 4.24.0 bump had nothing to do with it.** A version bump is the wrong
+> first suspect for this row; the corpus is.
+>
+> If a run still reports a different number, the **measured** value remains authoritative
+> — but count the corpus before concluding the audit changed.
+
+### Three 4.24.0 scans are inert here because of a gate, not because this repo conforms
+
+gvt-dev 4.24.0 added content scans the table above predates. All three fire **zero** times
+in this repo — and the reason matters more than the figure:
+
+| Scan | Severity | Checks |
+|---|---|---|
+| `pointer-anchor` | **error** | that a `file:line` citation carries a content anchor, and resolves it against the target |
+| `principle-citation` | **error** | that a citation names a principle number that exists |
+| `pillar-unknown` | warning | that a declared `metadata.pillar` value is recognized |
+
+Two of them carry **`error`** severity — the first error-severity content scans the audit
+has ever had. They move the exit code where they run.
+
+**They do not run here.** All three sit behind `AUDITING_PLUGIN_SOURCE`, which is true only
+when the audited repo *contains the plugin root being audited*. A routine audit of this repo
+runs gvt-dev's script out of the installed plugin cache, which is outside this tree, so the
+gate is false and the scans never execute.
+
+That is a gate result, not a clean bill of health: **this repo has not been measured against
+these three conventions at all.** Note also that the gate is about the *audited repo*, not
+about gvt-dev specifically — a future release that widens it, or a run configured so the
+plugin root falls inside this tree, would execute two error-severity scans against prose
+that has never been checked, and could move the exit code off `0`. This row is where that
+expectation belongs.
 
 ### Re-run the audit after editing `wiki/`, and compare against this table
 
