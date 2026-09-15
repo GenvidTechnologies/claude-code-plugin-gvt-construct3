@@ -2,7 +2,7 @@
 type: decision-record
 title: "0015. Discharging the `resolveRootFolder` Mirror When the Closure Diff Is *Not* Byte-Identical"
 description: >-
-  When ADR 0009's closure diff comes back dirty, decompose it into the discovery walk, the filtering policy, the narrowing wrapper and the error rendering, and discharge the mirror on semantic equivalence of the mirrored surface rather than on byte-identity.
+  When ADR 0009's closure diff comes back dirty, decompose it into the discovery walk, the filtering policy, the narrowing wrapper and the closure boundary, and discharge on semantic equivalence of the mirrored surface; byte-identity is demoted from the pass condition to a fast path.
 tags: [decision, architecture]
 status: stable
 generated: { by: process:plan-task, at: 2026-09-15T00:00:00Z }
