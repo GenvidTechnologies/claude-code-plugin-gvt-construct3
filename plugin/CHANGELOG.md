@@ -35,6 +35,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   its own pages. **The prose content of the docs is unchanged.**
 
 ### Changed
+- **The bundled `c3-domain-manager` pin moves `@0.9.0` → `@0.10.1`**, spanning two
+  upstream releases (0.10.0 never got a follow-up issue). **`c3-explorer`'s hard
+  `tools:` allow-list gains `mcp__c3-domain-manager__list-projects`** (40 → 41
+  entries) — without it the new tool would be *uncallable* by that agent, a
+  functional regression rather than a doc gap. The tool surface goes 14 → 15 with
+  nothing renamed or removed, verified against the packed tarball rather than the
+  issue's table. `list-projects` is `READ_ONLY` and is the one tool exempt from the
+  new optional `project` selector the other 14 gained; single-project consumers —
+  which is what this plugin configures — need no call-site change. Five
+  version-bearing sites were swept, including `docs/c3/toolchain-config.md`, which
+  is neither the manifest nor an agent doc. **The `c3-domain-manager` version floor
+  is deliberately held at `0.6.1`:** the change is additive and nothing the plugin
+  calls requires 0.10.1, so this is *not* breaking for consumers. (#107)
+- **Two corrections to #107's own surface claims, both found by verification.** The
+  issue stated the `docs:///` resource surface was unchanged; a live `resources/list`
+  probe returned **40** against 0.9.0's **37**. The three are pure *additions* — no
+  URI was renamed or removed — so the conclusion that no citation reconciliation is
+  owed still holds, but by measurement rather than by assertion. Separately, dm
+  0.10.0 moved its registration idiom to `registerProjectTool(…)`, so the documented
+  `registerTool(` grep now returns **2** against a surface that grew to 15. Both are
+  recorded in `wiki/pin-bump-verification.md`. (#107)
 - **BREAKING — the plugin now requires `construct3-chef` ≥ `1.2.0`** (was `≥ 1.0.0`),
   and all four skills raise their declared `minVersion` to match
   (`audit-c3-conventions`, `author-navigation-patterns`, `build-reference`,
