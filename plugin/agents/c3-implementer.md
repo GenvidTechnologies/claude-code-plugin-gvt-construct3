@@ -78,6 +78,30 @@ After moving or renaming C3 files, a domain override may go stale — `c3-explor
 `list-stale-overrides` surfaces these; fix with `remove-overrides` (or `set-overrides`)
 then `regenerate`.
 
+### Optimistic concurrency: pass the `txId` you read
+
+`set-overrides` and `remove-overrides` both take a **`txId`** for optimistic
+concurrency — the write is rejected unless the token matches the project's current
+one. **Always read it back from `get-state` immediately before the write; never
+construct or increment one yourself.**
+
+Since `@0.10.0` the token is a **composite `<projectId>:<n>` string**, not a bare
+integer, and both tools type it as a `string` in their input schemas. A client that
+passes a number is now rejected at *schema validation* — before the concurrency
+comparison runs — so the failure surfaces as a type error rather than as a stale-token
+message. Treating the token as opaque is what keeps this working across either shape.
+
+A rejection tells you which of two things went wrong, and they need different
+responses:
+
+- **Stale token** — someone else wrote since you read. Re-read `get-state` and retry.
+- **Malformed token** (`Invalid txId '<sent>' — …`) — your token *generator* is wrong.
+  Retrying cannot help; fix the caller. Before `@0.10.1` this case rendered as a stale
+  message, which sent callers into a retry loop that could never succeed.
+
+Note this is **c3-domain-manager's** `txId`. `construct3-chef`'s recipe and addon
+tools carry their own, unrelated `txId`, unaffected by the composite form above.
+
 `validate-editor` (READ_ONLY) re-walks `eventSheets/` fresh (never the cached
 domain index) and reports what the C3 editor would reject — a useful
 post-mutation editor-strictness check after `apply-recipe`, complementing
