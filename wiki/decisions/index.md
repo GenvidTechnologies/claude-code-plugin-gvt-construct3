@@ -34,4 +34,6 @@ available, so the amendment goes outside the quote.
 
 * [0015. Discharging the `resolveRootFolder` Mirror When the Closure Diff Is *Not* Byte-Identical](0015-discharging-the-mirror-when-the-closure-diff-is-not-identical.md) - When ADR 0009's closure diff comes back dirty, decompose it into the discovery walk, the filtering policy, the narrowing wrapper and the closure boundary, and discharge on semantic equivalence of the mirrored surface; byte-identity is demoted from the pass condition to a fast path.
 
+* [0016. The Residue Table Carries Invariants; Concrete Figures Live in One Dated Measurement](0016-residue-table-carries-invariants-not-figures.md) - The expected-audit-residue table states invariants and derivations rather than fixed counts; the one concrete measurement lives in a single dated worked example, so a re-measure updates one site instead of three.
+
 See the [wiki index](../index.md) for the rest of the bundle.
