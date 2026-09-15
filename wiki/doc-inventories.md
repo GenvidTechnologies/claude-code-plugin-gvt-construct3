@@ -204,9 +204,10 @@ review, because a table that visibly gets the hard case right does not invite a
 re-read of the easy ones.
 
 The tell is mechanical, so apply it row by row: **does this row assert that a
-name is gone, while the release notes must still say that name?** If yes it is
-the defective shape, whatever else in the table is already correct. Both of
-#76's rows had it; only one was caught before execution.
+name is gone, while any artifact the row's own grep will read — the release
+notes, an ADR, a comment, or the edited file itself — must still say that
+name?** If yes it is the defective shape, whatever else in the table is already
+correct. Both of #76's rows had it; only one was caught before execution.
 
 Note also *when* this surfaces. The tree-wide row's baseline was accurate when
 written — one hit, in the file being edited — so a premise re-check at planning
@@ -214,6 +215,49 @@ time passes it. It only became unsatisfiable once the CHANGELOG task ran, i.e.
 **the plan's own later work falsified its own earlier criterion**. That is a
 distinct failure from a row that decayed or was born wrong, and no gate before
 execution can catch it.
+
+### The colliding writer is not always a *later* artifact
+
+Everything above assumes the collision arrives from something written **after**
+the row — a CHANGELOG entry, an ADR, an issue comment. There is a second shape
+where the row collides with **its own task's primary edit**, and the
+release-notes form of the tell returns the right answer while still clearing it.
+
+Generalised, there are two reasons a banned name must survive:
+
+- **removal** — documenting a removal requires naming the removed thing;
+- **mis-attribution** — correcting a wrong attribution requires naming the
+  thing wrongly blamed.
+
+The second is the one that slips through, and a **version string** is its usual
+carrier: a version is exactly what gets wrongly blamed for a change (*"it moved
+at the bump"*), and exactly what looks safely historical once the pin is
+refreshed.
+
+Precedent: #106 re-pinned a version-pinned table from `gvt-dev 4.22.0` to
+`4.24.0` and pledged `grep -c -F 'gvt-dev 4.22.0'` → 0 over the file being
+edited. The baseline was accurate and the row read as a clean "the stale pin is
+gone" check. It was unsatisfiable when written, because the correction the issue
+existed to make is the sentence *"the **gvt-dev 4.22.0** → 4.24.0 bump had
+nothing to do with it"* — the `scanned` figure had moved because a wiki page was
+added, not because of the bump. Asked in its release-notes form the tell answers
+*no, the release notes need not say it* — correctly, and uselessly, because the
+token had to survive in the **corpus the row itself greps**.
+
+Two practical consequences:
+
+- **Scope the row to the claim, not the token.** The repair was to re-scope from
+  the bare version string to the stale *claim* —
+  `grep -c -F 'Measured against **gvt-dev 4.22.0**'` → 0 — which still fails if
+  the pin is left stale, and no longer fails on the prose that explains the
+  correction. Rewording the prose to dodge the grep was available and was
+  **rejected**: that passes a criterion by shrinking what it can see.
+- **Unlike the later-work case above, this one is catchable before execution.**
+  The paragraph above closes with "no gate before execution can catch it", which
+  is true of a collision with work still ahead. It is *not* true here: the
+  colliding prose belongs to the row's own task, so asking *"must the edit this
+  row grades write the token?"* settles it at authoring time. Don't file both
+  under unpreventable.
 
 ## A discovery sweep must be as broad as the defect class it describes
 
