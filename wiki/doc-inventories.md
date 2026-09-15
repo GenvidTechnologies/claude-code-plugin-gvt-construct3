@@ -238,7 +238,7 @@ frontmatter grep answers a question about frontmatter. If the prose says *"a rea
 goes looking and finds nothing"*, the corpus is every place a reader reads — body
 prose, link text, footnote labels, and frontmatter alike.
 
-Two riders, both from #93:
+Three riders — the first two from #93, the third from #103:
 
 - **A narrow sweep also under-counts the look-alikes**, so the do-not-touch list is
   filed short too. #93 catalogued 4 correct entries under a heading claiming five;
@@ -248,6 +248,31 @@ Two riders, both from #93:
   problem statement to match what the grep happened to cover makes the two agree
   while leaving the defect in the tree — the documentation equivalent of shrinking a
   verifier's field of view until it passes.
+- **Widening along the axis you already widened is not widening to the class.** The
+  tell above asks about the **corpus** — *where* the command searches. A sweep can
+  answer it correctly and still be too narrow, because the other half of a sweep is
+  its **pattern**: *which* strings count as an instance. Widening the corpus feels
+  like discharging the rule, so the pattern half goes unexamined.
+
+> **Precedent.** #103 named one site, found by matching a single retired-path
+> token. Planning widened that to three tokens and found three defects — the
+> corpus was right, the tell was asked and answered, and it was *still* short.
+> The class was never a token set: it was a **shape** — any live claim that the
+> retired directory exists — which reaches bare-path mentions no enumeration of
+> full filenames can. The review gate found two more that way, in a layout table
+> and in a machine-read label contract. Final count **5**, from a sweep twice
+> believed complete.
+>
+> The companion question, asked of the pattern rather than the corpus: **does my
+> pattern enumerate the class, or only the instances I already knew about?** An
+> enumeration built by generalising from the instance in hand can only ever
+> re-find that instance's shape. Three tokens is still a list of known answers;
+> the class was a predicate.
+
+> **This section's own bare `docs/` mentions are deliberate — do not sweep them.**
+> Same reason as the retired-token note further down this page: a rule about
+> stale-path sweeps has to name the shape it is about. Sweeping them would leave
+> the rule unable to state its own subject.
 
 ## The intra-repo anchor checker
 
