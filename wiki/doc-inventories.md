@@ -1,7 +1,7 @@
 ---
 type: practice-note
 title: Doc inventories, ADRs, and the changelog
-description: Which hand-maintained inventories a new skill, a new docs/c3 doc, or even a new section must be added to; how to scope an absence criterion and why every such row needs auditing; why a discovery sweep must be as broad as the defect class it describes; the intra-repo anchor checker and the index-mirror checker — plus why ADRs are never rewritten and the one metadata defect that is corrected in place, why a pure content correction still earns a CHANGELOG entry, and why a link inside the shipped plugin subtree must never escape it.
+description: Which hand-maintained inventories a new skill, a new docs/c3 doc, or even a new section must be added to; how to scope an absence criterion and why every such row needs auditing; why a discovery sweep must be as broad as the defect class it describes; the intra-repo anchor checker and the index-mirror checker — plus why ADRs are never rewritten and the one metadata defect that is corrected in place, why a file:line citation can be falsified by your own PR, why a pure content correction still earns a CHANGELOG entry, and why a link inside the shipped plugin subtree must never escape it.
 tags: [docs, inventories, changelog, adr, drift]
 status: stable
 stale_after: 2027-08-18
@@ -410,6 +410,27 @@ this with its two limits — **misstatement only, never style**, and **the body 
 authority**. Concretely, ADR 0014's row backticks `` `gvt-dev` `` where its
 frontmatter does not, and the repair for *that* is to drop the backticks from the
 **row**.
+
+#### A `file:line` citation can be falsified by your own PR
+
+A rider the same work earned twice over. ADR 0017's first draft cited this rule as
+`doc-inventories.md:339`, which was **correct when written**. A later commit *on the
+same branch* added the index-mirror-checker section above it, pushing the rule to
+`:379`. Nobody edited the citation and nobody edited the rule; a third edit between
+them invalidated it.
+
+This is worth separating from ordinary staleness. The usual guard — *re-check a claim
+because the tree has moved since* — does not fire, because the tree moved **inside the
+change you are still writing**, after the citing artifact was authored and before it
+was reviewed. The window is one branch wide.
+
+**Cite by section name, not by line.** It cannot drift on an insertion above it, and
+it is the same reasoning [ADR 0008](decisions/0008-recording-verification-provenance-in-docs-c3.md)
+already applies to shipped docs when it forbids `path:line` citations that drift
+silently on a re-tag. Where a line number is genuinely the clearest pointer — quoting
+a specific span — re-verify every `file:line` this branch **introduced** before the
+final gate, not just the ones it edited, and note that a citation into a file the
+branch also *adds sections to* is the highest-risk shape there is.
 
 Two things worth carrying:
 
