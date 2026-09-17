@@ -218,13 +218,14 @@ forms are legal (§6.1):
 - **Ordinary relative** — `./other-page.md` for a sibling page in the same
   directory, `../<subdir>/other-page.md` for a page in another subdirectory.
 
-A link that escapes the bundle root entirely — e.g. to `../docs/wiki-schema.md`
-or `../docs/decisions/0001-*.md` — remains legal per §6.1 as an ordinary
-relative link, but it is **unresolvable to an external OKF consumer** that
-only receives the `wiki/` bundle on its own. Treat this as a deliberate,
-documented trade-off for the rare page that genuinely needs to point outside
-the bundle (e.g. to this schema doc or an ADR) — not as a pattern to reach
-for by default.
+A link that escapes the bundle root entirely — e.g. to
+`../plugin/CONVENTIONS.md`, as `knowledge-boundaries.md` does — remains legal
+per §6.1 as an ordinary relative link, but it is **unresolvable to an external
+OKF consumer** that only receives the `wiki/` bundle on its own. The sharpest
+case is a link to `../plugin/docs/c3/index.md`: that is a *separate OKF
+bundle*, which such a consumer would not receive at all. Treat this as a
+deliberate, documented trade-off for the rare page that genuinely needs to
+point outside the bundle — not as a pattern to reach for by default.
 
 Consumers **must tolerate broken links** (§6.1): a link whose target doesn't
 exist yet is not malformed — it may simply be knowledge not yet written.
