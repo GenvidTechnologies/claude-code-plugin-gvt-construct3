@@ -282,7 +282,7 @@ frontmatter grep answers a question about frontmatter. If the prose says *"a rea
 goes looking and finds nothing"*, the corpus is every place a reader reads — body
 prose, link text, footnote labels, and frontmatter alike.
 
-Three riders — the first two from #93, the third from #103:
+Four riders — the first two from #93, the third from #103, the fourth from #105:
 
 - **A narrow sweep also under-counts the look-alikes**, so the do-not-touch list is
   filed short too. #93 catalogued 4 correct entries under a heading claiming five;
@@ -297,6 +297,13 @@ Three riders — the first two from #93, the third from #103:
   answer it correctly and still be too narrow, because the other half of a sweep is
   its **pattern**: *which* strings count as an instance. Widening the corpus feels
   like discharging the rule, so the pattern half goes unexamined.
+- **A referent has a *name* as well as a location, and a path pattern reaches only
+  the location.** The rider above widens from corpus to pattern — but every pattern
+  it contemplates is still a **path**. Prose names the same thing in words, and no
+  path-grep of any breadth matches a referent that appears with no path in it at
+  all. So ask the pattern a second question: *does the thing I am sweeping for have
+  a name as well as a location?* Where it does, the sweep needs both, and the two
+  halves cannot be checked by one command.
 
 > **Precedent.** #103 named one site, found by matching a single retired-path
 > token. Planning widened that to three tokens and found three defects — the
@@ -312,6 +319,24 @@ Three riders — the first two from #93, the third from #103:
 > enumeration built by generalising from the instance in hand can only ever
 > re-find that instance's shape. Three tokens is still a list of known answers;
 > the class was a predicate.
+
+> **Precedent, and the costliest placement of it.** #105 fixed a passage that
+> illustrated an out-of-bundle link with two targets that had since moved
+> *inside* the bundle. Its acceptance criteria were two greps, one per retired
+> path. But the same passage named those two targets a third time **in prose**,
+> as *"this schema doc or an ADR"* — no path, so neither grep could ever see it.
+> A fix that repointed both paths and left the sentence alone satisfied every
+> pledged criterion while leaving the wrong rule standing in the one document
+> that is normative for the convention.
+>
+> Two things make this worse than the sweep failures above. It landed in
+> **pledged criteria**, not a discovery sweep — so the blindness is a false
+> *green*, graded by two independent critics and written into a tracker issue
+> that outlives the branch. And the governing rule was **already on this page**,
+> recorded from #103 and cited in the very issue whose criteria shipped blind.
+> Knowing the rule is not the same as running it against your own checklist:
+> apply the rider above to the rows you are about to pledge, not only to the
+> sweep that found the defect.
 
 > **This section's own bare `docs/` mentions are deliberate — do not sweep them.**
 > Same reason as the retired-token note further down this page: a rule about
@@ -431,6 +456,24 @@ silently on a re-tag. Where a line number is genuinely the clearest pointer — 
 a specific span — re-verify every `file:line` this branch **introduced** before the
 final gate, not just the ones it edited, and note that a citation into a file the
 branch also *adds sections to* is the highest-risk shape there is.
+
+**The one-branch window is a property of the citing artifact, not of the rule — and
+a tracker issue body has no such bound.** An issue is written at filing, re-read at
+triage, and acted on at planning, often weeks apart, with no gate anywhere in
+between; there is no "final gate" at which its citations are re-verified, because
+the branch that would host one does not exist yet.
+
+> **Precedent.** #105 cited two lines of *this page*. The citation was corrected
+> once at triage and was wrong again by planning — three values for one fact inside
+> about two weeks, as unrelated commits added and removed prose above it.
+>
+> The sharp part is the middle value. It was a **correction**: triage noticed the
+> cited lines were wrong and fixed them — by supplying fresh line numbers, which
+> decayed the same way before anyone acted on them. A correction expressed in the
+> same notation as the defect re-commits the error it is correcting, and it does so
+> with the added authority of having just been checked. **Correct a decayed
+> citation to a section name or a quoted phrase, never to fresh line numbers** —
+> the repair has to change notation, not just the value.
 
 Two things worth carrying:
 
