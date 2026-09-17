@@ -2,7 +2,7 @@
 type: practice-note
 title: Verifying a pledged acceptance criterion
 description: >-
-  How a criterion's own check goes wrong — a grep standing in for coverage, a recount standing in for a diff, and a hand-guessed mutation standing in for a discriminating one — with the measurement that settles each.
+  How a criterion's own check goes wrong — a grep standing in for coverage, a recount standing in for a diff, a diff read with context standing in for its changed lines, and a hand-guessed mutation standing in for a discriminating one — with the measurement that settles each.
 tags: [verification, acceptance-criteria, testing, coverage]
 status: stable
 generated: { by: process:plan-task, at: 2026-09-02T00:00:00Z }
@@ -53,6 +53,55 @@ baseline, and cannot be thrown off by a prose mention. Reach for a count only wh
 the row genuinely asserts a quantity, and then match the count's corpus to the
 row's — see `designer.md`'s rule that a baseline measured over a narrower (or wider)
 corpus than the row asserts over is defective even when the measurement was correct.
+
+## A diff read with context is not a diff of changed lines
+
+The remedy above sends you to `git diff` — and there is a trap one step inside it.
+An *empty* diff is unambiguous, but a **partial** no-change row is not: *"this file
+changed, but the part the row protects did not."* Checking that means reading the
+diff's **lines**, and by default `git diff` prints three lines of unchanged context
+on either side of every hunk. A `grep` over that output counts context as evidence.
+
+The #112 case: the row pledged *"the `0015` row in `wiki/decisions/index.md` is
+byte-unchanged"*, while the same commit deliberately edited the `0014` row two lines
+above it. The check —
+
+```bash
+git diff -- wiki/decisions/index.md | grep -c '0015-discharging'    # -> 1
+```
+
+— returned **1**, which reads as a violation. The hit was a context line: the
+protected row sits inside the hunk created by the change beside it. The true answer
+was **0**.
+
+This is the false-**red** direction, and it is self-concealing in a specific way:
+the closer the protected text sits to the edit, the likelier it is to be pulled in
+as context — so the check fails hardest exactly where the row matters most. A row
+protecting something *far* from the change quietly passes and never exposes the bug.
+
+**Ask for changed lines only, and strip the file headers:**
+
+```bash
+git diff --unified=0 <base>...HEAD -- <path> \
+  | grep '^[+-]' | grep -v '^\(+++\|---\)' > changed.txt
+grep -c '<the protected token>' changed.txt      # 0 means untouched
+```
+
+`--unified=0` removes context; the second `grep -v` removes the `+++`/`---` header
+lines, which otherwise look like changed lines to any `^[+-]` filter.
+
+**Then run the positive control**, because this check's passing answer is `0` and so
+is a dead check's — the failure shape [the sweep-breadth
+rule](doc-inventories.md#a-discovery-sweep-must-be-as-broad-as-the-defect-class-it-describes)
+warns about, pointed at a single row. Edit the protected text on purpose, confirm the
+count goes non-zero, and revert:
+
+```bash
+sed -i 's/<protected phrase>/<altered>/' <path>   # must make the count non-zero
+```
+
+A no-change row whose check has never returned non-zero has not been verified; it
+has been asserted.
 
 ## A guessed mutation is not a discriminating one
 

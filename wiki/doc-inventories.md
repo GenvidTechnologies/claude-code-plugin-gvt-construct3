@@ -1,7 +1,7 @@
 ---
 type: practice-note
 title: Doc inventories, ADRs, and the changelog
-description: Which hand-maintained inventories a new skill, a new docs/c3 doc, or even a new section must be added to; how to scope an absence criterion and why every such row needs auditing; why a discovery sweep must be as broad as the defect class it describes; the intra-repo anchor checker — plus why ADRs are never rewritten, why a pure content correction still earns a CHANGELOG entry, and why a link inside the shipped plugin subtree must never escape it.
+description: Which hand-maintained inventories a new skill, a new docs/c3 doc, or even a new section must be added to; how to scope an absence criterion and why every such row needs auditing; why a discovery sweep must be as broad as the defect class it describes; the intra-repo anchor checker and the index-mirror checker — plus why ADRs are never rewritten and the one metadata defect that is corrected in place, why a file:line citation can be falsified by your own PR, why a pure content correction still earns a CHANGELOG entry, and why a link inside the shipped plugin subtree must never escape it.
 tags: [docs, inventories, changelog, adr, drift]
 status: stable
 stale_after: 2027-08-18
@@ -336,6 +336,46 @@ target never existed or has already gone. See
 [trap 7](/verifying-against-construct3-sample.md) for the dead link that
 survived six PRs because nothing checked this.
 
+## The index-mirror checker
+
+`scripts/check-index-mirrors.mjs` (dev-workspace, dependency-free, added in #112)
+checks the other half of index integrity: not whether a link resolves, but whether
+the **row's text still matches what it claims to quote**.
+
+Both bundle indexes require it. `wiki/decisions/index.md` says each row mirrors its
+record's frontmatter `description` verbatim, with any amendment appended *after* the
+mirrored span; `wiki/index.md` says "Each entry's description is the linked page's
+frontmatter `description`, so the index and the page can't drift." Nothing enforced
+either, and when #112 measured it, **four rows had drifted** — two in each index.
+
+```bash
+node scripts/check-index-mirrors.mjs                  # both indexes
+node scripts/check-index-mirrors.mjs wiki/index.md    # or name them
+```
+
+Like the anchor checker it is deliberately **not** wired into `.gvt-agent.json`'s
+`commands.validate` — and note that command could not reach it anyway: it globs
+`skills/*/scripts/test/*.test.mjs` from inside `plugin/`, so nothing under
+`scripts/test/` is in the validated suite. Run those with
+`node --test scripts/test/*.test.mjs` from the repo root.
+
+Four outcomes, and the distinction between two of them is the point:
+
+| Outcome | Meaning |
+|---|---|
+| `exact` | row text equals the target's `description` |
+| `appended` | row mirrors it, then adds an annotation — the legal amendment shape |
+| `skipped` | the target has **no frontmatter** (three `wiki/index.md` entries legitimately have none) |
+| `diverged` | anything else, including a missing target or an absent `description` key |
+
+**`skipped` is never folded into `exact`.** A checker that counted a frontmatter-less
+target as passing would report a clean result over a corpus it never read — the
+fail-open shape this page's sweep-breadth rule above exists to catch.
+
+**What it cannot tell you is which side is wrong.** It reports that a row and a
+description disagree; deciding whether to repair the row or the record is a judgement,
+governed by the rule below.
+
 ## ADRs are historical records — don't retroactively rewrite them
 
 When a rename or refactor lands, sweep the *living* docs (README, `CLAUDE.md`,
@@ -349,6 +389,60 @@ Precedent: commit `2400b62` renamed the plugin `genvid-c3` → `gvt-construct3`
 without editing ADR 0004's `genvid-c3` references, and the later `genvid-dev` →
 `gvt-dev` sweep likewise skipped `docs/decisions/`. If a decision is genuinely
 reversed, add a **superseding** ADR rather than editing the old one in place.
+
+### The one exception: a `description` that contradicts its own body
+
+**Scope check first.** The rule above covers two cases — a sweep landing on an ADR,
+and a decision being reversed. A record's frontmatter `description` that misstated
+its own body *on the day it was written* is neither, and #112 hit exactly that.
+
+ADR 0015's body decomposes the mirror obligation into four numbered axes whose
+fourth is **the closure boundary**; its `description` named *"the error rendering"*
+in that slot — not an axis at all, but a sub-detail of axis 3. The index row was
+right and the record's own summary was wrong. Both texts were introduced in the
+**same commit**, so neither was the later revision of the other: git provenance
+could not adjudicate it, and only the body could.
+
+**Such a description is corrected in place.** It is metadata *about* the decision,
+not the decision; correcting it changes nothing the historical-record rule protects.
+[ADR 0017](decisions/0017-frontmatter-description-defect-not-reversal.md) records
+this with its two limits — **misstatement only, never style**, and **the body is the
+authority**. Concretely, ADR 0014's row backticks `` `gvt-dev` `` where its
+frontmatter does not, and the repair for *that* is to drop the backticks from the
+**row**.
+
+#### A `file:line` citation can be falsified by your own PR
+
+A rider the same work earned twice over. ADR 0017's first draft cited this rule as
+`doc-inventories.md:339`, which was **correct when written**. A later commit *on the
+same branch* added the index-mirror-checker section above it, pushing the rule to
+`:379`. Nobody edited the citation and nobody edited the rule; a third edit between
+them invalidated it.
+
+This is worth separating from ordinary staleness. The usual guard — *re-check a claim
+because the tree has moved since* — does not fire, because the tree moved **inside the
+change you are still writing**, after the citing artifact was authored and before it
+was reviewed. The window is one branch wide.
+
+**Cite by section name, not by line.** It cannot drift on an insertion above it, and
+it is the same reasoning [ADR 0008](decisions/0008-recording-verification-provenance-in-docs-c3.md)
+already applies to shipped docs when it forbids `path:line` citations that drift
+silently on a re-tag. Where a line number is genuinely the clearest pointer — quoting
+a specific span — re-verify every `file:line` this branch **introduced** before the
+final gate, not just the ones it edited, and note that a citation into a file the
+branch also *adds sections to* is the highest-risk shape there is.
+
+Two things worth carrying:
+
+- **Establish which side is wrong before choosing a repair.** #112 prescribed
+  "restore the row to mirror the record" for both divergences, which presumes the
+  record is right. That presumption failed on one of the two.
+- **A verbatim-mirror convention destroys an independent witness.** This defect was
+  visible *only* because the row disagreed. Once every row mirrors its description
+  exactly, a description that misstates its own body is invisible to
+  `check-index-mirrors.mjs` — both sides agree perfectly while both misquote the
+  record. The other 14 records were spot-checked by hand at the time (0 defects);
+  that is the only method there is.
 
 > **This section's own `genvid-c3` mentions are deliberate — do not sweep them.**
 > The rule has to *name* the retired token to cite the precedent it rests on;
