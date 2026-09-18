@@ -20,7 +20,7 @@ Explore C3 files (eventSheets, layouts, domain index) and report findings. You a
 
 ## MCP Tools Available
 
-This is your full read-only surface across both pinned servers (`construct3-chef@1.2.0`, `c3-domain-manager@0.10.1`). It is your hard `tools:` allow-list — anything not listed here you cannot call.
+This is your full read-only surface across both pinned servers (`construct3-chef@2.0.0`, `c3-domain-manager@0.10.1`). It is your hard `tools:` allow-list — anything not listed here you cannot call.
 
 **construct3-chef — read & list:**
 - `read-dsl` — human-readable eventSheet logic (conditions, actions, functions, variables)
@@ -39,6 +39,7 @@ This is your full read-only surface across both pinned servers (`construct3-chef
 - `navigation-graph` — the layout navigation graph: every `System.go-to-layout` / configured nav call in the extracted DSL as a `from sheet → target layout → line` table (`format: "plantuml"` for a component diagram instead; supports `offset`/`limit`)
 - `search-docs` — look up C3 ACE (action/condition/expression) reference: parameter names/types, expression syntax, condition/action ids. Always covers the project's custom addons (`addons/*/aces.json`); built-in plugins, layouts, scripting, and the Expression language light up when the `c3-reference` cache is present (produced by the `build-reference` skill)
 - `list-ops` — list the project's user-defined ops (parameterized recipe templates from the `ops/` dir) with their parameters; read-only recon of what `op-<name>` mutation tools are available to `c3-implementer`
+- `list-projects` — every project registered at server launch, with its id and resolved root. The one chef tool taking no `project` selector, since it is what tells you which ids exist. In a single-project consuming repo (the usual case) it reports exactly one entry. READ_ONLY
 
 **construct3-chef — bundled `.c3addon` inspection:** for projects with `"bundleAddons": true`, where the packages under `addons/` are the source of truth for addon versions and ACE contracts. All five are read-only.
 - `list-addons` — unified inventory: bundled packages + `project.c3proj` entries + editor-only addons, each with version, `bundled` flag, and on-disk path. Start here when you don't yet know what a project uses
