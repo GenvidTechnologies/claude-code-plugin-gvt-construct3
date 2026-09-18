@@ -57,7 +57,7 @@ They must point at the **same tree**. The defaults agree out of the box. If you 
 
 ## Non-Rooted C3 Projects (project in a subdirectory)
 
-Both servers resolve the C3 project root via `resolveRootFolder` (from `@genvidtech/mcp-utils`). The full field-level reference is in each server's own docs; what follows is the consumer contract.
+Both servers resolve the C3 project root via `resolveRootFolder` (from `@genvidtech/mcp-utils`). The full field-level reference is in each server's own docs; what follows is the consumer contract for the **default, single-root** resolution mode. construct3-chef also offers an opt-in multi-root mode — see [`--discover-projects`: opt-in multi-root mode](#--discover-projects-opt-in-multi-root-mode) below.
 
 ### Precedence (high to low)
 
@@ -76,7 +76,7 @@ A project nested **two or more levels deep** (e.g. `client/game/project.c3proj`)
 
 When two or more child directories each contain `project.c3proj`:
 
-- **construct3-chef** warns to stderr and falls back to cwd.
+- **construct3-chef**, run without `--discover-projects`, warns to stderr and falls back to cwd.
 - **c3-domain-manager** exits with an error.
 
 Resolve ambiguity with an explicit `--project-dir` or `C3_PROJECT_DIR`.
@@ -99,6 +99,14 @@ Resolve ambiguity with an explicit `--project-dir` or `C3_PROJECT_DIR`.
 ```
 
 Precedence across config levels: **local > project > user > plugin-declared**. A workspace-root `.mcp.json` is the "local" level and takes priority.
+
+### `--discover-projects`: opt-in multi-root mode
+
+construct3-chef also offers a third resolution mode, `--discover-projects`, alongside the single-root precedence above. It is **opt-in**: a server launched without the flag resolves exactly as described above, and this plugin's own `plugin.json` launch stays single-root; `--discover-projects` is available for a consumer to opt into, not something this bundle turns on by default.
+
+Under `--discover-projects`, one server process hosts multiple C3 project roots at once. Roots are fixed at launch (there is no runtime registration), and each tool call selects its target via an optional `project` parameter — omit it and the call uses the default project, so existing single-project call sites are unaffected. There is no fan-out and no cross-project operation: a call still targets one project at a time. A `list-projects` tool reports every registered project's id and root (in a single-project repo it returns exactly one entry).
+
+This is a consumer-side option for repos that host more than one C3 project and want a single server process to cover all of them, via a workspace-root `.mcp.json` override (see Option B above) that adds `--discover-projects` to the launch args. It does not change how this plugin ships.
 
 ### Why `--project-dir` is not added to `plugin.json`
 
