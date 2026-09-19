@@ -4,13 +4,13 @@ The **`gvt-construct3` plugin** for Claude Code — Construct 3 platform knowled
 
 It bundles the **construct3-chef** and **c3-domain-manager** MCP servers, ships the `c3-explorer` and `c3-implementer` agents, and owns the canonical **C3 platform reference** (`plugin/docs/c3/`). It is **independent of the `gvt-dev` plugin** — installable on its own.
 
-It is distributed through the [`claude-code-marketplace`](https://github.com/genvid-holdings/claude-code-marketplace) catalog (marketplace name `genvid-plugins`).
+It is distributed through the [`claude-code-gvt-marketplace`](https://github.com/GenvidTechnologies/claude-code-gvt-marketplace) catalog (marketplace name `gvt-plugins`).
 
 ## Install
 
 ```text
-/plugin marketplace add https://github.com/genvid-holdings/claude-code-marketplace.git
-/plugin install gvt-construct3@genvid-plugins
+/plugin marketplace add https://github.com/GenvidTechnologies/claude-code-gvt-marketplace.git
+/plugin install gvt-construct3@gvt-plugins
 ```
 
 The plugin declares `construct3-chef` and `c3-domain-manager` in its `plugin.json` (`mcpServers`), so they start when the plugin is enabled. They may appear as **"Pending approval"** — approve them once.
