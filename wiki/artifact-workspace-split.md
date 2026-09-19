@@ -50,14 +50,22 @@ form stopped being viable the moment the artifact moved.[^adr-0004]
 The `url` → `git-subdir` migration shipped at **v1.1.0**. Steady-state releases
 since are a **single-value `source.ref` bump** in the catalog.[^adr-0004]
 
-> **Verify the catalog repo at release time.** ADR 0004 records the catalog as
-> `genvid-holdings/claude-code-marketplace`, and this repo's `CLAUDE.md` names the
-> same repo (marketplace name `genvid-plugins`) — but the installed `gvt-dev`
-> `release-plugin` skill describes the catalog as
-> `GenvidTechnologies/claude-code-gvt-marketplace`. These disagree. The *mechanism*
-> (`git-subdir` + `path: "plugin"`) is stable and is what this page asserts; resolve
-> the repo name against the catalog itself before pushing a `source.ref` bump rather
-> than trusting either doc.
+> **The catalog is `GenvidTechnologies/claude-code-gvt-marketplace`, marketplace name
+> `gvt-plugins`** — resolved, no longer an open question. Two catalogs are live and
+> both carry this plugin with an identical `git-subdir` / `path: "plugin"` shape, so
+> the two never contradicted each other on *mechanism*; they differed only on which
+> repo hosts the entry. The GenvidTechnologies catalog is the one to bump.
+>
+> Note the marketplace **name** was never in dispute once checked: both catalogs
+> declare `"name": "gvt-plugins"`. The living docs said `genvid-plugins`, which
+> matched neither — an install command built from them would have failed outright.
+> That is corrected wherever it was load-bearing.
+>
+> ADR 0004's *decision* is untouched by this. It settled that a subfolder artifact
+> forces a `git-subdir` source, and that remains true; only an incidental fact it
+> recorded in passing — the hosting repo — has decayed. Records are not swept, so
+> ADR 0004 still names the catalog it named in 2026; read this page for the current
+> one.
 
 ## What follows from it
 
