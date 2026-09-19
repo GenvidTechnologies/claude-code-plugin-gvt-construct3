@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-09-19
+
 ### Added
 - **`audit-c3-conventions` now has direct unit tests for its two shared
   helpers.** `scripts/lib/frontmatter.mjs` and `scripts/lib/config-resolve.mjs`
