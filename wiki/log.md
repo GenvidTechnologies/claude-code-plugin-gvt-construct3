@@ -17,6 +17,35 @@ the full maintenance schema.
 
 ## 2026-09-19
 
+* **Creation**: `the-npm-surface-and-ci-gate.md`, and **ADR 0019**, from the #119 work
+  that gave this repo an npm surface and its first CI. The page records four fail-open
+  shapes that were *measured* rather than reasoned about, because reasoning got three of
+  them wrong: `npm ci` from a manifest-less directory walks **up** and exits **0** against
+  an ancestor manifest; `npm ci --prefix ./does-not-exist` exits 1 but with the
+  *deletion-arm* message, so a wrong path and a missing lockfile are indistinguishable in
+  a log; a test glob matched from the wrong directory prints `# pass 0` and exits **0**;
+  and the default test reporter's counters are non-ASCII and cannot be grepped.
+
+  The decision worth finding later is that **an empty dependency set still makes a real
+  gate**. `npm ci` was measured firing on *both* failure modes against
+  `dependencies: {}` — so the CI half is live now, while the host-install half is armed
+  and unfired until #95 names a real dependency. The landing is a *surface*, not a
+  dependency, and saying which is what keeps it honest.
+
+  ADR 0019 also records the answer to the question #119 required be recorded either way —
+  `audit-c3-conventions` is **not** wired into `commands.validate`, because the audit's
+  target is `process.cwd()` and this repo can never be a valid one. The "no" is paired
+  with a strict coverage *increase*: the previously-ungated 33 workspace tests join the
+  gated 197.
+
+* **Update**: `artifact-workspace-split.md`'s catalog blockquote is resolved rather than
+  re-issued. The authoritative catalog is `GenvidTechnologies/claude-code-gvt-marketplace`,
+  marketplace name `gvt-plugins`. Both live catalogs turned out to declare the same
+  marketplace *name*, and the living docs had said `genvid-plugins`, matching neither — so
+  the docs were not on the wrong side of a disagreement, they were wrong against both.
+  ADR 0004 keeps the catalog it named; only an incidental fact it recorded had decayed,
+  and its decision is untouched.
+
 * **Update**: `the-audit-contract.md` § *Expected audit residue* is re-measured against
   **gvt-dev 4.26.0** (was 4.24.0), at `0a6bacc` / v3.0.0. Three of five signals moved and
   two rows are new. The consequential one: **gvt-dev #421 closed by *declining* to
