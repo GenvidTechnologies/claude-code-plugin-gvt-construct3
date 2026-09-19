@@ -4,8 +4,8 @@ title: The convention contract and the audit
 description: How audit-c3-conventions validates a consuming repo — the data-driven expects model, the two checks deliberately baked into the script, the presence-vs-content validation boundary, base project resolution, and the audit residue this repo expects on every run as known cost rather than regression.
 tags: [audit, expects, contract, discovery, adr-0002, adr-0005, adr-0006]
 status: stable
-stale_after: 2027-03-15
-generated: { by: process:maintain-wiki, at: 2026-09-15T00:00:00Z }
+stale_after: 2027-03-19
+generated: { by: process:maintain-wiki, at: 2026-09-19T00:00:00Z }
 sources:
   - id: claude-md
     resource: ../raw/claude-md-2026-08-18.md
@@ -151,34 +151,40 @@ this bundle ([ADR 0012](/decisions/0012-retiring-docs-into-the-wiki-bundle.md)),
 reports a stable set of findings that are **known cost, not regression**. Subtract these
 before treating any output as a problem.
 
-Measured against **gvt-dev 4.24.0**:
+Measured against **gvt-dev 4.26.0** (at `0a6bacc`, v3.0.0):
 
 | Signal | Expected | Cause |
 |---|---|---|
-| broken-link warnings | **one per intra-wiki bundle-absolute link** — deliberately no fixed count; the invariant below is the baseline | `scanBrokenLinks` resolves a bundle-absolute `](/page.md)` against the repo root instead of the bundle root — gvt-dev #421. One per intra-wiki link; all false. |
-| retired-token findings | **8** | The four deliberate retired-token citations this repo carries on purpose, each emitted twice because `scanRetiredTokens` unions the docs-root and wiki-dir walks and this repo's overrides make them the same directory. No upstream issue filed. |
-| orphaned-doc findings | **0** | **Not a pass.** `scanOrphanedDocs` looks for a `TOC.md` inside the docs root; this bundle's index is `index.md`, so the scanner returns empty on its first line. It is inert, not satisfied — index completeness is checked by hand. |
+| broken-link warnings | **0** | `wiki/` is **not link-checked at all** any more. gvt-dev #421 closed by *declining* OKF bundle content rather than by fixing the resolution, deferring dead links to `/gvt-dev:maintain-wiki lint` (gvt-dev ADR-0053). See the coverage gap below — this is a zero from a check that did not run. |
+| retired-token findings | **8** | The four deliberate retired-token citations this repo carries on purpose, each emitted twice because `scanRetiredTokens` unions the docs-root and wiki-dir walks and this repo's overrides make them the same directory. Tracked upstream as gvt-dev #453. |
+| orphaned-doc findings | **0** | **Not a pass**, same as before — but the mechanism changed. It used to be silently inert (`scanOrphanedDocs` looked for a `TOC.md` that this bundle names `index.md`). 4.26.0 now *announces* the skip, on the same ADR-0053 bundle-ownership grounds. Index completeness is still checked by hand. |
+| skip-notes | **2** (`info`) | New at 4.26.0: one `… were not link-checked` line naming the wiki file count, one `orphan check skipped` line. Both are the two rows above declaring themselves. |
+| Practice Coverage → Environment | **`partial adoption`** | **False.** `scripts/lib/practice-detect.mjs` hard-codes `SCHEMA_DOC = 'docs/wiki-schema.md'` and never consults `config.paths`, so this repo's `"docs/wiki-schema.md": "wiki/wiki-schema.md"` override is ignored — 5 of 6 signals present. gvt-dev **#467** (distinct from #390, which is `maintain-wiki`'s copy of the same hard-coding). |
 | exit code | **0** | Only `error` severity moves the exit code; everything above is `warning` or `info`. |
-| scanned line | `scanned 19 file(s) under wiki/, CLAUDE.md` | `resolveDocsRoot` derives the docs-tier root from the `docs/TOC.md` override, so the scanners walk `wiki/`. The figure is one per `.md` under `wiki/` sitting outside `hygiene.excludePaths`, plus `CLAUDE.md` — currently 18 + 1. |
+| scanned line | `scanned 20 file(s) under wiki/, CLAUDE.md` | `resolveDocsRoot` derives the docs-tier root from the `docs/TOC.md` override, so the scanners walk `wiki/`. The figure is one per `.md` under `wiki/` sitting outside `hygiene.excludePaths`, plus `CLAUDE.md` — currently 19 + 1. |
 
-**A fixed count is the wrong baseline here, and the right one is an invariant.** The
-warning total moves every time anyone adds or removes an intra-wiki link, so pinning a
-number guarantees false alarms on legitimate edits. What actually holds is a one-to-one
-correspondence:
+### The broken-link invariant is retired — do not run it
 
-```bash
-# these two numbers must be equal
-node <audit> | grep -c 'broken link'
-grep -rho '](/[a-z0-9][a-z0-9./-]*\.md)' wiki/ | wc -l   # minus any inside backticks
-```
+Until gvt-dev 4.24.0 this section carried an *invariant* rather than a count: one
+broken-link warning per intra-wiki `](/…)` link, checkable by comparing
+`grep -c 'broken link'` against a `grep -rho '](/…\.md)' wiki/ | wc -l`, with a stable
+offset of two for backticked prose examples the parser correctly ignores. The dated pair
+was **79 warnings against 81 raw matches**.
 
-**A regression is a broken-link warning with no matching `](/…)` link, or a `](/…)` link
-with no matching warning** — either means something other than #421 is at work.
+**That check is now a false-red generator and has been removed from this page.** At
+gvt-dev 4.26.0 the same two commands return **0** and **87**. Nothing regressed: #421 was
+closed by scoping the scan *out* of OKF bundles, so the left-hand number is structurally
+zero and can never track the right-hand one again. Anyone running the old check against a
+byte-correct `wiki/` reads an 87-link catastrophe and goes editing documents that are
+already correct — the exact false-red failure this repo has been bitten by before.
 
-**The concrete pair is recorded once, in the dated worked example below, rather than
-restated here.** Two of the raw matches are backticked prose examples the audit's parser
-correctly ignores, so the warning count runs two short of the raw count — that *offset* is
-the stable fact, not either number on its own.
+This is why the check is deleted rather than adjusted: a comparison whose left side is
+pinned to zero is not a weaker verifier, it is a broken one.
+
+> **Coverage gap, stated plainly.** `wiki/` now has **no dead-link coverage from the
+> audit**. The links were not verified — the check was handed to `/gvt-dev:maintain-wiki
+> lint`, which nothing currently obliges anyone to run. Run it explicitly when you touch
+> links under `wiki/`; a green audit says nothing about them.
 
 > **The `scanned` figure is derivable, and the last move in it is accounted for.** This
 > section previously treated the number as opaque — as depending on the audit's internal
@@ -191,6 +197,12 @@ the stable fact, not either number on its own.
 > `wiki/verifying-a-pledged-criterion.md` — **the wiki corpus grew by one page, and the
 > gvt-dev 4.22.0 → 4.24.0 bump had nothing to do with it.** A version bump is the wrong
 > first suspect for this row; the corpus is.
+>
+> **The rule held a second time.** The move from 19 to 20 happened at `1349681`
+> (#115), which added `wiki/dispatching-doc-work.md` — again a corpus growth, again
+> concurrent with a gvt-dev bump (4.24.0 → 4.26.0) that had nothing to do with it.
+> Counting the corpus at both commits settled it in one command; the bump was, once
+> more, the wrong first suspect.
 >
 > If a run still reports a different number, the **measured** value remains authoritative
 > — but count the corpus before concluding the audit changed.
@@ -221,15 +233,24 @@ plugin root falls inside this tree, would execute two error-severity scans again
 that has never been checked, and could move the exit code off `0`. This row is where that
 expectation belongs.
 
+**Re-confirmed at 4.26.0:** all three still fire zero times and the gate is unchanged.
+Note what that evidence is worth — zero findings is equally consistent with "the gate is
+closed" and with "the repo conforms", so the figure alone cannot distinguish them. The
+claim above rests on the gate, which was re-read in the 4.26.0 source, not on the count.
+
 ### Re-run the audit after editing `wiki/`, and compare against this table
 
 The table above says what the residue *should* be; nothing currently tells a contributor
-to **check** it. Adding or editing a page under `wiki/` can move these figures — a new
-bundle-absolute link moves the broken-link count, and a new page outside
-`hygiene.excludePaths` moves `scanned`. That change is invisible in the authoring PR and
-surfaces later, in someone else's unrelated audit run, as residue they did not cause.
+to **check** it. Adding or editing a page under `wiki/` can move these figures — a new page
+outside `hygiene.excludePaths` moves `scanned`, and a retired-token citation moves the
+token count. That change is invisible in the authoring PR and surfaces later, in someone
+else's unrelated audit run, as residue they did not cause.
 
-So before opening a PR that touches `wiki/`, run the audit and diff the four signals
+(Adding a bundle-absolute link no longer moves anything, because that scan no longer runs
+here — see *The broken-link invariant is retired* above, and run `maintain-wiki lint`
+instead.)
+
+So before opening a PR that touches `wiki/`, run the audit and diff the signals
 against this table:
 
 ```
@@ -241,15 +262,25 @@ not automatically a defect — it may be the legitimate consequence of the page 
 added — but it must be *noticed*, and either explained in the PR or folded into this
 table as part of the same change.
 
-Worked example (2026-09-15, #107): a branch that added `wiki/decisions/0015-*.md` and
-edited `wiki/pin-bump-verification.md` re-ran clean at **79 / 81 / `scanned 19` / exit 0**
-— identical to the 4.24.0 baseline, because `wiki/decisions/` sits in
+Worked example **[point-in-time: gvt-dev 4.24.0, not reproducible today]** (2026-09-15,
+#107): a branch that added `wiki/decisions/0015-*.md` and edited
+`wiki/pin-bump-verification.md` re-ran clean at **79 / 81 / `scanned 19` / exit 0** —
+identical to the 4.24.0 baseline, because `wiki/decisions/` sits in
 `hygiene.excludePaths` and the edits added no bundle-absolute links. The check cost one
-command and converted an assumption into a fact.
+command and converted an assumption into a fact. **The first two figures cannot recur**
+— the broken-link scan no longer runs here — so read this as a record of the method
+working, not as numbers to match.
 
-**These numbers are pinned to a gvt-dev version and will move.** When #421 lands the
-broken-link count goes to 0; when #390 lands the Practice Coverage row returns from
-`Environment … partial adoption` to `adopted` and `run-retro` resumes detecting the wiki.
+**These numbers are pinned to a gvt-dev version and will move — and the last forecast
+came true.** The previous revision predicted that "when #421 lands the broken-link count
+goes to 0"; #421 landed, and it did. What the forecast got wrong is worth keeping: it
+also said "when #390 lands the Practice Coverage row returns … to `adopted`", but #390 is
+`maintain-wiki`'s hard-coding, and the audit's own copy lives in
+`scripts/lib/practice-detect.mjs` and is tracked separately as **gvt-dev #467**. Fixing
+#390 alone would not have moved this row. **A residue row should cite the issue that
+gates *it*, not the nearest issue about the same bug** — the two can be fixed on
+different schedules.
+
 Re-measure on the next gvt-dev bump rather than carrying this table forward — which is
 why this page's `stale_after` sits in the six-month bucket for version-pinned content
 rather than the one-year bucket its topic would otherwise get.

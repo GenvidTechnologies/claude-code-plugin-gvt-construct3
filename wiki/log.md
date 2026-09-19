@@ -15,6 +15,55 @@ before. If a past entry itself needs correcting, add a new entry that says
 so; never edit or remove the old one in place. See `wiki/wiki-schema.md` for
 the full maintenance schema.
 
+## 2026-09-19
+
+* **Update**: `the-audit-contract.md` § *Expected audit residue* is re-measured against
+  **gvt-dev 4.26.0** (was 4.24.0), at `0a6bacc` / v3.0.0. Three of five signals moved and
+  two rows are new. The consequential one: **gvt-dev #421 closed by *declining* to
+  link-check OKF bundle content** rather than by fixing the resolution, deferring dead
+  links to `/gvt-dev:maintain-wiki lint` (gvt-dev ADR-0053). That takes broken-link
+  warnings to **0** — and retires the section's central **invariant**, the one-to-one
+  correspondence between warnings and intra-wiki `](/…)` links.
+
+  **The invariant is deleted, not adjusted, and that is the point of the entry.** Its two
+  commands now return `0` and `87`, so a contributor following the page's own prescribed
+  pre-PR check would read an 87-link catastrophe against a byte-correct `wiki/` and go
+  editing documents that are already right — the false-red direction this repo has been
+  bitten by before. A comparison whose left side is structurally pinned to zero is not a
+  weaker verifier, it is a broken one. The page now states the resulting **coverage gap**
+  plainly: `wiki/` has no dead-link coverage from the audit at all; the links were not
+  verified, the check was handed to a tool nothing obliges anyone to run.
+
+  Other rows: retired-token holds at **8** and now cites gvt-dev **#453** (the page said
+  "No upstream issue filed"); orphaned-doc holds at **0** but the mechanism changed from
+  silently inert to explicitly announced; `scanned` moves **19 → 20**; two new `info`
+  skip-notes are modelled; and a new row records `Practice Coverage → Environment =
+  partial adoption` as **false**, caused by `practice-detect.mjs` hard-coding
+  `docs/wiki-schema.md` past this repo's `paths` override.
+
+  **Two forecasts in the prior revision were graded, and the split is the reusable part.**
+  The #421 prediction came true exactly. The companion prediction — that #390 landing
+  would return Practice Coverage to `adopted` — was **wrong**, because #390 is
+  `maintain-wiki`'s copy of the hard-coding while the audit's own copy is tracked
+  separately as **#467**; fixing #390 alone would not have moved the row. Recorded as a
+  rule: *a residue row should cite the issue that gates it, not the nearest issue about
+  the same bug* — the two can be fixed on different schedules.
+
+  The `scanned` move was diagnosed by the page's own standing guidance rather than
+  attributed to the bump: counting the corpus at `bde2027` (18 pages) and at HEAD (19)
+  identified `wiki/dispatching-doc-work.md` (#115) as the cause. That is the **second**
+  time the rule "a version bump is the wrong first suspect for this row; the corpus is"
+  has held while a bump happened concurrently, so the page now records both instances.
+
+  Not driven by a `raw/` capture: the facts come from a 4.26.0 audit run in this
+  workspace and from reading 4.26.0's `practice-detect.mjs`, `summary.mjs` and
+  `audit.mjs` in the installed plugin cache. The 4.24.0 worked example is kept but
+  stamped **point-in-time**, since its first two figures can no longer recur. Filed
+  upstream during the same run: gvt-dev **#540** (the Summary's unmet lines count
+  severity buckets rather than expectations, so `optional: 73 of 85` and `22 optional
+  expectations unmet` contradict each other — and the same defect is already live on the
+  `required` line wherever the error-severity `pointer-anchor` scan runs).
+
 ## 2026-09-01
 
 * **Update**: `pin-bump-verification.md` gains *"A resource repath reaches past the tool
