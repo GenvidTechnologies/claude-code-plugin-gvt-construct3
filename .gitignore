@@ -1,2 +1,5 @@
 # Local-only working artifacts (plan-task scratch — kept local, not shipped)
 /plan.md
+
+# Installed dependencies — never inside the shipped plugin/ subtree
+node_modules/
