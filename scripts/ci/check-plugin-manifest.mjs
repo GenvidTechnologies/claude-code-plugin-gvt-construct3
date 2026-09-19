@@ -114,9 +114,22 @@ if (servers === null || typeof servers !== 'object' || Array.isArray(servers)) {
       );
       continue;
     }
-    for (const { pkg, version } of pinned) {
-      console.log(`${key}: ${pkg} pinned at ${version}`);
+    // The pinned package must be the one this server key names. Accepting any
+    // pinned @genvidtech/* argument would pass a manifest that launches
+    // c3-domain-manager under the construct3-chef key — a check that cannot tell
+    // the two servers apart is not checking the pin, only its shape.
+    const expected = `${SCOPE}${name}`;
+    const match = pinned.find((p) => p.pkg === expected);
+    if (!match) {
+      problem(
+        `${key}.args`,
+        `pinned package does not match the server key — expected ${expected}, got ${pinned
+          .map((p) => p.pkg)
+          .join(', ')}`,
+      );
+      continue;
     }
+    console.log(`${key}: ${match.pkg} pinned at ${match.version}`);
   }
 }
 
