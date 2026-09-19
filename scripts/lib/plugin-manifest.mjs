@@ -33,6 +33,18 @@ function isDigits(text) {
 export function parsePinnedArg(arg) {
   if (typeof arg !== 'string' || !arg.startsWith(SCOPE)) return null;
   const at = arg.lastIndexOf('@');
+  // Belt-and-suspenders, and NON-DISCRIMINATING — deliberately left in place,
+  // but do not write a test for it: no input can distinguish its presence from
+  // its absence, so any such test would pass either way.
+  //
+  // `startsWith(SCOPE)` above fixes the first 12 characters as `@genvidtech/`,
+  // whose only `@` is at index 0. So this guard fires only when `at === 0`
+  // (no second `@`), and in that case `pkg` is `''`, which the `pkg.length`
+  // check two lines down already rejects. Every input that trips this line
+  // trips that one too. Established by mutation testing during #127: fully
+  // disabling this line leaves the whole suite green, and a 23-input sweep
+  // (including `@genvidtech/@1.2.3` and `@genvidtech/` alone) found zero
+  // behavioural disagreement between the two variants.
   if (at <= SCOPE.length - 1) return null;
   const pkg = arg.slice(0, at);
   const version = arg.slice(at + 1);
