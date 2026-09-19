@@ -39,12 +39,24 @@ the full maintenance schema.
   gated 197.
 
 * **Update**: `artifact-workspace-split.md`'s catalog blockquote is resolved rather than
-  re-issued. The authoritative catalog is `GenvidTechnologies/claude-code-gvt-marketplace`,
-  marketplace name `gvt-plugins`. Both live catalogs turned out to declare the same
-  marketplace *name*, and the living docs had said `genvid-plugins`, matching neither — so
-  the docs were not on the wrong side of a disagreement, they were wrong against both.
-  ADR 0004 keeps the catalog it named; only an incidental fact it recorded had decayed,
-  and its decision is untouched.
+  re-issued. The catalog is `GenvidTechnologies/claude-code-gvt-marketplace`, marketplace
+  name `gvt-plugins`.
+
+  **The resolution is that there was only ever one catalog.**
+  `genvid-holdings/claude-code-marketplace` and
+  `GenvidTechnologies/claude-code-gvt-marketplace` are the **same repository**, renamed —
+  identical repo `id` `1255536717`, identical `created_at`. The living docs were pointing
+  at a pre-rename name, not at a rival catalog, and `genvid-plugins` was never any
+  catalog's name at all.
+
+  **Worth carrying forward as a verification trap:** GitHub redirects a renamed repo, so
+  fetching *either* name succeeds and returns plausible content. A check that confirms
+  "both exist" has confirmed nothing — it followed a redirect. Only the repo `id`
+  discriminates. This session recorded the two-catalog reading as fact and carried it
+  through analysis, design, and into shipped prose before an `id` comparison caught it.
+
+  ADR 0004 keeps the name it recorded; only an incidental fact decayed, and its decision
+  is untouched.
 
 * **Update**: `the-audit-contract.md` § *Expected audit residue* is re-measured against
   **gvt-dev 4.26.0** (was 4.24.0), at `0a6bacc` / v3.0.0. Three of five signals moved and
