@@ -66,12 +66,20 @@ jobs:
             echo "found and tracked: $f"
           done
 
-      # STEP 2 — lockfile honesty. Catches BOTH failure modes, measured:
+      # STEP 2 — lockfile honesty.
       #
-      # Known-bad (lockfile deleted):
-      #   EUSAGE "can only install with an existing package-lock.json", exit 1.
       # Known-bad (manifest and lockfile diverge):
       #   EUSAGE "...are in sync" + "Missing: <pkg> from lock file", exit 1.
+      #   This is the arm step 2 actually catches in this workflow. Measured.
+      #
+      # Known-bad (lockfile deleted):
+      #   npm would print EUSAGE "can only install with an existing
+      #   package-lock.json" — but IN THIS WORKFLOW it never gets the chance,
+      #   because step 1 asserts existence under `set -eu` and exits first.
+      #   Measured: the deletion probe run contains zero occurrences of EUSAGE.
+      #   Both messages are recorded here anyway, because step 2 BECOMES the
+      #   deletion detector the moment step 1 is removed — which is the reason
+      #   not to remove it.
       #
       # working-directory is load-bearing. Without it npm walks UP the directory
       # tree, installs against an ancestor manifest, and exits 0 — passing while

@@ -93,7 +93,8 @@ Six grounds:
   and the gate resolves its own directories. The `cd plugin &&` fail-open class is
   retired from the config, though it still applies to any glob typed by hand and the
   documentation of it stays.
-- **All 230 tests are gated**, up from 197.
+- **All 238 tests are gated**, up from 197 — the 33 workspace tests that were previously
+  ungated, plus the 8 that came with the gate's own test-surface library.
 - **One deliberate asymmetry:** `npm ci` runs in CI only, never in `commands.validate`.
   With zero dependencies it is cheap today, but it becomes network- and cache-dependent
   the moment a real dependency lands, and `commands.validate` must stay hermetic.
@@ -105,6 +106,10 @@ Six grounds:
   established. This landing does not depend on it, since nothing is installed. #95 does:
   this repo's audit runs *from the plugin cache* on every consumer, so the usability
   preflight must be discharged there before a runtime dependency ships.
-- **The version bump this step earns is owed, not waived.** ADR-0051 states the manifest
-  step carries a version bump on its own merits. It is deferred to the release, not
-  declined.
+- **The version bump this step earns is owed, not waived.** ADR-0051 states that the
+  manifest step carries a version bump on its own merits — though note that sentence is
+  written about the *upstream* equivalent step, whose stated reason is that it is "the
+  first time `plugin/` gains a dependency". This landing gains a manifest and a lockfile
+  but **no dependency**, so the reasoning is transferred by analogy rather than quoted as
+  binding. The conclusion is unaffected: the shipped subtree changes, so a bump is owed.
+  It is deferred to the release, not declined.
