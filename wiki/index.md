@@ -45,6 +45,7 @@ maintenance rules.
 * [Dispatching documentation work](dispatching-doc-work.md) - tech-writer fabricates plausible concrete detail beyond its source, so classify by payload rather than genre — prose can be dispatched, but symbols, paths, field names and schemas are authored inline, and an ADR is not exempt for reading like prose.
 * [Working with the code reviewer](working-with-code-review.md) - The reviewer recurrently over-escalates valid-but-unusual Markdown to critical — how to verify the severity against the spec, why a sound finding can still carry a remedy that is wrong for this repo, why its silence on an inherited claim is not verification, and why its per-row verdict can contradict the measurement in its own evidence column.
 * [Issue triage conventions](issue-triage-conventions.md) - This repo's flat-label triage model — one category label, no priority scheme, question doubling as needs-info, and the blocked-upstream lifecycle — plus why a small clean backlog is still worth triaging.
+* [The npm surface and the CI gate](the-npm-surface-and-ci-gate.md) - Why the manifest and lockfile live in plugin/ and nowhere else, why an empty dependency set still makes a real gate, and the four measured ways a check here passes while verifying nothing — npm ci walking up to an ancestor manifest, a glob matched from the wrong directory, a wrong path reporting as a deleted lockfile, and a reporter whose counters cannot be grepped.
 
 ## Decision records
 
