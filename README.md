@@ -61,5 +61,5 @@ The shipped plugin lives in the **`plugin/`** subfolder; the repo root is the de
 
 - Skills are directories with `SKILL.md`; agents are flat `.md` files in `plugin/agents/`.
 - Top-level frontmatter is fixed (`name`, `description`, plus Anthropic-supported fields); custom expectations go under `metadata.expects`.
-- Validate with `cd plugin && claude plugin validate .`.
-- Test the audit with `cd plugin && node --test skills/audit-c3-conventions/scripts/test/*.test.mjs`.
+- Run everything with `node scripts/ci/gate.mjs && claude plugin validate plugin`, from the repo root — that is exactly what `commands.validate` and CI both run.
+- Test the audit alone with `cd plugin && node --test skills/audit-c3-conventions/scripts/test/*.test.mjs`.

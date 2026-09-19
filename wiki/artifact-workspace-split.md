@@ -61,9 +61,11 @@ since are a **single-value `source.ref` bump** in the catalog.[^adr-0004]
 
 ## What follows from it
 
-- **All plugin checks run inside `plugin/`.** `commands.validate` in
-  `.gvt-agent.json` does `cd plugin && …` for precisely this reason — and dropping
-  that `cd` fails *open*, since the test glob then matches nothing and still exits 0.
+- **Plugin checks are scoped to `plugin/`, but no longer by a `cd`.** `commands.validate`
+  used to do `cd plugin && …`, which fails *open*: run the test glob from anywhere else and
+  it matches nothing and still exits 0. It now runs `node scripts/ci/gate.mjs`, which
+  expands each suite's glob in Node against an explicit directory and fails closed on an
+  empty match. The scoping survives; the fail-open does not.
   See [Doc inventories, ADRs, and the changelog](/doc-inventories.md).
 - **Releases are cross-repo.** `gvt-dev:release-plugin` (≥ 2.8.0) honors
   `paths.plugin_root`, operates on `plugin/.claude-plugin/plugin.json` and

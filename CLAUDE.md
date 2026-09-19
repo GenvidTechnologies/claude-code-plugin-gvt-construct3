@@ -48,14 +48,15 @@ The plugin is distributed through the [`claude-code-marketplace`](https://github
 
 ## Commands
 
-All plugin checks run inside `plugin/` (that's what `commands.validate` in `.gvt-agent.json` does):
+Everything runs from the **repo root**. `commands.validate` in `.gvt-agent.json` is
+`node scripts/ci/gate.mjs && claude plugin validate plugin`:
 
 ```bash
-# Validate the plugin manifest + structure (run before any release/PR)
-cd plugin && claude plugin validate .
+# Both test suites, floor-asserted (this is what commands.validate and CI both run)
+node scripts/ci/gate.mjs
 
-# Run all skill test suites
-cd plugin && node --test skills/*/scripts/test/*.test.mjs
+# Validate the plugin manifest + structure (run before any release/PR)
+claude plugin validate plugin
 
 # Run a single test by name
 cd plugin && node --test --test-name-pattern="semver: higher patch" skills/audit-c3-conventions/scripts/test/audit.test.mjs
@@ -64,17 +65,27 @@ cd plugin && node --test --test-name-pattern="semver: higher patch" skills/audit
 node plugin/skills/audit-c3-conventions/scripts/audit.mjs
 ```
 
-There is no build step, no `package.json`, no lint config — plain ESM `.mjs` run directly by Node, tests via the built-in `node:test` runner only.
+`scripts/ci/gate.mjs` owns the test-count floors — it is the single place they are
+written, and `.github/workflows/gate.yml` calls the same script rather than restating
+the globs. Don't re-state a floor here; read it from the gate.
 
-> **The `cd plugin &&` is load-bearing, and dropping it fails *open*.** The test glob is
-> relative to `plugin/`, so from the repo root it matches nothing, prints
-> `tests 0 / pass 0 / fail 0`, and **exits 0** — a green run that verified nothing. The same
-> glob is embedded in `.gvt-agent.json`'s `commands.validate`, so any wrapper or agent that
-> loses the working directory inherits the trap. **Confirm a non-zero test count** (197 on
-> `main` at `78a646d` — an anchor that drifts, so treat a mismatch as "re-derive", not
-> "fail") rather than reading exit 0 as a pass. Note the shell's working directory also
-> persists between tool calls, so a `cd plugin` in one command silently changes where the
-> *next* one runs — which is how this usually happens.
+`plugin/` carries a `package.json` and a committed `package-lock.json` so the host can
+perform a lockfile-gated dependency install. There is still no build step and no lint
+config — plain ESM `.mjs` run directly by Node, tests via the built-in `node:test`
+runner only, and zero dependencies today.
+
+> **A bare `cd plugin &&` test glob fails *open*, and `commands.validate` no longer carries
+> one.** The glob is relative to `plugin/`, so from the repo root it matches nothing, prints
+> `tests 0 / pass 0 / fail 0`, and **exits 0** — a green run that verified nothing. That is
+> why `commands.validate` now runs `node scripts/ci/gate.mjs` instead: the gate expands the
+> glob in Node against an explicit directory and **fails closed on an empty match**, printing
+> `files matched: N (floor F)` so a reader can tell "passed" from "ran nothing". The floors
+> live in the gate and nowhere else.
+>
+> The trap still applies to any glob you type by hand — the single-test-by-name recipe above
+> included. **Confirm a non-zero test count** rather than reading exit 0 as a pass. Note the
+> shell's working directory also persists between tool calls, so a `cd plugin` in one command
+> silently changes where the *next* one runs — which is how this usually happens.
 >
 > **The same persistence has an inverse form that bites git, and one half of it is also
 > silent.** Once the shell is *inside* `plugin/`, a path written repo-root-relative no
