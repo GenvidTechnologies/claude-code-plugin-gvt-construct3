@@ -2,7 +2,7 @@
 type: practice-note
 title: Working with the code reviewer
 description: >-
-  The reviewer recurrently over-escalates valid-but-unusual Markdown to critical — how to verify the severity against the spec, why a sound finding can still carry a remedy that is wrong for this repo, and why its silence on an inherited claim is not verification.
+  The reviewer recurrently over-escalates valid-but-unusual Markdown to critical — how to verify the severity against the spec, why a sound finding can still carry a remedy that is wrong for this repo, why its silence on an inherited claim is not verification, and why its per-row verdict can contradict the measurement in its own evidence column.
 tags: [code-review, markdown, commonmark, anchors, severity, verification]
 status: stable
 stale_after: 2027-08-18
@@ -96,6 +96,35 @@ The corollary is the point of the whole section: **verify flagged inherited fact
 yourself.** The dispatch improves the odds that the reviewer looks; it does not
 transfer the obligation.
 
+## A verdict is not its evidence — read the column, not the conclusion
+
+A third mode, and the one the section above cannot catch, because the countermeasure
+**works** and the failure happens afterwards. The reviewer runs the check, records the
+real number, and then grades the row **satisfied anyway** — reasoning past its own
+measurement instead of failing the row.
+
+The #120 case: R1 pledged that `grep -c "2\.0\.0"` across the four pin files returns
+**5**. The reviewer's evidence column reported **6**, annotated *"expected 5, with 1
+extra from legitimate prose in c3-implementer.md line 88"* — and its verdict column
+said **satisfied**, with the summary reporting 11 of 11 met. The explanation was
+correct on the facts (see [a token count is not a site
+check](/verifying-a-pledged-criterion.md)); the row still said 5 and the tree still
+said 6. A criterion that a grader may explain away is not pre-committed, which is the
+whole property ADR-0017 exists to create.
+
+This is not the same as asserting an unrun check. Here the check ran and its output is
+right there in the report — so *"show the command if you ran one"* is satisfied, and
+every structural defence in the section above passes. The only thing that catches it is
+reading the numbers against what the row demanded.
+
+**So read a review's evidence column, not its verdict column, and re-derive any row
+where the two disagree.** The numbered-question dispatch is what makes this cheap: it
+is what put the contradicting figure on the page in the first place. Treat a
+reviewer's per-row measurements as data worth having and its per-row verdicts as
+opinion — useful, not authoritative. In the same report this reviewer also referred to
+a nonexistent "ADR 0107" (#107 is an issue, not a decision record), a small tell in the
+same direction: its detailed evidence was sound while its summary ran ahead of it.
+
 [^claude-md]: CLAUDE.md, "The code-reviewer recurrently over-escalates
 valid-but-unusual Markdown".
 
@@ -103,3 +132,4 @@ valid-but-unusual Markdown".
 
 - [Doc inventories, ADRs, and the changelog](/doc-inventories.md) — the absence-criterion rule the #72 remedy contradicted.
 - [Verifying an MCP pin bump](/pin-bump-verification.md) — the same "verify the assertion" habit applied to issue bodies.
+- [Verifying a pledged acceptance criterion](/verifying-a-pledged-criterion.md) — the row-side counterpart: the defective criteria a reviewer's verdict can paper over.
