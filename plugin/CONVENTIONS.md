@@ -26,8 +26,11 @@ npx -y @genvidtech/construct3-chef validate-addons
 ```
 
 It is a subcommand of the **same package the plugin already pins**, so it needs no
-extra dependency. It is **read-only**, and it **exits non-zero when it reports
-findings**, so it chains with `&&` like any other check. It reports:
+extra dependency. It is **read-only**, and by default it **exits non-zero when it
+reports findings**, so it chains with `&&` like any other check. Pass
+`--skip-gate <families>` to exempt named check families from the exit code while
+still printing their findings — an opt-out for incremental adoption, not a change
+to the default behaviour above. It reports:
 
 - **Package integrity** — unreadable/malformed archives, LFS pointers committed in
   place of the real file, missing required entries, id/filename mismatches.
@@ -38,11 +41,18 @@ findings**, so it chains with `&&` like any other check. It reports:
 - **`aces.json` and `properties` against each addon's `lang/*.json`** — the
   ACE-vs-strings consistency check.
 
+Its output also includes a **per-family summary line**, so a `--skip-gate`d
+family's findings remain visible even though they no longer affect the exit code.
+
 Pass `--addon <id-or-path>` to scope it to a single addon.
 
 Adding it unconditionally is safe: on a project that does not bundle addons it
 finds nothing and exits `0` (the missing-package pass only considers `usedAddons`
 entries marked `bundled: true`). Requires `construct3-chef ≥ 1.0.0`.
+
+The MCP equivalent of this check has no `--skip-gate` parameter: an MCP tool call
+has no process exit code to gate, so the concept doesn't apply there — the CLI is
+the only surface with a gate to exempt.
 
 For the *interactive* side of this surface — inventory (`list-addons`), an addon
 upgrade's breaking surface (`diff-addon-aces`), and its call-site blast radius

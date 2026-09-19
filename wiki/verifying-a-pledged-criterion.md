@@ -2,7 +2,7 @@
 type: practice-note
 title: Verifying a pledged acceptance criterion
 description: >-
-  How a criterion's own check goes wrong — a grep standing in for coverage, a recount standing in for a diff, a diff read with context standing in for its changed lines, and a hand-guessed mutation standing in for a discriminating one — with the measurement that settles each.
+  How a criterion's own check goes wrong — a grep standing in for coverage, a recount standing in for a diff, a diff read with context standing in for its changed lines, a hand-guessed mutation standing in for a discriminating one, a token count standing in for the sites it means, and a line range standing in for an anchor — with the measurement that settles each.
 tags: [verification, acceptance-criteria, testing, coverage]
 status: stable
 generated: { by: process:plan-task, at: 2026-09-02T00:00:00Z }
@@ -12,9 +12,9 @@ generated: { by: process:plan-task, at: 2026-09-02T00:00:00Z }
 A pledged criterion is graded twice — by the validator and by the code reviewer —
 and it is written into a tracker issue where it outlives the branch. That makes a
 *wrong check* nearly as expensive as a wrong row: both produce a confident verdict
-nobody re-derives. The three failures below all came from one session (#96) and all
-have the same shape — **a cheap proxy standing in for the measurement the row
-actually asserts.**
+nobody re-derives. The failures below all have the same shape — **a cheap proxy
+standing in for the measurement the row actually asserts.** Each section names the
+session it came from; they are not all from one, and the list is meant to grow.
 
 Sibling pages: [Doc inventories, ADRs, and the changelog](doc-inventories.md) covers
 scoping an *absence* criterion; this page covers checking a criterion once it exists.
@@ -123,6 +123,62 @@ guard at config-resolve.mjs:16 disabled   175 pass / 0 fail    15 pass / 2 fail
 
 **Diff the coverage report with and without the new tests.** The lines that move from
 uncovered to covered *are* the discriminating surface; anything else is a guess.
+
+## A token count is not a site check
+
+A row that means *"these N specific places moved"* is tempting to check by counting
+the new token across the files those places live in. The count is a proxy for the
+sites, and it breaks the moment anything **else** in those files legitimately gains
+the same token — including a later task in the very same plan.
+
+The #120 case: R1 pledged that the five hard chef pin sites read `2.0.0`, checked as
+*"`grep -c "2\.0\.0"` across the four pin files returns 5."* Task 3 of the same plan
+then unified the `txId` prose and wrote *"Both `construct3-chef` (since `@2.0.0`)…"*
+into `plugin/agents/c3-implementer.md:88` — a sixth occurrence that is **not** a pin
+site. The measured total was 6 against a pledged 5. Nothing was wrong with the work;
+the row simply could not tell a pin site from a sentence.
+
+Note this is the **same collision the absence-row rule already guards against**,
+arriving from the opposite direction. `plan-task` tells you to re-run every *absence*
+row against the mentions later tasks will legitimately add — and that screen was run
+here, and worked. Nobody extended it to a row pinning a token's **exact count**, which
+is vulnerable identically: any row fixing an occurrence total over a corpus a later
+task will write to is jointly unsatisfiable with that task. Filed upstream as
+[gvt-dev#464](https://github.com/GenvidTechnologies/claude-code-plugin-gvt-dev/issues/464),
+where the first instance was a page tally; a version string behaves the same way.
+
+**Assert per-site, not per-corpus.** `grep -c 'construct3-chef@2\.0\.0' <each file>`
+against its own expected number pins the sites themselves and is indifferent to prose
+elsewhere in the file. The paired *absence* half — `grep -c "1\.2\.0"` totalling 0
+across those files — needs no such care, because no later task had reason to
+reintroduce the old version.
+
+## A line range is not an anchor
+
+A row that means *"this anchor now carries the current value"* cannot be checked by
+printing fixed line numbers. Any insertion above them shifts the target, so the check
+fails on a **correct** execution — and, worse, the range silently starts describing
+whatever moved into it.
+
+The #120 case: R9 pledged the wiki count anchors were refreshed *"in place"*, verified
+by `sed -n '270,275p;350,354p;404,417p'`. Both halves were wrong when written. The page's
+own convention is **additive** — `pin-bump-verification.md:363` records the dm `0.10.1`
+re-probe as a new row beside `0.9.0`'s rather than replacing it, and that predates the
+branch — so "in place" contradicted the pattern the task was meant to follow, and would
+have destroyed the historical chain that makes a delta legible. The line ranges then
+could not survive the additive edit that actually happened.
+
+**Address an anchor by its content, not its coordinates** — `grep -n 'holds 26'`, not
+`sed -n '270,275p'`. And before pledging *how* an edit lands, read how the target file
+already records the same kind of fact; a criterion that prescribes an edit **mechanism**
+can contradict the file's own convention, which is a defect no amount of careful
+execution can satisfy.
+
+Both #120 rows were **defective, not decayed** — unsatisfiable when written rather than
+overtaken by drift, the distinction `planner.md` draws as *"a decayed row was right once,
+a mismarked row never was."* Both were amended in the open on the issue, carrying the
+original wording, the defect, and the evidence, per ADR-0017: a pre-committed target may
+move, but never silently.
 
 ## Two things this does not license
 

@@ -35,6 +35,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   its own pages. **The prose content of the docs is unchanged.**
 
 ### Changed
+- **The bundled `construct3-chef` pin moves `@1.2.0` → `@2.0.0`.** The MCP tool
+  surface goes 37 → 38 — one addition, `list-projects` (`READ_ONLY`) — nothing
+  removed or renamed. **`c3-explorer`'s hard `tools:` allow-list gains
+  `mcp__construct3-chef__list-projects`** (25 → 26 entries); without it the new
+  tool would be *uncallable* by that agent, a functional change rather than a
+  doc one. The `docs:///` resource surface grows 51 → 59, purely additive —
+  nothing repathed, so no citation needs updating. **`txId` is now a composite
+  `<projectId>:<counter>` on both bundled servers**, not just
+  `c3-domain-manager`; `c3-implementer`'s optimistic-concurrency guidance is
+  unified into one top-level section stating the shared shape once, and the
+  earlier claim that chef's `txId` was unaffected by the composite form is
+  removed — it was wrong. `docs/c3/toolchain-config.md` now documents chef's
+  opt-in `--discover-projects` multi-root mode (one server process, N roots
+  fixed at launch, no fan-out); this plugin's own launch stays single-root.
+  `validate-addons` gained a `--skip-gate <families>` CLI flag that exempts
+  named families from the exit code without suppressing their findings, plus a
+  per-family summary line. **The version floor is deliberately held at
+  `1.2.0`** — chef 2.0.0 is purely additive, so nothing a skill depends on
+  broke — see the decision record "Hold the Version Floor Through a
+  Purely-Additive Major Upstream Bump". (#120)
 - **The bundled `c3-domain-manager` pin moves `@0.9.0` → `@0.10.1`**, spanning two
   upstream releases (0.10.0 never got a follow-up issue). **`c3-explorer`'s hard
   `tools:` allow-list gains `mcp__c3-domain-manager__list-projects`** (40 → 41

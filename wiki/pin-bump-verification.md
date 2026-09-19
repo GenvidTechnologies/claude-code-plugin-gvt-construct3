@@ -295,6 +295,14 @@ grew.** `list-ops` is `READ_ONLY` (so it belongs in the explorer allow-list);
 `op-<name>` is `MUTATE` and dynamic (so it belongs in implementer docs only,
 documented as a *class*, since the names are not fixed).[^reconciliation]
 
+**Re-measured at chef `2.0.0` (#120): the allow-list holds 26.** The single new
+tool is `list-projects` — chef's own, distinct from c3-domain-manager's
+same-named tool added at `0.10.1` (#107) — and it is `reg()`-registered as
+chef's one project-**un**scoped tool (see the `regP`/`reg` idiom split under
+"The count anchors" below). The relation above is otherwise unchanged; `list-ops`
+also moved at this bump, from `opsRegistry.js` into the `server.js` surface
+proper, without changing its `READ_ONLY` status or its place in the allow-list.
+
 ## A scope rename reaches past the tool lists
 
 A package **scope rename** is a pin bump that also changes the package *name*, so it
@@ -350,6 +358,7 @@ Measured this way on 2026-09-01, before rewriting any reference:
 | Pinned server | `resources/list` entries |
 |---|---|
 | `@genvidtech/construct3-chef@1.2.0` | **51** — 50 documents under `wiki/` plus a static `readme` |
+| `@genvidtech/construct3-chef@2.0.0` | **59** — re-probed 2026-09-18 (#120); purely additive, all 8 new entries are `docs:///decisions/0034-…` through `0041-…`, nothing repathed or removed |
 | `@genvidtech/c3-domain-manager@0.9.0` | **37** |
 | `@genvidtech/c3-domain-manager@0.10.1` | **40** — re-probed 2026-09-15 (#107) |
 
@@ -403,8 +412,9 @@ in `plugin/.claude-plugin/plugin.json`'s `mcpServers`.
 
 | Server | Idiom | Location | Count |
 |---|---|---|---|
-| construct3-chef | `reg("…")` | `dist/mcp/server.js` | **36** at `1.2.0` (unchanged from `1.1.0`) — was **34** at `1.0.0`, **30** stable `0.9.0` → `0.11.2` |
-| construct3-chef | + `list-ops` from `opsRegistry.js` | — | **37 total** — was **35**, **31** |
+| construct3-chef | `regP("…")` (project-scoped) | `dist/mcp/server.js` | **37** at `2.0.0` — includes `list-ops`, moved in from `opsRegistry.js` at this bump |
+| construct3-chef | `reg("…")` (unscoped) | `dist/mcp/server.js` | **1** at `2.0.0` — `list-projects` only |
+| construct3-chef | total | — | **38** at `2.0.0` — was **37** at `1.2.0` (`reg()` **36** + `list-ops` **1**), **35**, **31** |
 | c3-domain-manager | `registerProjectTool` + one direct `registerTool` | `dist/mcp/server.js` | **15** at `0.10.1` — was **14** at `0.7.0` → `0.9.0`, **13** before |
 
 > **dm changed its registration idiom at `0.10.0` — a bare `registerTool(` grep now
@@ -415,9 +425,34 @@ in `plugin/.claude-plugin/plugin.json`'s `mcpServers`.
 > is the dm-side instance of the silent-zero rule below — the surface **grew** by one
 > while the old grep appeared to show it collapsing to 2.
 
-**Grep `reg(` in `server.js`, not `registerTool(`.** A bare `registerTool(` grep barely
-matches chef — only `list-ops` and the dynamic `op-<name>` wrapper use that idiom — so it
-undercounts badly.[^reconciliation]
+> **chef changed its registration idiom at `2.0.0` — a bare `reg(` grep now returns
+> 1, not 38.** The 37 project-scoped tools (`list-ops` among them, having moved out
+> of `opsRegistry.js` at this bump) register through `regP("…", …)`; only
+> `list-projects` still calls `reg("…")` directly, because it is the one tool exempt
+> from the project selector. Count `regP("…"` **plus** `reg("…"` and union the
+> names. This is the **second consecutive bump** where the registration idiom
+> moved: dm `0.10.1` (above) switched to `registerProjectTool(`, reporting **2**
+> against a surface that had grown; chef `2.0.0` now does the mirror-image thing,
+> reporting a bare `reg(` count of **1** against a surface that also grew.
+> **Discover the idiom empirically each time** — grep several candidate forms and
+> compare counts across versions, rather than reusing the previous bump's pattern
+> — and **diff the tool-name sets, not the counts.**
+
+**A second-order trap from this same bump: `list-ops` briefly looked
+newly-added.** Diffing tool-name sets extracted with the *old* `1.2.0`-side
+pattern (`reg("…"` in `server.js` only) against a `regP("…"` extraction on the
+`2.0.0` side shows `list-ops` present only on the new side — not because the
+tool is new, but because the `1.2.0`-side pattern never matched its
+`opsRegistry.js`-era `registerTool(` call to begin with. This is rule 2 above
+(a spurious hit reads as evidence) firing in the *added* direction: a name
+present in one side's extraction and absent from the other's can be an
+extraction artifact rather than a real delta. Confirm with a
+presence-anywhere grep over the raw `dist/` of **both** packed versions before
+believing any "added" entry.
+
+**Grep `reg(` and `regP(` in `server.js`, not raw `registerTool(`.** A bare
+`registerTool(` grep still barely matches chef — the dynamic `op-<name>` wrapper
+is the main exception — so it undercounts badly.[^reconciliation]
 
 > **Distrust a silent zero.** If a surface grep returns **0**, or an implausibly small
 > set, the registration idiom or the file moved — it does not mean the surface shrank.

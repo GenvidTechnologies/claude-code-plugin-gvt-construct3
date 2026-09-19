@@ -38,4 +38,6 @@ available, so the amendment goes outside the quote.
 
 * [0017. A Frontmatter `description` That Contradicts Its Own Body Is a Defect, Not a Reversal](0017-frontmatter-description-defect-not-reversal.md) - An index row misquoting its record is repaired on whichever side is wrong; when a record's own frontmatter description contradicts the body it summarizes, that is a metadata defect correctable in place, not a decision reversal earning a superseding record — and the licence extends to misstatement only, never to style.
 
+* [0018. Hold the Version Floor Through a Purely-Additive Major Upstream Bump](0018-hold-the-floor-through-a-purely-additive-major-bump.md) - When a major upstream bump adds capability without removing, renaming, or repathing anything a pinned skill or agent depends on, the consumer floor stays at the pre-bump version rather than moving because semver crossed a major boundary.
+
 See the [wiki index](../index.md) for the rest of the bundle.
