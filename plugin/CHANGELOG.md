@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **The plugin subtree now carries a `package.json` and a committed
+  `package-lock.json`.** Two new files — `plugin/package.json` and
+  `plugin/package-lock.json` — so a host can perform a lockfile-gated dependency
+  install. The manifest is `private`, declares `type: "module"`, and carries **no
+  `version`** field: the plugin's version remains solely in
+  `.claude-plugin/plugin.json`, so there is no second version string to drift.
+  `dependencies` is **empty**, which means **consumers receive two files and zero
+  bytes of third-party code**, and no `node_modules/` is created on install.
+  Nothing about installing or using the plugin changes. This is the prerequisite
+  for #95 (adopting the shared audit core): the manifest and lockfile must exist
+  and be enforced *before* anything can be pinned in them, because a missing
+  lockfile makes the install silently skip with nothing reporting it. (#119)
+
 ## [3.0.0] - 2026-09-19
 
 ### Added
