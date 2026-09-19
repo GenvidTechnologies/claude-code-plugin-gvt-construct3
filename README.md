@@ -4,13 +4,13 @@ The **`gvt-construct3` plugin** for Claude Code — Construct 3 platform knowled
 
 It bundles the **construct3-chef** and **c3-domain-manager** MCP servers, ships the `c3-explorer` and `c3-implementer` agents, and owns the canonical **C3 platform reference** (`plugin/docs/c3/`). It is **independent of the `gvt-dev` plugin** — installable on its own.
 
-It is distributed through the [`claude-code-marketplace`](https://github.com/genvid-holdings/claude-code-marketplace) catalog (marketplace name `genvid-plugins`).
+It is distributed through the [`claude-code-gvt-marketplace`](https://github.com/GenvidTechnologies/claude-code-gvt-marketplace) catalog (marketplace name `gvt-plugins`).
 
 ## Install
 
 ```text
-/plugin marketplace add https://github.com/genvid-holdings/claude-code-marketplace.git
-/plugin install gvt-construct3@genvid-plugins
+/plugin marketplace add https://github.com/GenvidTechnologies/claude-code-gvt-marketplace.git
+/plugin install gvt-construct3@gvt-plugins
 ```
 
 The plugin declares `construct3-chef` and `c3-domain-manager` in its `plugin.json` (`mcpServers`), so they start when the plugin is enabled. They may appear as **"Pending approval"** — approve them once.
@@ -61,5 +61,5 @@ The shipped plugin lives in the **`plugin/`** subfolder; the repo root is the de
 
 - Skills are directories with `SKILL.md`; agents are flat `.md` files in `plugin/agents/`.
 - Top-level frontmatter is fixed (`name`, `description`, plus Anthropic-supported fields); custom expectations go under `metadata.expects`.
-- Validate with `cd plugin && claude plugin validate .`.
-- Test the audit with `cd plugin && node --test skills/audit-c3-conventions/scripts/test/*.test.mjs`.
+- Run everything with `node scripts/ci/gate.mjs && claude plugin validate plugin`, from the repo root — that is exactly what `commands.validate` and CI both run.
+- Test the audit alone with `cd plugin && node --test skills/audit-c3-conventions/scripts/test/*.test.mjs`.

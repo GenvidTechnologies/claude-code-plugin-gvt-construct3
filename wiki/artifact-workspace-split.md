@@ -50,20 +50,36 @@ form stopped being viable the moment the artifact moved.[^adr-0004]
 The `url` → `git-subdir` migration shipped at **v1.1.0**. Steady-state releases
 since are a **single-value `source.ref` bump** in the catalog.[^adr-0004]
 
-> **Verify the catalog repo at release time.** ADR 0004 records the catalog as
-> `genvid-holdings/claude-code-marketplace`, and this repo's `CLAUDE.md` names the
-> same repo (marketplace name `genvid-plugins`) — but the installed `gvt-dev`
-> `release-plugin` skill describes the catalog as
-> `GenvidTechnologies/claude-code-gvt-marketplace`. These disagree. The *mechanism*
-> (`git-subdir` + `path: "plugin"`) is stable and is what this page asserts; resolve
-> the repo name against the catalog itself before pushing a `source.ref` bump rather
-> than trusting either doc.
+> **The catalog is `GenvidTechnologies/claude-code-gvt-marketplace`, marketplace name
+> `gvt-plugins`** — resolved, and the resolution is simpler than it looked. There is
+> **one catalog, not two.** `genvid-holdings/claude-code-marketplace` and
+> `GenvidTechnologies/claude-code-gvt-marketplace` are the **same repository**,
+> renamed — identical repo `id` (`1255536717`) and identical `created_at`. The old
+> path still resolves only because GitHub redirects a renamed repo.
+>
+> **That redirect is why this looked like a disagreement for so long, and it is the
+> trap to remember.** Fetching either name succeeds and returns plausible content, so
+> a check that "confirms both exist" confirms nothing — it followed a redirect. The
+> discriminator is the repo `id`, not the name, not a successful fetch, and not the
+> file contents. Compare ids before concluding two remotes are distinct.
+>
+> So the living docs were not picking the wrong side of a live disagreement; they were
+> pointing at a **pre-rename name**. The marketplace `name` is `gvt-plugins`; the docs
+> said `genvid-plugins`, which was never any catalog's name, so an install command
+> built from them would have failed outright. Corrected wherever it was load-bearing.
+>
+> ADR 0004's *decision* is untouched. It settled that a subfolder artifact forces a
+> `git-subdir` source, and that remains true; only an incidental fact it recorded in
+> passing — the hosting repo's name — has decayed. Records are not swept, so ADR 0004
+> still names the repo under the name it had; read this page for the current one.
 
 ## What follows from it
 
-- **All plugin checks run inside `plugin/`.** `commands.validate` in
-  `.gvt-agent.json` does `cd plugin && …` for precisely this reason — and dropping
-  that `cd` fails *open*, since the test glob then matches nothing and still exits 0.
+- **Plugin checks are scoped to `plugin/`, but no longer by a `cd`.** `commands.validate`
+  used to do `cd plugin && …`, which fails *open*: run the test glob from anywhere else and
+  it matches nothing and still exits 0. It now runs `node scripts/ci/gate.mjs`, which
+  expands each suite's glob in Node against an explicit directory and fails closed on an
+  empty match. The scoping survives; the fail-open does not.
   See [Doc inventories, ADRs, and the changelog](/doc-inventories.md).
 - **Releases are cross-repo.** `gvt-dev:release-plugin` (≥ 2.8.0) honors
   `paths.plugin_root`, operates on `plugin/.claude-plugin/plugin.json` and

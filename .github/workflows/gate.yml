@@ -1,0 +1,107 @@
+# Fail-closed gate for the gvt-construct3 plugin.
+#
+# Every step below states what it prints on a KNOWN-BAD input. That is not
+# decoration: this repo's signature failure is a check that passes while
+# verifying nothing (a glob matched from the wrong directory prints "# pass 0"
+# and exits 0), so "exit 0" alone is not evidence here. Each step is required to
+# emit positive evidence — a count, a path, a name — that a reader can check.
+#
+# Two things are deliberately NOT here:
+#
+#   cache: npm             — there is nothing to cache at zero dependencies.
+#                            Add it WITH cache-dependency-path: plugin/package-lock.json
+#                            when issue #95 lands a real dependency, not before.
+#                            (setup-node with cache: npm fails the job when it
+#                            finds no lockfile, which would be a redundant third
+#                            deletion detector sitting in a confusing place.)
+#
+#   claude plugin validate — the Claude Code CLI is not on a GitHub runner, and
+#                            whether it runs unauthenticated on a fresh install
+#                            is UNVERIFIED. Step 4 runs a dependency-free shape
+#                            check instead; `claude plugin validate plugin` stays
+#                            the local gate via commands.validate, and the
+#                            release gate.
+#
+# Do NOT add scripts/check-index-mirrors.mjs or scripts/check-doc-anchors.mjs
+# here without re-reading wiki/the-npm-surface-and-ci-gate.md first. Wiring a
+# checker that can go red for reasons unrelated to the lockfile widens what a
+# red run could mean, which is exactly what the AC#2 demonstration needs to keep
+# narrow.
+
+name: Gate
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      # STEP 1 — existence + tracked-ness, asserted at the exact path.
+      #
+      # Known-bad (file missing):   "::error::plugin/package.json is missing", exit 1.
+      # Known-bad (file untracked): "::error::plugin/package-lock.json is not tracked by git", exit 1.
+      #
+      # This runs BEFORE npm on purpose. `npm ci --prefix ./does-not-exist` fails
+      # with the DELETION-arm message, so without this step a wrong path and a
+      # deleted lockfile are indistinguishable in the log. Tracked-ness is checked
+      # too: a lockfile that exists locally but was never committed is the silent
+      # skip this whole gate exists to prevent.
+      - name: Assert the npm surface is present and tracked
+        run: |
+          set -eu
+          for f in plugin/package.json plugin/package-lock.json; do
+            test -f "$f" || { echo "::error::$f is missing"; exit 1; }
+            git ls-files --error-unmatch "$f" >/dev/null 2>&1 \
+              || { echo "::error::$f is not tracked by git"; exit 1; }
+            echo "found and tracked: $f"
+          done
+
+      # STEP 2 — lockfile honesty.
+      #
+      # Known-bad (manifest and lockfile diverge):
+      #   EUSAGE "...are in sync" + "Missing: <pkg> from lock file", exit 1.
+      #   This is the arm step 2 actually catches in this workflow. Measured.
+      #
+      # Known-bad (lockfile deleted):
+      #   npm would print EUSAGE "can only install with an existing
+      #   package-lock.json" — but IN THIS WORKFLOW it never gets the chance,
+      #   because step 1 asserts existence under `set -eu` and exits first.
+      #   Measured: the deletion probe run contains zero occurrences of EUSAGE.
+      #   Both messages are recorded here anyway, because step 2 BECOMES the
+      #   deletion detector the moment step 1 is removed — which is the reason
+      #   not to remove it.
+      #
+      # working-directory is load-bearing. Without it npm walks UP the directory
+      # tree, installs against an ancestor manifest, and exits 0 — passing while
+      # verifying nothing. Step 1 is the structural backstop for that.
+      - name: Lockfile honesty (npm ci)
+        working-directory: plugin
+        run: npm ci --no-audit --no-fund
+
+      # STEP 3 — both test suites, floor-asserted, with printed evidence.
+      #
+      # Known-bad (wrong cwd, or a glob that matches nothing):
+      #   "files matched: 0 (floor 10)" and exit 1 — never exit 0 on an empty
+      #   match, which is the entire point of the floors.
+      #
+      # Prints "files matched: N (floor F)" and "tests=N pass=N fail=N" per suite,
+      # so a reader distinguishes "passed" from "ran nothing" by reading numbers.
+      - name: Test gate (both suites, floor-asserted)
+        run: node scripts/ci/gate.mjs
+
+      # STEP 4 — plugin manifest shape. Hermetic: no network, no npx.
+      #
+      # Known-bad (missing key, or an MCP server pinned to a range rather than an
+      # exact version): exit 1 naming the specific key that failed.
+      - name: Plugin manifest shape
+        run: node scripts/ci/check-plugin-manifest.mjs

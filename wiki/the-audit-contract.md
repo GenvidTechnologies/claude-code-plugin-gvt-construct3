@@ -161,7 +161,7 @@ Measured against **gvt-dev 4.26.0** (at `0a6bacc`, v3.0.0):
 | skip-notes | **2** (`info`) | New at 4.26.0: one `… were not link-checked` line naming the wiki file count, one `orphan check skipped` line. Both are the two rows above declaring themselves. |
 | Practice Coverage → Environment | **`partial adoption`** | **False.** `scripts/lib/practice-detect.mjs` hard-codes `SCHEMA_DOC = 'docs/wiki-schema.md'` and never consults `config.paths`, so this repo's `"docs/wiki-schema.md": "wiki/wiki-schema.md"` override is ignored — 5 of 6 signals present. gvt-dev **#467** (distinct from #390, which is `maintain-wiki`'s copy of the same hard-coding). |
 | exit code | **0** | Only `error` severity moves the exit code; everything above is `warning` or `info`. |
-| scanned line | `scanned 20 file(s) under wiki/, CLAUDE.md` | `resolveDocsRoot` derives the docs-tier root from the `docs/TOC.md` override, so the scanners walk `wiki/`. The figure is one per `.md` under `wiki/` sitting outside `hygiene.excludePaths`, plus `CLAUDE.md` — currently 19 + 1. |
+| scanned line | `scanned 21 file(s) under wiki/, CLAUDE.md` | `resolveDocsRoot` derives the docs-tier root from the `docs/TOC.md` override, so the scanners walk `wiki/`. The figure is one per `.md` under `wiki/` sitting outside `hygiene.excludePaths`, plus `CLAUDE.md` — currently 20 + 1. |
 
 ### The broken-link invariant is retired — do not run it
 

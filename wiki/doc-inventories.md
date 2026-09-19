@@ -379,10 +379,15 @@ node scripts/check-index-mirrors.mjs wiki/index.md    # or name them
 ```
 
 Like the anchor checker it is deliberately **not** wired into `.gvt-agent.json`'s
-`commands.validate` — and note that command could not reach it anyway: it globs
-`skills/*/scripts/test/*.test.mjs` from inside `plugin/`, so nothing under
-`scripts/test/` is in the validated suite. Run those with
-`node --test scripts/test/*.test.mjs` from the repo root.
+`commands.validate`. Note the reason changed: `commands.validate` used to be unable to
+reach anything under `scripts/` at all, because it globbed
+`skills/*/scripts/test/*.test.mjs` from inside `plugin/`. It now runs
+`node scripts/ci/gate.mjs`, whose second suite **is** `scripts/test/*.test.mjs` — so the
+*tests* under `scripts/test/` are gated. These two checkers stay out regardless, because
+they are **CLIs, not tests**, and because a checker that can go red for reasons unrelated
+to the change under test widens what a red run means. See
+[The npm surface and the CI gate](the-npm-surface-and-ci-gate.md) § *Do not wire a
+red-on-main checker into CI*. Run them by hand.
 
 Four outcomes, and the distinction between two of them is the point:
 

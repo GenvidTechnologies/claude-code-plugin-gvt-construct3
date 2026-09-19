@@ -40,4 +40,6 @@ available, so the amendment goes outside the quote.
 
 * [0018. Hold the Version Floor Through a Purely-Additive Major Upstream Bump](0018-hold-the-floor-through-a-purely-additive-major-bump.md) - When a major upstream bump adds capability without removing, renaming, or repathing anything a pinned skill or agent depends on, the consumer floor stays at the pre-bump version rather than moving because semver crossed a major boundary.
 
+* [0019. The npm Surface Ships in `plugin/` Only, and the Audit Stays Out of `commands.validate`](0019-npm-surface-shape-and-audit-stays-out-of-validate.md) - The manifest and committed lockfile live in plugin/ with an empty dependency set, whose CI gate is live while its host-install half stays armed and unfired; and audit-c3-conventions is deliberately not wired into commands.validate, because its target is the working directory and this repo can never be a valid target.
+
 See the [wiki index](../index.md) for the rest of the bundle.

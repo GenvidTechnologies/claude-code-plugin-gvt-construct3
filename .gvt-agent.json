@@ -4,7 +4,7 @@
     "host": "github"
   },
   "commands": {
-    "validate": "cd plugin && claude plugin validate . && node --test skills/*/scripts/test/*.test.mjs"
+    "validate": "node scripts/ci/gate.mjs && claude plugin validate plugin"
   },
   "paths": {
     "plugin_root": "plugin",
