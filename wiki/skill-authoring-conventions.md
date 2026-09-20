@@ -1,7 +1,7 @@
 ---
 type: practice-note
 title: Skill authoring conventions
-description: Frontmatter keys are fixed; scripts split a pure lib from a thin I/O CLI with tests at a path validation actually globs; remediation prose must never describe a check the script does not yet implement; and prose must never restate a value a declarative source already owns.
+description: Frontmatter keys are fixed; scripts split a pure lib from a thin I/O CLI with tests at a path validation actually globs; mutation-testing an extraction tells an untested branch from a non-discriminating one, which must be annotated rather than tested; remediation prose must never describe a check the script does not yet implement; and prose must never restate a value a declarative source already owns.
 tags: [skills, frontmatter, scripts, testing, grounding, drift]
 status: stable
 stale_after: 2027-08-18
@@ -64,6 +64,47 @@ unit-tested.
 There is no build step, no `package.json`, no lint config — the scripts and libs
 are plain ESM `.mjs` run directly by Node, and tests use the built-in `node:test`
 runner only.
+
+## Mutation-test the extraction, and tell "untested" from "untestable"
+
+Tests written *after* the code already works can assert only the passing path and
+still look thorough. The cheap countermeasure, used twice here now, is to
+**mutate each rejection branch, confirm the suite goes red, restore** — and to
+report which named test caught which mutation, rather than a bare "all green".
+
+The finding worth planning for is a **surviving** mutation, because it has two
+very different causes and the remedies are opposites:
+
+| Mutation survives because… | What it means | Remedy |
+|---|---|---|
+| no test exercises the branch | **untested** | write the test |
+| *no input can distinguish* the branch's presence from its absence | **non-discriminating** | annotate it at the site — do **not** write a test |
+
+The second case is the trap: a test added there passes whether or not the branch
+exists, so it manufactures coverage rather than measuring it. That is the same
+"a check that can degrade to matching everything or matching nothing is not a
+check" shape catalogued in
+[The npm surface and the CI gate](/the-npm-surface-and-ci-gate.md), pointed at a
+test instead of a CI step.
+
+Settle which case you are in by **building both variants and diffing their
+behaviour over a spread of inputs**, not by reading the code — the argument for
+unreachability is exactly the kind that is persuasive and wrong.
+
+> **Precedent.** #127 extracted `scripts/lib/plugin-manifest.mjs` and mutated
+> eleven rejection branches; ten were caught by a named test. The eleventh,
+> `parsePinnedArg`'s `at <= SCOPE.length - 1` guard, survived being disabled
+> outright — `startsWith(SCOPE)` above it fixes the first twelve characters as
+> `@genvidtech/`, whose only `@` is at index 0, so the guard can fire only when
+> `at === 0`, and that makes `pkg` empty, which the next check already rejects.
+> A 23-input sweep across both variants found zero behavioural disagreement. The
+> guard was left in place and annotated; an unfalsifiable check is worse than an
+> absent one, so it is now labelled as one.
+
+Removing such a branch is a *behaviour* question. Inside a deliberately
+behaviour-preserving refactor it is out of scope — but leaving it unmarked
+invites either a later "cleanup" that cannot know it is safe, or precisely the
+hollow test above.
 
 ## Two patterns for a skill that targets a tool
 

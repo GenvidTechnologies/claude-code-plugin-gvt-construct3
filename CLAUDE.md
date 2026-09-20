@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Add a skill, a `docs/c3` doc, or even a new `##` section | [Doc inventories, ADRs, and the changelog](wiki/doc-inventories.md) — the hand-maintained inventories that drift silently |
 | Write or change a skill's scripts or frontmatter | [Skill authoring conventions](wiki/skill-authoring-conventions.md) — the lib/CLI split, where tests must live, and the unimplemented-remediation trap |
 | Touch `audit.mjs` or the `expects` contract | [The convention contract and the audit](wiki/the-audit-contract.md) |
-| Add a CI step, or touch `plugin/package.json` / the lockfile | [The npm surface and the CI gate](wiki/the-npm-surface-and-ci-gate.md) — why the manifest ships in `plugin/` only, and the four measured ways a check here passes while verifying nothing |
+| Add a CI step, touch `plugin/package.json` / the lockfile, **or assert on a test count** | [The npm surface and the CI gate](wiki/the-npm-surface-and-ci-gate.md) — why the manifest ships in `plugin/` only, and the four measured ways a check here passes while verifying nothing. The count trigger is the one that gets missed: measuring a suite ad-hoc is neither a CI step nor a manifest edit, yet way #4 (`node --test`'s default reporter emits no greppable counters — `--test-reporter=tap` does) is exactly about that |
 | Decide *where* a fact belongs | [The knowledge boundaries](wiki/knowledge-boundaries.md) |
 | Write guidance for an agent | [Agent capability envelopes](wiki/agent-capability-envelopes.md) |
 | Defer an issue to `construct3-chef` | [Deferring an issue upstream](wiki/deferring-issues-upstream.md) |

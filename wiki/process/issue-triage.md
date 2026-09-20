@@ -75,6 +75,31 @@ than the plugin — content-validation and addon tooling in particular (see the
    follow-up becomes actionable. Triage should re-check each `blocked-upstream`
    issue's upstream state on every run — a stale block silently hides plannable
    work.
+4. **Decide "shipped" by contents, never by existence — and never trust a
+   re-check recipe recorded on a previous run.** A package name can be published,
+   and a repo created, long before anything consumable exists: npm's OIDC
+   trusted-publishing setup reserves the name with a stub release. So
+   `npm view <pkg> version` returning *a* version, or `gh api repos/<org>/<repo>`
+   returning 200, means the **name** is taken, not that the **tool** exists.
+   Require a real entry point (`main`/`exports`), a version past the placeholder,
+   and a description that is not the setup stub:
+
+   ```bash
+   npm view <pkg> --json   # read files/unpackedSize/main/exports, not just .version
+   ```
+
+   The trap is that this decays in the **false-green** direction, which is the
+   expensive one for a block: the recorded check starts *succeeding*, so a
+   conscientious re-run reads as "the gate cleared" and the label comes off work
+   that still cannot start. Recording the earlier negative result is what sets
+   the trap — a comment saying *"`npm view` → E404, `gh api` → 404"* reads as a
+   reusable recipe, and it is the one shape that inverts silently.
+
+   > **Precedent.** #95's block was recorded 2026-09-18 with exactly those two
+   > commands and their 404s. By 2026-09-19 both returned success —
+   > `@genvidtech/audit-core@0.0.0`, 2 files, 2051 bytes, no `main`, no
+   > `exports`, described as *"OIDC trusted publishing setup package"*. Nothing
+   > consumable had shipped, and `gvt-dev#457` was still open.
 
 ## Splitting
 
