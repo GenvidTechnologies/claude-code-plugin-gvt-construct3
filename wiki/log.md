@@ -15,6 +15,23 @@ before. If a past entry itself needs correcting, add a new entry that says
 so; never edit or remove the old one in place. See `wiki/wiki-schema.md` for
 the full maintenance schema.
 
+## 2026-09-23
+
+* **Update**: `the-npm-surface-and-ci-gate.md` gains a new § *When a test-count floor
+  moves*, and **ADR 0020** records the policy it states — from the #128 work that
+  conforms this repo's workspace floors to actual. The file-count floor is retired as a
+  hand-written literal and derived from a declared per-suite `expect` inventory (the
+  glob is the query; the declared list is the expected answer); the pass-count floor
+  stays an explicit number, conformed exact-current rather than padded with slack. A
+  present-but-undeclared test file, or a pass count that has climbed above its floor, is
+  reported as a non-fatal advisory — never turns the gate red — so `>=` keeps meaning
+  `>=` and adding a test can never break the gate.
+
+  ADR 0020 also records that the plugin suite's floors were reviewed against this same
+  policy and already complied (`10` files / `197` passing, zero slack, nothing to
+  change) — measured 2026-09-23 with `node scripts/ci/gate.mjs`. The workspace suite's
+  floors are conformed separately, as part of the same issue's wiring task.
+
 ## 2026-09-19
 
 * **Creation**: `the-npm-surface-and-ci-gate.md`, and **ADR 0019**, from the #119 work

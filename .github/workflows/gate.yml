@@ -96,6 +96,11 @@ jobs:
       #
       # Prints "files matched: N (floor F)" and "tests=N pass=N fail=N" per suite,
       # so a reader distinguishes "passed" from "ran nothing" by reading numbers.
+      #
+      # The file-count floor printed above is derived, not hand-written: each
+      # suite carries a declared inventory of the test files it's supposed to
+      # contain, and the floor is that list's length. See ADR 0020 and
+      # wiki/the-npm-surface-and-ci-gate.md.
       - name: Test gate (both suites, floor-asserted)
         run: node scripts/ci/gate.mjs
 

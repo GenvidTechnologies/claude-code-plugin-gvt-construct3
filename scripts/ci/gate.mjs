@@ -37,6 +37,18 @@
 // Floors are `>=`: adding tests never breaks the gate, only losing them does.
 // Exits 1 if any suite matches too few files, produces an unparseable TAP
 // summary, reports a failure, passes fewer than its floor, or exits nonzero.
+//
+// The file-count floor is DERIVED from each suite's `expect` list below,
+// rather than a free-standing `minFiles` literal — there is no `minFiles` in
+// this file's SUITES entries; the floor is `expect.length`. Entries are
+// POSIX-style (`a/b.test.mjs`) because `fs.globSync` returns platform-native
+// separators — backslashes on Windows, forward slashes on Linux/CI — and
+// `scripts/lib/floor-stale.mjs`'s `checkInventory` normalises both sides
+// through `toPosix` before comparing. A declared file that is actually
+// MISSING is fatal and named in the failure line; a file that is PRESENT but
+// not declared in `expect` is advisory only (`STALE`, via `checkFloorStale`)
+// so `>=` still holds — adding a test file can never break the gate, it can
+// only make the declared inventory stale.
 
 import { globSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -47,21 +59,42 @@ import {
   formatTapSummary,
   checkSuiteFloor,
 } from '../lib/test-surface.mjs';
+import { checkInventory, checkFloorStale } from '../lib/floor-stale.mjs';
 
 const SUITES = [
   {
     name: 'plugin',
     cwd: 'plugin',
     glob: 'skills/*/scripts/test/*.test.mjs',
-    minFiles: 10,
+    // The file-count floor is this list's length — see the header comment.
+    expect: [
+      'skills/audit-c3-conventions/scripts/test/audit.test.mjs',
+      'skills/audit-c3-conventions/scripts/test/config-resolve.test.mjs',
+      'skills/audit-c3-conventions/scripts/test/frontmatter-branches.test.mjs',
+      'skills/audit-c3-conventions/scripts/test/frontmatter.test.mjs',
+      'skills/author-navigation-patterns/scripts/test/dsl-files.test.mjs',
+      'skills/author-navigation-patterns/scripts/test/nav-patterns.test.mjs',
+      'skills/author-navigation-patterns/scripts/test/preview-patterns.test.mjs',
+      'skills/build-reference/scripts/test/cdn-aces.test.mjs',
+      'skills/build-reference/scripts/test/merge.test.mjs',
+      'skills/build-reference/scripts/test/reference-index.test.mjs',
+    ],
     minPass: 197,
   },
   {
     name: 'workspace',
     cwd: '.',
     glob: 'scripts/test/*.test.mjs',
-    minFiles: 3,
-    minPass: 33,
+    // The file-count floor is this list's length — see the header comment.
+    expect: [
+      'scripts/test/audit-snapshot.test.mjs',
+      'scripts/test/doc-anchors.test.mjs',
+      'scripts/test/floor-stale.test.mjs',
+      'scripts/test/index-mirrors.test.mjs',
+      'scripts/test/plugin-manifest.test.mjs',
+      'scripts/test/test-surface.test.mjs',
+    ],
+    minPass: 75,
   },
 ];
 
@@ -82,14 +115,19 @@ for (const suite of SUITES) {
   try {
     files = globSync(suite.glob, { cwd: suiteCwd }).sort();
   } catch (err) {
-    console.log(`files matched: 0 (floor ${suite.minFiles})`);
+    console.log(`files matched: 0 (floor ${suite.expect.length})`);
     fail(suite.name, `could not expand glob in ${suiteCwd}: ${err.message}`);
     console.log('');
     continue;
   }
 
-  const globCheck = checkGlobFloor(files, suite.minFiles);
+  const globCheck = checkGlobFloor(files, suite.expect.length);
   console.log(globCheck.message);
+
+  const inventory = checkInventory(files, suite.expect);
+  if (inventory.missing.length > 0) {
+    fail(suite.name, `expected test file(s) missing: ${inventory.missing.join(', ')}`);
+  }
 
   if (!globCheck.ok) {
     fail(
@@ -97,6 +135,9 @@ for (const suite of SUITES) {
       `glob matched ${globCheck.count} file(s), below floor ${globCheck.floor} — ` +
         `the suite did not run. Check the working directory: ${suiteCwd}`,
     );
+  }
+
+  if (inventory.missing.length > 0 || !globCheck.ok) {
     console.log('');
     continue;
   }
@@ -136,6 +177,16 @@ for (const suite of SUITES) {
     console.log('--- end runner output ---');
   } else {
     console.log(`OK ${suite.name}: ${globCheck.count} file(s), ${summary.pass} passing (floor ${suite.minPass})`);
+
+    const stale = checkFloorStale({
+      name: suite.name,
+      unlisted: inventory.unlisted,
+      pass: summary.pass,
+      minPass: suite.minPass,
+    });
+    if (stale.stale) {
+      console.log(stale.message);
+    }
   }
 
   console.log('');
