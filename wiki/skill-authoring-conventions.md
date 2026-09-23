@@ -1,7 +1,7 @@
 ---
 type: practice-note
 title: Skill authoring conventions
-description: Frontmatter keys are fixed; scripts split a pure lib from a thin I/O CLI with tests at a path validation actually globs; mutation-testing an extraction tells an untested branch from a non-discriminating one, which must be annotated rather than tested; remediation prose must never describe a check the script does not yet implement; and prose must never restate a value a declarative source already owns.
+description: Frontmatter keys are fixed; scripts split a pure lib from a thin I/O CLI with tests at a path validation actually globs; mutation-testing an extraction tells an untested branch from a non-discriminating one, which must be annotated rather than tested; a test imports the function it checks, never an inline copy; remediation prose must never describe a check the script does not yet implement; and prose must never restate a value a declarative source already owns.
 tags: [skills, frontmatter, scripts, testing, grounding, drift]
 status: stable
 stale_after: 2027-08-18
@@ -105,6 +105,21 @@ Removing such a branch is a *behaviour* question. Inside a deliberately
 behaviour-preserving refactor it is out of scope — but leaving it unmarked
 invites either a later "cleanup" that cannot know it is safe, or precisely the
 hollow test above.
+
+## A test imports what it tests — never an inline copy
+
+A test that pastes a copy of the function it checks is testing the copy. It
+stays green however the real function changes, so it is the same "passes
+whether or not the code is right" shape as the non-discriminating test above,
+arrived at by duplication instead of by an unreachable branch. If the function
+is private to a CLI script, that is the signal to move it into `scripts/lib/`
+and export it — the lib/CLI split above exists precisely so the logic is
+importable.
+
+> **Precedent.** `audit.test.mjs`'s semver tests exercised an inline
+> `semverGte` "for unit-testing without importing the full script", while the
+> audit ran its own private copy. Nothing linked the two. #124/#126 moved the
+> function into `lib/mcp-check.mjs` and pointed the tests at that export.
 
 ## Two patterns for a skill that targets a tool
 

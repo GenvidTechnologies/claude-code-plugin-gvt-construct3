@@ -17,6 +17,11 @@ the full maintenance schema.
 
 ## 2026-09-23
 
+* **Update**: `skill-authoring-conventions.md` gains § *A test imports what it tests —
+  never an inline copy*, from the #124/#126 retro: `audit.test.mjs` had been testing a
+  pasted copy of `semverGte` rather than the function the audit ran. Session
+  observation, not a `raw/` capture.
+
 * **Update**: `the-audit-contract.md` § *MCP probing* rewritten for #124/#126, and
   **ADR 0021** records the decision. The section previously said both MCP CLIs report
   their version as "unknown" and that the authoritative version comes from the
