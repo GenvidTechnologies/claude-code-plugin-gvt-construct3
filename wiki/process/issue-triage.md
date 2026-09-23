@@ -54,6 +54,19 @@ motivation. For a **pin-bump chore**, the target version and whether the server'
 MCP tool surface changed (which determines if `/gvt-dev:reconcile-mcp-pin` is
 required — see [Verifying an MCP pin bump](/pin-bump-verification.md)).
 
+**A pin bump owes *two* surfaces, not one: tools and `docs:///` resources.** The
+tool surface is the one everyone remembers, and it is not the one that has been
+moving. #88 was a resource-surface bump whose tool sets were byte-identical, so
+every tool-side check passed and saw nothing while every resource name repathed.
+#107 asserted the resource surface was unchanged when it had grown 37 → 40. #130
+said nothing about it at all, and it had grown 40 → 41. An issue that answers only
+the tool question has answered the half that is usually unchanged.
+
+Silence is the worse shape of the two. A wrong claim invites a check; an omission
+reads to the next person as *checked and unchanged*. Answer the resource question
+explicitly even when the answer is "no change" — and settle it by speaking MCP to
+the pinned server and reading `resources/list`, not from the issue's own table.
+
 Missing the essentials → add the **`question`** label and comment exactly what is
 needed. (This repo has no dedicated `needs-info` label; `question` serves that
 role — the `needsInfoLabel` in the `bugTracker` block must be set to `question`.)
@@ -100,6 +113,40 @@ than the plugin — content-validation and addon tooling in particular (see the
    > `@genvidtech/audit-core@0.0.0`, 2 files, 2051 bytes, no `main`, no
    > `exports`, described as *"OIDC trusted publishing setup package"*. Nothing
    > consumable had shipped, and `gvt-dev#457` was still open.
+
+5. **Decide it by what the package *exports*, not by its packaging metadata — the
+   discriminators in clause 4 have themselves decayed.** Every tell listed above
+   is a property of the manifest: a real entry point, a version past the
+   placeholder, a description that is not the stub. All three are satisfied the
+   moment someone adds an `exports` map, which is packaging work, not the tool.
+
+   > **Second precedent, same block.** Re-checked 2026-09-23. `@genvidtech/audit-core`
+   > is now `0.1.0`, 5 files / 3730 bytes, with `main: ./src/index.mjs`, a full
+   > `exports` map, a `yaml` dependency, and the description *"Shared audit
+   > mechanism for the gvt-dev and gvt-construct3 convention audits"*. It passes
+   > **every** clause-4 test. Its entire module is eight lines:
+   >
+   > ```js
+   > export const VERSION = '0.1.0';
+   > ```
+   >
+   > `gvt-dev#457` was still open, and #95 stayed blocked — correctly, but on the
+   > open upstream issue alone, since the recorded tests had all gone green.
+
+   So the clause-4 recipe now inverts exactly as clause 4 predicts a recorded
+   recipe will: it starts succeeding while nothing consumable has shipped. Add a
+   mechanism-level test and make it the deciding one:
+
+   ```bash
+   npm pack <pkg> && tar xzf *.tgz
+   grep -c '^export ' package/src/*.mjs   # what can a consumer actually call?
+   ```
+
+   **The question is whether the package exports something this repo would call**,
+   not whether it is shaped like a package that could. A single `VERSION` constant
+   is a reserved name with a nicer manifest. When the mechanism test and the
+   metadata tests disagree, the mechanism test wins; when it is inconclusive, the
+   upstream issue's state is the tiebreak, not the metadata.
 
 ## Splitting
 
