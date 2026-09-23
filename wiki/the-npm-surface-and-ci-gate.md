@@ -154,12 +154,12 @@ Both suites follow the same rule. The plugin suite ships and the workspace suite
 not, but that difference attaches to the test file, not to the file-count or
 pass-count floor: a new test file under `plugin/` also earns a `plugin/CHANGELOG.md`
 entry and a release bump, while `gate.mjs` itself sits outside `plugin/`, so changing
-`gate.mjs` alone earns neither. Say this explicitly — the single rule's silence must
-not be read as permission to skip the CHANGELOG.
+`gate.mjs` alone earns neither. The single rule's silence is not permission to skip
+the CHANGELOG.
 
-Restate the `>=` rationale in one sentence: adding tests never breaks the gate — only
-losing a declared file, or a glob matching nothing, does. The rider worth adding is
-that `>=` is the margin for work in flight, not a standing margin: if `gate.mjs`
+The `>=` rationale in one sentence: adding tests never breaks the gate — only losing
+a declared file, or a glob matching nothing, does. `>=` is the margin for work in
+flight, not a standing margin: if `gate.mjs`
 prints a pass count above the pass-count floor on `main`, the pass-count floor is
 stale and someone owes an edit, the same way an unlisted file owes a line in `expect`.
 
