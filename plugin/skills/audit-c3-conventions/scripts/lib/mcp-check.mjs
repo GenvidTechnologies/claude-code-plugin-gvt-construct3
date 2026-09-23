@@ -114,9 +114,11 @@ export function evaluateMcpExpectation({ component, entry, pin, probe }) {
 //   tmpRoot — defaults to os.tmpdir(); overridable for tests.
 export function probeMcpPackage(spec, { spawn, tmpRoot = os.tmpdir() } = {}) {
   const dir = mkdtempSync(join(tmpRoot, 'gvt-construct3-mcp-probe-'));
-  writeFileSync(join(dir, 'package.json'), '{}');
 
   try {
+    // Inside the try so a failed write still removes the dir and is reported
+    // as a probe error rather than thrown out of the audit.
+    writeFileSync(join(dir, 'package.json'), '{}');
     const result = spawn('npx', ['-y', spec, '--version'], {
       cwd: dir,
       encoding: 'utf8',
