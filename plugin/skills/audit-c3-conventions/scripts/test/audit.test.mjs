@@ -192,18 +192,9 @@ test('resolveAgentConfig: neither name present → parsed null, name null, marke
 
 // ---- semver comparison tests ------------------------------------------------
 
-// Inline semverGte for unit-testing without importing the full script
-function semverGte(a, b) {
-  const pa = a.split('.').map(Number);
-  const pb = b.split('.').map(Number);
-  for (let i = 0; i < 3; i++) {
-    const va = pa[i] ?? 0;
-    const vb = pb[i] ?? 0;
-    if (va > vb) return true;
-    if (va < vb) return false;
-  }
-  return true;
-}
+// semverGte lives in lib/mcp-check.mjs; these tests exercise that real export
+// (they previously tested an inline copy, which could not catch a regression).
+import { semverGte } from '../lib/mcp-check.mjs';
 
 test('semver: equal versions → gte', () => {
   assert.equal(semverGte('0.4.0', '0.4.0'), true);

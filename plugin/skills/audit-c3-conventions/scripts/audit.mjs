@@ -26,6 +26,7 @@ import { spawnSync } from 'node:child_process';
 
 import { extractFrontmatter } from './lib/frontmatter.mjs';
 import { resolveKey } from './lib/config-resolve.mjs';
+import { findPinnedVersion, evaluateMcpExpectation, probeMcpPackage } from './lib/mcp-check.mjs';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 // scripts -> audit-c3-conventions -> skills -> plugin root
@@ -325,95 +326,37 @@ function evaluateTool(component, entry) {
   };
 }
 
-async function evaluateMcp(component, entry) {
-  const required = entry.required !== false;
-  const server = entry.server;
-  const minVersion = entry.minVersion;
-  const pkg = entry.package; // npm package name backing the bin (e.g. @genvidtech/construct3-chef)
-
-  const fail = (detail) => ({
-    kind: 'mcp',
-    component: component.name,
-    target: server,
-    ok: false,
-    severity: required ? 'error' : 'info',
-    detail,
-    reason: entry.reason,
-  });
-
-  // 1. Reachability — confirm the package actually runs via npx (the same way
-  //    the plugin's plugin.json launches it: `npx -y <package> server`). npx
-  //    resolves by *package* name, so we probe the scoped `package` (e.g.
-  //    @genvidtech/construct3-chef), not the bare bin name — `npx construct3-chef`
-  //    would 404. Fall back to the bin name only when no package is declared.
-  const probeTarget = pkg ?? server;
-  let result;
-  try {
-    result = spawnSync('npx', ['-y', probeTarget, '--version'], {
-      encoding: 'utf8',
-      shell: process.platform === 'win32',
-    });
-  } catch (err) {
-    return fail(`MCP server \`${server}\` not reachable via npx (${err.message})`);
-  }
-  if (result.status !== 0) {
-    return fail(`MCP server \`${server}\` not reachable via npx`);
-  }
-
-  // 2. Version — resolve from the installed package.json. Both CLIs currently
-  //    report `--version` as "unknown" (yargs default), so the bin output is an
-  //    unreliable source; the installed package.json is authoritative. Fall back
-  //    to parsing the --version output in case a future CLI wires a real version.
-  let found = pkg ? resolvePackageVersion(pkg, REPO_ROOT) : null;
-  if (!found) {
-    const m = (result.stdout ?? '').match(/(\d+)\.(\d+)\.(\d+)/);
-    if (m) found = `${m[1]}.${m[2]}.${m[3]}`;
-  }
-  if (!found) {
-    return fail(
-      `\`${server}\` is reachable but its version could not be determined` +
-        (pkg ? ` (could not resolve ${pkg}/package.json)` : ' (no package name declared)'),
-    );
-  }
-
-  if (minVersion && !semverGte(found, minVersion)) {
-    return fail(`\`${server}\` is ${found}, needs >= ${minVersion}`);
-  }
-
-  return { kind: 'mcp', component: component.name, target: server, ok: true, detail: found };
-}
-
-// Resolve an installed package's version by walking node_modules from the
-// consuming repo upward. Reads package.json directly (not via require.resolve)
-// so a package `exports` map that omits `./package.json` can't block us, and
-// walking up handles monorepo hoisting to a parent node_modules.
-function resolvePackageVersion(pkgName, repoRoot) {
-  let dir = repoRoot;
-  for (;;) {
-    const pkgJsonPath = join(dir, 'node_modules', pkgName, 'package.json');
+// The plugin's own manifest, read once per run. It is the source of truth for
+// which server version the agents actually talk to (its `mcpServers` pins),
+// so the MCP check compares against it rather than anything the consuming repo
+// has installed (ADR 0021). An unreadable manifest yields `null`, and every
+// MCP entry then reports that no pin was found.
+let pluginManifest;
+function loadPluginManifest() {
+  if (pluginManifest === undefined) {
     try {
-      return JSON.parse(readFileSync(pkgJsonPath, 'utf8')).version ?? null;
+      pluginManifest = JSON.parse(
+        readFileSync(join(PLUGIN_ROOT, '.claude-plugin', 'plugin.json'), 'utf8'),
+      );
     } catch {
-      // not here — climb to the parent
+      pluginManifest = null;
     }
-    const parent = dirname(dir);
-    if (parent === dir) return null; // reached filesystem root
-    dir = parent;
   }
+  return pluginManifest;
 }
 
-// ---- semver comparison ------------------------------------------------------
-
-function semverGte(a, b) {
-  const pa = a.split('.').map(Number);
-  const pb = b.split('.').map(Number);
-  for (let i = 0; i < 3; i++) {
-    const va = pa[i] ?? 0;
-    const vb = pb[i] ?? 0;
-    if (va > vb) return true;
-    if (va < vb) return false;
-  }
-  return true; // equal
+// 1. Version — the pin the plugin's plugin.json launches for this server
+//    (`npx -y <package>@<pin> server`), looked up by the entry's scoped
+//    `package`.
+// 2. Reachability — run that exact pinned spec with `--version` from a sealed
+//    temp directory (see lib/mcp-check.mjs), so the invoking directory and its
+//    ancestors cannot change the result. Skipped when there is no pin to probe.
+async function evaluateMcp(component, entry) {
+  const pin = findPinnedVersion(loadPluginManifest(), entry.server, entry.package);
+  const probe = pin
+    ? probeMcpPackage(`${entry.package}@${pin}`, { spawn: spawnSync })
+    : { status: null, stdout: '', error: undefined };
+  return evaluateMcpExpectation({ component, entry, pin, probe });
 }
 
 // ---- helpers ----------------------------------------------------------------
