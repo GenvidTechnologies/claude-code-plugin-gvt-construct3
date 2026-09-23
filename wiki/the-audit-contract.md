@@ -125,14 +125,25 @@ data-driven `expects` field, not a script-level check
 
 ## MCP probing
 
-Reachability is confirmed by running `npx -y <package> --version` for the
-**scoped** package (`@genvidtech/construct3-chef`), since npx resolves by package
-name — `npx construct3-chef` would 404.
+The version checked against an `mcp` entry's `minVersion` is **the plugin's own pin**:
+the argument of `mcpServers[<server>].args` in `plugin/.claude-plugin/plugin.json`
+that starts with `<package>@`, where `package:` is the scoped npm name the `mcp`
+expects entry declares. That is the server the agents actually talk to, so the
+consuming repo's `node_modules` plays no part in the check — installing or removing
+a devDependency cannot change the verdict.
 
-Both CLIs currently report version as `"unknown"`, so the authoritative version
-comes from walking `node_modules` for the backing package's `package.json`
-(`resolvePackageVersion`). The `package:` field in an `mcp` expects entry names
-that package.
+Reachability is confirmed by running that exact pinned spec,
+`npx -y <package>@<pin> --version` — the **scoped** package, since npx resolves by
+package name (`npx construct3-chef` would 404), at the **pinned** version rather than
+`latest`. The probe runs from a fresh `mkdtemp` directory holding an empty `{}`
+`package.json`, which stops npm's upward project walk there: a cwd (or ancestor)
+whose project satisfies the spec makes npx run a local bin instead of fetching, and
+`os.tmpdir()` alone can itself be such a project.
+
+The decision and the measurements behind it are in
+[ADR 0021](/decisions/0021-mcp-check-reads-the-plugin-pin-and-probes-sealed.md).
+The verdict logic is the pure `scripts/lib/mcp-check.mjs`; `audit.mjs` only reads
+`plugin.json` and supplies the real `spawnSync`.
 
 ## Exit codes
 

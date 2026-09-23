@@ -22,6 +22,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and be enforced *before* anything can be pinned in them, because a missing
   lockfile makes the install silently skip with nothing reporting it. (#119)
 
+### Fixed
+- **`audit-c3-conventions` no longer fails a repo because of what the repo has
+  installed.** The MCP check now takes the server version from the plugin's own
+  `plugin.json` pin (the server the agents actually talk to) instead of walking the
+  consuming repo's `node_modules`. A repo carrying `@genvidtech/construct3-chef` as an
+  older devDependency previously got four `construct3-chef is 0.11.2, needs >= 1.2.0`
+  errors although the plugin launches `2.0.0`; it now audits green, and installing or
+  removing the devDependency no longer changes the verdict. A pin that is genuinely
+  below a floor still fails, naming the pin. (#124)
+- **The MCP reachability probe no longer reports a healthy package as unreachable.**
+  It now runs the exact pinned spec (`npx -y <package>@<pin> --version`, not the bare
+  package, which resolved `latest`) from a fresh temporary directory holding an empty
+  `package.json`. Run from a repo that publishes one of the bundled servers, npx
+  previously treated the package as locally provided and failed to run it, producing a
+  required `not reachable via npx` error. An unfetchable package still fails. The
+  `SKILL.md` remediation that suggested adding a devDependency "to pin it locally" is
+  removed, since a local copy no longer affects the check. (#126)
+- Decision and measurements recorded in ADR 0021.
+
 ## [3.0.0] - 2026-09-19
 
 ### Added
