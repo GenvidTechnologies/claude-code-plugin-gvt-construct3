@@ -2,7 +2,7 @@
 type: practice-note
 title: The npm surface and the CI gate
 description: >-
-  Why the manifest and lockfile live in plugin/ and nowhere else, why an empty dependency set still makes a real gate, and the four measured ways a check here passes while verifying nothing — npm ci walking up to an ancestor manifest, a glob matched from the wrong directory, a wrong path reporting as a deleted lockfile, and a reporter whose counters cannot be grepped.
+  Why the manifest and lockfile live in plugin/ and nowhere else, why an empty dependency set still makes a real gate, the four measured ways a check here passes while verifying nothing — npm ci walking up to an ancestor manifest, a glob matched from the wrong directory, a wrong path reporting as a deleted lockfile, and a reporter whose counters cannot be grepped — and what to do when a test-count floor moves: the file-count floor is derived from a declared inventory, so only the pass-count floor is ever a number you touch by hand.
 tags: [ci, npm, lockfile, verification, fail-open, plugin-artifact]
 status: stable
 generated: { by: process:plan-task, at: 2026-09-19T00:00:00Z }
@@ -131,3 +131,37 @@ Claude Code CLI is not on a GitHub runner and whether it runs unauthenticated th
 is unverified. CI runs a small dependency-free manifest-shape check instead, and
 `claude plugin validate plugin` stays the local gate. Note that form — it works from
 the repo root, which is what let `commands.validate` drop its `cd`.
+
+## When a test-count floor moves
+
+`gate.mjs` holds, per suite, a declared list of the test files making up that suite
+(`expect: [...]`), plus one pass-count floor. The file-count floor is not written
+anywhere — it is the list's length.
+
+Adding or removing a test file means you list the file by name in `expect`, or remove
+its entry; the file-count floor follows automatically. Adding or removing a test case
+inside an existing file moves only the pass-count floor — the file itself didn't
+change, so the file-count floor has nothing to move.
+
+You do not have to measure anything by hand: run `node scripts/ci/gate.mjs` from the
+repo root (not `cd plugin` first — `CLAUDE.md`'s own single-test recipe does exactly
+that, and the shell's working directory persists between calls). A file you added but
+did not declare is reported as unlisted; a pass count above the pass-count floor is
+reported as stale. Neither turns the gate red — that is what `>=` is for — so the
+report is the prompt, and acting on it is the rule, not optional housekeeping.
+
+Both suites follow the same rule. The plugin suite ships and the workspace suite does
+not, but that difference attaches to the test file, not to the file-count or
+pass-count floor: a new test file under `plugin/` also earns a `plugin/CHANGELOG.md`
+entry and a release bump, while `gate.mjs` itself sits outside `plugin/`, so changing
+`gate.mjs` alone earns neither. Say this explicitly — the single rule's silence must
+not be read as permission to skip the CHANGELOG.
+
+Restate the `>=` rationale in one sentence: adding tests never breaks the gate — only
+losing a declared file, or a glob matching nothing, does. The rider worth adding is
+that `>=` is the margin for work in flight, not a standing margin: if `gate.mjs`
+prints a pass count above the pass-count floor on `main`, the pass-count floor is
+stale and someone owes an edit, the same way an unlisted file owes a line in `expect`.
+
+See ADR 0020 for why this repo calibrates exact-current rather than declared slack,
+and for the dated review of the plugin suite's test-count floors against that policy.

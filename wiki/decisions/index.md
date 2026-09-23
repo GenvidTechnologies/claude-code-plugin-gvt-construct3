@@ -42,4 +42,6 @@ available, so the amendment goes outside the quote.
 
 * [0019. The npm Surface Ships in `plugin/` Only, and the Audit Stays Out of `commands.validate`](0019-npm-surface-shape-and-audit-stays-out-of-validate.md) - The manifest and committed lockfile live in plugin/ with an empty dependency set, whose CI gate is live while its host-install half stays armed and unfired; and audit-c3-conventions is deliberately not wired into commands.validate, because its target is the working directory and this repo can never be a valid target.
 
+* [0020. Test-Count Floors Are Calibrated Exact-Current, and the File-Count Floor Becomes a Declared Inventory](0020-declared-inventory-derives-the-file-count-floor.md) - Both suites' test-count floors are calibrated exact-current rather than carrying slack, one rule for both; the file-count floor is retired as a hand-written literal and derived from a declared per-suite `expect` inventory whose length is the floor, and a present-but-undeclared file is reported as a non-fatal advisory rather than failing the run.
+
 See the [wiki index](../index.md) for the rest of the bundle.
