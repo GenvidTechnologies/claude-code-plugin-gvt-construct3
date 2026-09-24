@@ -60,9 +60,9 @@ accuracy, not capability gating.)
 
 To author or fix an op *wrapper* (params + `{{PARAM}}` placement) and dry-run-validate it before applying, use the `/gvt-construct3:create-c3-op` skill.
 
-## Domain-config maintenance (c3-domain-manager @0.10.1)
+## Domain-config maintenance (c3-domain-manager @0.11.0)
 
-The domain-manager server (pinned `@0.10.1`) exposes write tools for the
+The domain-manager server (pinned `@0.11.0`) exposes write tools for the
 project's domain taxonomy, plus the `validate-editor` read diagnostic. The
 *capability* is generic, but the **content is project-specific** — which file
 maps to which domain is a fact that lives in the consuming repo, not here. Treat
@@ -72,7 +72,7 @@ taxonomy decisions.
 
 - `set-overrides` — add/update overrides in `domain-config.json` (map a file path to a domain)
 - `remove-overrides` — remove overrides by file path
-- `regenerate` — run the domain index generator and refresh `extracted/domain-index/` (clears the `domainDirty` flag)
+- `regenerate` — run the domain index generator and refresh `extracted/domain-index/` (clears the `domainDirty` flag). Since `@0.11.0` it takes an optional `maxUnclassified` (integer ≥ 0) classification-coverage gate: when more files than that are unclassified the call returns an error result, but the index is still regenerated and `domainDirty` still cleared, and the offending paths are in the call's output. Omit it for the historical behaviour (count reported, call succeeds).
 
 After moving or renaming C3 files, a domain override may go stale — `c3-explorer`'s
 `list-stale-overrides` surfaces these; fix with `remove-overrides` (or `set-overrides`)

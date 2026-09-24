@@ -41,6 +41,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   removed, since a local copy no longer affects the check. (#126)
 - Decision and measurements recorded in ADR 0021.
 
+### Changed
+- **The bundled `c3-domain-manager` pin moves `@0.10.1` → `@0.11.0`**, picking up
+  its opt-in classification-coverage gate: `regenerate` accepts an optional
+  `maxUnclassified` and returns an error result when more files than that are
+  unclassified (the index is regenerated either way). `c3-implementer` now
+  documents the parameter. The tool surface is unchanged — the same 15 tool names
+  at both versions, verified against the packed tarballs — so `c3-explorer`'s
+  allow-list needs no change. A live `resources/list` goes 40 → 41, purely
+  additive (`docs:///decisions/0030-classification-coverage-gate`), so no resource
+  citation moves. The `minVersion` floor holds at `0.6.1`: nothing here requires
+  0.11.0, so this is *not* breaking for consumers. The ADR 0007 mirror check passes
+  cleanly — `dist/adapters/locations.js` is byte-identical and `@genvidtech/mcp-utils`
+  stays at `^0.10.0`, already in the reviewed baseline. (#130)
+
 ## [3.0.0] - 2026-09-19
 
 ### Added
