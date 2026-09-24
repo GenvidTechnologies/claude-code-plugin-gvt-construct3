@@ -359,6 +359,21 @@ Start the pinned server over stdio and speak MCP to it: send `initialize`, then 
 JSON-RPC from stdout. A throwaway Node script parameterised by package spec is enough —
 scratchpad, not the repo, per `/gvt-dev:build-probe`.
 
+Three setup facts the throwaway script needs, each of which cost an iteration at #130:
+
+- **A packed tarball carries no `node_modules`.** Run `npm install --omit=dev
+  --ignore-scripts` inside the extracted `package/` before starting the server — its
+  runtime dependencies (`@genvidtech/mcp-utils`, the MCP SDK) are not in the tarball. Seal the parent scratch dir with a `{}` `package.json`
+  first — `%TEMP%` is itself an npm project.
+- **Resolve the server's script path to absolute when you also set the child's `cwd`.**
+  A relative `<dir>/package/dist/cli.js` resolves against the *new* cwd and points
+  nowhere. With the child's stderr discarded, the probe sees no reply and reports only
+  its own timeout — the discarded-stderr trap above, firing on the instrument rather
+  than the measurement. Keep stderr visible until the probe has worked once.
+- **c3-domain-manager needs no project to answer `resources/list`.** With no
+  `project.c3proj` marker it warns, falls back to its cwd, and serves normally, so no
+  fixture project is required.
+
 Measured this way on 2026-09-01, before rewriting any reference:
 
 | Pinned server | `resources/list` entries |
