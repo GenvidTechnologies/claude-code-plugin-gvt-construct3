@@ -4,5 +4,7 @@
   "type": "module",
   "license": "MIT-0",
   "description": "Private manifest for the shipped gvt-construct3 plugin subtree. Exists so the host can perform a lockfile-gated dependency install, per ADR-0051 of the dev-workspace plugin. The plugin's own version lives in .claude-plugin/plugin.json.",
-  "dependencies": {}
+  "dependencies": {
+    "@genvidtech/audit-core": "0.2.0"
+  }
 }
