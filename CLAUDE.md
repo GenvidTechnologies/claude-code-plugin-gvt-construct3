@@ -50,9 +50,12 @@ The plugin is distributed through the [`claude-code-gvt-marketplace`](https://gi
 ## Commands
 
 Everything runs from the **repo root**. `commands.validate` in `.gvt-agent.json` is
-`node scripts/ci/gate.mjs && claude plugin validate plugin`:
+`npm ci --prefix plugin --ignore-scripts --no-audit --no-fund && node scripts/ci/gate.mjs && claude plugin validate plugin`:
 
 ```bash
+# Install plugin/'s dependencies (needed once per checkout/worktree; validate runs it)
+npm ci --prefix plugin --ignore-scripts --no-audit --no-fund
+
 # Both test suites, floor-asserted (this is what commands.validate and CI both run)
 node scripts/ci/gate.mjs
 
@@ -72,8 +75,12 @@ the globs. Don't re-state a floor here; read it from the gate.
 
 `plugin/` carries a `package.json` and a committed `package-lock.json` so the host can
 perform a lockfile-gated dependency install. There is still no build step and no lint
-config — plain ESM `.mjs` run directly by Node, tests via the built-in `node:test`
-runner only, and zero dependencies today.
+config: plain ESM `.mjs` runs directly under Node, and tests use the built-in
+`node:test` runner only. There is one runtime dependency, `@genvidtech/audit-core`,
+pinned exactly
+([ADR 0022](wiki/decisions/0022-audit-core-adoption-and-npm-ci-in-validate.md)).
+Claude Code installs it into a consumer's plugin cache. A git checkout needs the
+`npm ci` above, and without it the audit exits 2 with a message saying so.
 
 > **A bare `cd plugin &&` test glob fails *open*, and `commands.validate` no longer carries
 > one.** The glob is relative to `plugin/`, so from the repo root it matches nothing, prints

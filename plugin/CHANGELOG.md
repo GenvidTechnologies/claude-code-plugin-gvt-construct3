@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for #95 (adopting the shared audit core): the manifest and lockfile must exist
   and be enforced *before* anything can be pinned in them, because a missing
   lockfile makes the install silently skip with nothing reporting it. (#119)
+  *Superseded within this release:* #95 (under **Changed**) adds the first
+  dependency, so consumers now receive third-party code and a `node_modules/`.
 
 ### Fixed
 - **`audit-c3-conventions` no longer fails a repo because of what the repo has
@@ -42,6 +44,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Decision and measurements recorded in ADR 0021.
 
 ### Changed
+- **`audit-c3-conventions` now runs on the shared `@genvidtech/audit-core`
+  library.** The plugin's first runtime dependency is pinned exactly at `0.2.0` in
+  `plugin/package.json`. It brings `yaml` as its only dependency of its own. Claude
+  Code installs both into the plugin cache when it installs or updates the plugin;
+  consumers run no command. From audit-core the audit takes component discovery,
+  the frontmatter parser, dotted-key resolution, the existence probes and the
+  `file`/`config`/`tool` evaluators, replacing the hand-copied versions. Path
+  resolution, the ` (project root: …)` target suffix, the C3-specific checks, the
+  `mcp` evaluator and the report stay local. The report reads the same: it was
+  byte-identical on four fixture projects. Two visible differences:
+  - Every `expects`-derived finding now carries a `required` boolean.
+  - If the dependency cannot be imported, for example when running from a git
+    checkout without `npm ci --prefix plugin`, the audit exits **2** with a message
+    naming the package and the fix, not a module-resolution stack trace.
+
+  The parser now also accepts block scalars (`|` / `>`) in frontmatter. **The plugin
+  version must be bumped at release** because the shipped subtree gains a
+  dependency. See ADR 0022. (#95)
 - **The bundled `c3-domain-manager` pin moves `@0.10.1` → `@0.11.0`**, picking up
   its opt-in classification-coverage gate: `regenerate` accepts an optional
   `maxUnclassified` and returns an error result when more files than that are
