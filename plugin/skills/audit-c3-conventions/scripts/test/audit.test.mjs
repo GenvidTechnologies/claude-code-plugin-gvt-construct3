@@ -218,7 +218,7 @@ test('semver: lower minor → not gte', () => {
 
 // ---- frontmatter tests ------------------------------------------------------
 
-import { extractFrontmatter } from '../lib/frontmatter.mjs';
+import { extractFrontmatter } from '@genvidtech/audit-core';
 
 test('frontmatter: extracts mcp array from SKILL.md shape', () => {
   const src = `---

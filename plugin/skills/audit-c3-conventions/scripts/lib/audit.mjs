@@ -21,6 +21,12 @@
 // mechanism this file depends on, and only then dynamically imports this file
 // and calls `main()`.
 //
+// Mechanism (component walking, probes, and the file/config/tool expectation
+// evaluators) comes from `@genvidtech/audit-core`; this file keeps the
+// gvt-construct3-specific policy on top of it — path resolution (repo root vs.
+// project root), the `(project root: ...)` disambiguator, the config `in:`
+// default, and the bespoke marker/discovery/divergence checks below.
+//
 // Exit code (set by `main`, via `process.exit`): 0 if all required
 // expectations are satisfied; 1 if any error finding; 2 on unexpected script
 // error (the CLI wrapper's own `.catch`, mirrored here for callers that
@@ -31,8 +37,14 @@ import { join, dirname, resolve, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
-import { extractFrontmatter } from './frontmatter.mjs';
-import { resolveKey } from './config-resolve.mjs';
+import {
+  walkComponents,
+  fileExists,
+  resolveKey,
+  evaluateFile as coreEvaluateFile,
+  evaluateConfig as coreEvaluateConfig,
+  evaluateTool,
+} from '@genvidtech/audit-core';
 import { findPinnedVersion, evaluateMcpExpectation, probeMcpPackage } from './mcp-check.mjs';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
@@ -199,138 +211,39 @@ export async function checkC3Marker(repoRoot, agentConfig) {
   };
 }
 
-// ---- walk -------------------------------------------------------------------
-
-async function walkComponents(pluginRoot) {
-  const components = [];
-
-  const skillsDir = join(pluginRoot, 'skills');
-  if (await dirExists(skillsDir)) {
-    const skills = await fs.readdir(skillsDir, { withFileTypes: true });
-    for (const entry of skills) {
-      if (!entry.isDirectory()) continue;
-      const skillFile = join(skillsDir, entry.name, 'SKILL.md');
-      if (!(await fileExists(skillFile))) continue;
-      const component = await loadComponent('skill', entry.name, skillFile);
-      if (component) components.push(component);
-    }
-  }
-
-  const agentsDir = join(pluginRoot, 'agents');
-  if (await dirExists(agentsDir)) {
-    const agents = await fs.readdir(agentsDir, { withFileTypes: true });
-    for (const entry of agents) {
-      if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
-      const name = entry.name.replace(/\.md$/, '');
-      const component = await loadComponent('agent', name, join(agentsDir, entry.name));
-      if (component) components.push(component);
-    }
-  }
-
-  return components;
-}
-
-async function loadComponent(type, name, filePath) {
-  const content = await fs.readFile(filePath, 'utf8');
-  const fm = extractFrontmatter(content);
-  if (!fm) return { type, name, expects: null };
-  return { type, name, expects: fm.metadata?.expects ?? null };
-}
-
 // ---- evaluate ---------------------------------------------------------------
 
+// Both wrappers below build a SYNCHRONOUS resolver closure (audit-core's
+// evaluateFile/evaluateConfig call it without awaiting) that encodes this
+// repo's path-resolution and display policy, then delegate the actual
+// probe/finding-building to audit-core.
+
 export async function evaluateFile(component, entry, repoRoot = REPO_ROOT, projectRoot = repoRoot) {
-  const required = entry.required !== false;
-  const root = entry.base === 'project' ? projectRoot : repoRoot;
-  const path = join(root, entry.path);
-  const exists = await fileExists(path);
-
-  const disambiguator =
-    projectRoot !== repoRoot ? ` (project root: ${basename(projectRoot)})` : '';
-  const target = `${entry.path}${disambiguator}`;
-
-  if (exists) {
-    return { kind: 'file', component: component.name, target, ok: true };
-  }
-  return {
-    kind: 'file',
-    component: component.name,
-    target,
-    ok: false,
-    severity: required ? 'error' : 'info',
-    detail: `file not found${required ? '' : ' (optional)'}`,
-    reason: entry.reason,
+  const resolveFile = (e) => {
+    const root = e.base === 'project' ? projectRoot : repoRoot;
+    const disambiguator =
+      projectRoot !== repoRoot ? ` (project root: ${basename(projectRoot)})` : '';
+    return { path: join(root, e.path), probe: 'file', target: `${e.path}${disambiguator}` };
   };
+  return coreEvaluateFile(component, entry, resolveFile);
 }
 
 export async function evaluateConfig(component, entry, repoRoot = REPO_ROOT, projectRoot = repoRoot) {
-  const required = entry.required !== false;
-  // No component currently declares a `config` expect without an explicit `in:`,
-  // so this default is inert today. Unlike the marker check above, it does NOT
-  // fall back to the legacy `.genvid-agent.json` name.
-  const inFile = entry.in ?? '.gvt-agent.json';
-  const root = entry.base === 'project' ? projectRoot : repoRoot;
-  const filePath = join(root, inFile);
-
-  const disambiguator =
-    projectRoot !== repoRoot ? ` (project root: ${basename(projectRoot)})` : '';
-  const target = `${entry.key} in ${inFile}${disambiguator}`;
-
-  let parsed;
-  try {
-    const raw = await fs.readFile(filePath, 'utf8');
-    parsed = JSON.parse(raw);
-  } catch (err) {
+  const resolveConfig = (e) => {
+    // No component currently declares a `config` expect without an explicit `in:`,
+    // so this default is inert today. Unlike the marker check above, it does NOT
+    // fall back to the legacy `.genvid-agent.json` name.
+    const inFile = e.in ?? '.gvt-agent.json';
+    const root = e.base === 'project' ? projectRoot : repoRoot;
+    const disambiguator =
+      projectRoot !== repoRoot ? ` (project root: ${basename(projectRoot)})` : '';
     return {
-      kind: 'config',
-      component: component.name,
-      target,
-      ok: false,
-      severity: required ? 'error' : 'info',
-      detail:
-        err.code === 'ENOENT'
-          ? `${inFile} not found`
-          : `${inFile} unreadable (${err.message})`,
-      reason: entry.reason,
+      path: join(root, inFile),
+      source: inFile,
+      target: `${e.key} in ${inFile}${disambiguator}`,
     };
-  }
-
-  const result = resolveKey(parsed, entry.key);
-  if (result.found) {
-    return {
-      kind: 'config',
-      component: component.name,
-      target,
-      ok: true,
-    };
-  }
-  return {
-    kind: 'config',
-    component: component.name,
-    target,
-    ok: false,
-    severity: required ? 'error' : 'info',
-    detail: `key not found (path broke at "${result.missingAt}")${required ? '' : ' (optional)'}`,
-    reason: entry.reason,
   };
-}
-
-function evaluateTool(component, entry) {
-  const required = entry.required !== false;
-  const exists = commandExists(entry.command);
-
-  if (exists) {
-    return { kind: 'tool', component: component.name, target: entry.command, ok: true };
-  }
-  return {
-    kind: 'tool',
-    component: component.name,
-    target: entry.command,
-    ok: false,
-    severity: required ? 'error' : 'info',
-    detail: `command not found on PATH${required ? '' : ' (optional)'}`,
-    reason: entry.reason,
-  };
+  return coreEvaluateConfig(component, entry, resolveConfig);
 }
 
 // The plugin's own manifest, read once per run. It is the source of truth for
@@ -364,32 +277,6 @@ async function evaluateMcp(component, entry) {
     ? probeMcpPackage(`${entry.package}@${pin}`, { spawn: spawnSync })
     : { status: null, stdout: '', error: undefined };
   return evaluateMcpExpectation({ component, entry, pin, probe });
-}
-
-// ---- helpers ----------------------------------------------------------------
-
-async function fileExists(path) {
-  try {
-    const s = await fs.stat(path);
-    return s.isFile();
-  } catch {
-    return false;
-  }
-}
-
-async function dirExists(path) {
-  try {
-    const s = await fs.stat(path);
-    return s.isDirectory();
-  } catch {
-    return false;
-  }
-}
-
-function commandExists(cmd) {
-  const checker = process.platform === 'win32' ? 'where' : 'which';
-  const result = spawnSync(checker, [cmd], { stdio: 'pipe' });
-  return result.status === 0;
 }
 
 // ---- discovery ambiguity ----------------------------------------------------

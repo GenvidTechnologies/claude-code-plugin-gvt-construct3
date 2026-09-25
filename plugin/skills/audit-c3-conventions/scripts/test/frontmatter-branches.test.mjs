@@ -16,7 +16,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { parseYaml } from '../lib/frontmatter.mjs';
+import { parseYaml } from '@genvidtech/audit-core';
 
 // frontmatter.mjs:39-41 — parseBlock meets a sequence item where it expected a key
 test('parseYaml: a bare top-level sequence yields an empty object', () => {
