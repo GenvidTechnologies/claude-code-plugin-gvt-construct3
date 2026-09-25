@@ -197,9 +197,13 @@ async function call(transport, dispatcher, { id, method, params }, timeoutMs) {
 
 // Calls `method` repeatedly, following `result.nextCursor` until a response
 // omits it, and concatenates `result[resultKey]` across every page. Throws
-// (via `call`) on any transport failure encountered on any page.
+// (via `call`) on any transport failure encountered on any page, and throws
+// on a cursor it has already followed: a server that keeps answering within
+// the per-call timeout while repeating a cursor would otherwise loop forever,
+// a hang with no error — the opposite of failing loudly.
 async function listAll(transport, dispatcher, method, resultKey, { timeoutMs, nextId }) {
   const items = [];
+  const seen = new Set();
   let cursor;
   do {
     const params = cursor === undefined ? {} : { cursor };
@@ -207,6 +211,14 @@ async function listAll(transport, dispatcher, method, resultKey, { timeoutMs, ne
     const page = result?.[resultKey];
     if (Array.isArray(page)) items.push(...page);
     cursor = result?.nextCursor;
+    if (cursor !== undefined) {
+      if (seen.has(cursor)) {
+        throw new McpProtocolError(
+          `"${method}" returned repeated cursor ${JSON.stringify(cursor)}; pagination would never end${stderrSuffix(transport)}`,
+        );
+      }
+      seen.add(cursor);
+    }
   } while (cursor !== undefined);
   return items;
 }

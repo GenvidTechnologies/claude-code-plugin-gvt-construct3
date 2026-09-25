@@ -212,6 +212,22 @@ test('probeSurface rejects on a JSON-RPC error response, with code, message, and
   });
 });
 
+test('probeSurface rejects when a list call repeats a nextCursor instead of looping forever', { timeout: 2000 }, async () => {
+  const { transport } = createFakeTransport({
+    stderrText: 'stuck pager',
+    onSend: makeHandler({
+      'tools/list': (msg, push) => push(ok(msg.id, { tools: [{ name: 't' }], nextCursor: 'same' })),
+    }),
+  });
+
+  await assert.rejects(probeSurface(transport, { timeoutMs: 500 }), (err) => {
+    assert.match(err.message, /"tools\/list"/);
+    assert.match(err.message, /repeated cursor "same"/);
+    assert.match(err.message, /stuck pager/);
+    return true;
+  });
+});
+
 test('probeSurface rejects when tools/list reports zero tools (the empty-surface guard)', async () => {
   const { transport } = createFakeTransport({
     stderrText: 'nothing registered',

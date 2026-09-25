@@ -142,11 +142,21 @@ function makeTransport(child) {
 // fails with EPERM — measured on the first live run of this script.
 async function killAndWait(child, graceMs = 5000) {
   if (!child || child.exitCode !== null || child.signalCode !== null) return;
-  const exited = new Promise((resolveExit) => child.once('exit', resolveExit));
+  const exited = new Promise((resolveExit) => child.once('exit', () => resolveExit(true)));
+  const waitExit = async () => {
+    let timer;
+    const done = await Promise.race([exited, new Promise((r) => { timer = setTimeout(() => r(false), graceMs); })]);
+    clearTimeout(timer);
+    return done;
+  };
   child.kill();
-  let timer;
-  await Promise.race([exited, new Promise((r) => { timer = setTimeout(r, graceMs); })]);
-  clearTimeout(timer);
+  // A server that ignores SIGTERM would otherwise outlive the probe. On
+  // Windows `kill()` already terminates the process outright, so this
+  // escalation only matters elsewhere.
+  if (!(await waitExit())) {
+    child.kill('SIGKILL');
+    await waitExit();
+  }
 }
 
 // A cleanup failure must not discard a probe that succeeded, so it is
