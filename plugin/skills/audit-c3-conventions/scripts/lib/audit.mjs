@@ -1,0 +1,557 @@
+// Validates the consuming repo against the gvt-construct3 plugin's convention
+// contract. Checks:
+//   1.  C3-project marker (project.c3proj present, or .gvt-agent.json
+//       features.c3 === true, or paths.c3project pointing at an existing file)
+//       — the legacy `.genvid-agent.json` name is still accepted as a fallback
+//   1b. Discovery ambiguity (bespoke, advisory `warning`) — 2+ sibling dirs
+//       carrying project.c3proj, which aborts c3-domain-manager's bare-args
+//       auto-discovery; suppressed by an explicit root pin
+//   1c. Root divergence (bespoke, advisory `info`) — the paths.c3project root
+//       differs from the one bare-args discovery would pick
+//   2.  Walk plugin skills/agents metadata.expects (files, config, tools, mcp).
+//       An `mcp` entry's minVersion is probed via `npx -y <package> --version`;
+//       this file states no floors of its own — each component's
+//       `metadata.expects.mcp` frontmatter is the source of truth (ADR 0002).
+//
+// Read-only — no --fix / migration mode.
+//
+// This is the audit's implementation library, not the CLI entry point: it
+// exports `main` and does not self-run. The thin `../audit.mjs` runs a
+// usability preflight against `@genvidtech/audit-core`, the shared audit
+// mechanism this file depends on, and only then dynamically imports this file
+// and calls `main()`.
+//
+// Mechanism (component walking, probes, and the file/config/tool expectation
+// evaluators) comes from `@genvidtech/audit-core`; this file keeps the
+// gvt-construct3-specific policy on top of it — path resolution (repo root vs.
+// project root), the `(project root: ...)` disambiguator, the config `in:`
+// default, and the bespoke marker/discovery/divergence checks below.
+//
+// Exit code (set by `main`, via `process.exit`): 0 if all required
+// expectations are satisfied; 1 if any error finding; 2 on unexpected script
+// error (the CLI wrapper's own `.catch`, mirrored here for callers that
+// import `main` directly).
+
+import { promises as fs, readFileSync } from 'node:fs';
+import { join, dirname, resolve, basename } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+
+import {
+  walkComponents,
+  fileExists,
+  resolveKey,
+  evaluateFile as coreEvaluateFile,
+  evaluateConfig as coreEvaluateConfig,
+  evaluateTool,
+} from '@genvidtech/audit-core';
+import { findPinnedVersion, evaluateMcpExpectation, probeMcpPackage } from './mcp-check.mjs';
+
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
+// scripts/lib -> scripts -> audit-c3-conventions -> skills -> plugin root
+const PLUGIN_ROOT = resolve(SCRIPT_DIR, '..', '..', '..', '..');
+
+const REPO_ROOT = process.cwd();
+
+export function resolveProjectRoot(repoRoot, agentJson) {
+  if (agentJson && typeof agentJson === 'object') {
+    const result = resolveKey(agentJson, 'paths.c3project');
+    if (result.found && typeof result.value === 'string') {
+      return dirname(resolve(repoRoot, result.value));
+    }
+  }
+  return repoRoot;
+}
+
+// Resolves the gvt-dev agent config once, preferring the current `.gvt-agent.json`
+// name and falling back to the legacy `.genvid-agent.json` when the new name isn't
+// present (or isn't valid JSON). "Success" means the file both reads and parses.
+export async function resolveAgentConfig(repoRoot) {
+  for (const [name, usedLegacy] of [
+    ['.gvt-agent.json', false],
+    ['.genvid-agent.json', true],
+  ]) {
+    try {
+      const raw = await fs.readFile(join(repoRoot, name), 'utf8');
+      const parsed = JSON.parse(raw);
+      return { parsed, name, usedLegacy };
+    } catch {
+      // Missing or invalid JSON — try the next candidate
+    }
+  }
+  return { parsed: null, name: null, usedLegacy: false };
+}
+
+export async function main() {
+  const components = await walkComponents(PLUGIN_ROOT);
+  const findings = [];
+
+  const agentConfig = await resolveAgentConfig(REPO_ROOT);
+  const projectRoot = resolveProjectRoot(REPO_ROOT, agentConfig.parsed);
+
+  // 1. C3-project marker check (bespoke OR-check across three indicators)
+  findings.push(await checkC3Marker(REPO_ROOT, agentConfig));
+
+  // 1b. Discovery-ambiguity check (bespoke) — advisory `warning`; mirrors
+  // c3-domain-manager's bare-args auto-discovery, which aborts (-32000) when
+  // 2+ child dirs contain `project.c3proj`. Only pushes a finding when it fires.
+  // `scan` and `mcpOverride` are computed once here and reused by the (later)
+  // root-divergence check — don't inline them into the call below.
+  const scan = await scanC3ProjectMarkers(REPO_ROOT);
+  const mcpOverride = await resolveMcpProjectDirOverride(REPO_ROOT);
+  const discovery = await checkDiscoveryAmbiguity(REPO_ROOT, process.env, mcpOverride, scan);
+  if (discovery) findings.push(discovery);
+
+  // 1c. Root-divergence check (bespoke) — advisory `info`; fires when the
+  // paths.c3project-derived root the audit validated differs from the root
+  // bare-args discovery would pick, even though discovery itself is
+  // unambiguous. Reuses the SAME scan/mcpOverride computed above.
+  const divergence = checkRootDivergence({
+    repoRoot: REPO_ROOT,
+    projectRoot,
+    scan,
+    env: process.env,
+    explicitOverride: mcpOverride,
+  });
+  if (divergence) findings.push(divergence);
+
+  if (agentConfig.usedLegacy) {
+    findings.push({
+      kind: 'config',
+      component: 'gvt-construct3',
+      target: '.genvid-agent.json',
+      ok: false,
+      severity: 'info',
+      detail: 'using deprecated `.genvid-agent.json` — rename to `.gvt-agent.json`',
+      reason:
+        'The gvt-dev config file was renamed `.genvid-agent.json` → `.gvt-agent.json`; the legacy name is still accepted during the transition.',
+    });
+  }
+
+  // 2. Walk component expects: files, config, tools, mcp
+  for (const component of components) {
+    const expects = component.expects;
+    if (!expects) continue;
+
+    for (const entry of expects.files ?? []) {
+      findings.push(await evaluateFile(component, entry, REPO_ROOT, projectRoot));
+    }
+    for (const entry of expects.config ?? []) {
+      findings.push(await evaluateConfig(component, entry, REPO_ROOT, projectRoot));
+    }
+    for (const entry of expects.tools ?? []) {
+      findings.push(evaluateTool(component, entry));
+    }
+    for (const entry of expects.mcp ?? []) {
+      findings.push(await evaluateMcp(component, entry));
+    }
+  }
+
+  const report = formatReport(findings);
+  console.log(report);
+
+  const hasErrors = findings.some((f) => f.severity === 'error');
+  process.exit(hasErrors ? 1 : 0);
+}
+
+// ---- C3 marker check --------------------------------------------------------
+
+export async function checkC3Marker(repoRoot, agentConfig) {
+  const COMPONENT = 'gvt-construct3';
+  const KIND = 'marker';
+  const REASON =
+    'gvt-construct3 only applies to Construct 3 projects; this repo does not look like one.';
+
+  // Option A: project.c3proj exists
+  const c3projPath = join(repoRoot, 'project.c3proj');
+  if (await fileExists(c3projPath)) {
+    return { kind: KIND, component: COMPONENT, target: 'project.c3proj', ok: true };
+  }
+
+  // Option B / C: .gvt-agent.json (or legacy .genvid-agent.json, already
+  // resolved by resolveAgentConfig)
+  const parsed = agentConfig?.parsed ?? null;
+
+  if (parsed !== null) {
+    // Option B: features.c3 === true
+    const featuresResult = resolveKey(parsed, 'features.c3');
+    if (featuresResult.found && featuresResult.value === true) {
+      return {
+        kind: KIND,
+        component: COMPONENT,
+        target: '.gvt-agent.json features.c3',
+        ok: true,
+      };
+    }
+
+    // Option C: paths.c3project points at existing file
+    const pathsResult = resolveKey(parsed, 'paths.c3project');
+    if (pathsResult.found && typeof pathsResult.value === 'string') {
+      const override = resolve(repoRoot, pathsResult.value);
+      if (await fileExists(override)) {
+        return {
+          kind: KIND,
+          component: COMPONENT,
+          target: `paths.c3project → ${pathsResult.value}`,
+          ok: true,
+        };
+      }
+    }
+  }
+
+  return {
+    kind: KIND,
+    component: COMPONENT,
+    target: 'C3-project marker',
+    ok: false,
+    severity: 'error',
+    detail:
+      'No C3-project marker found (need `project.c3proj`, or `.gvt-agent.json` `features.c3: true`, or `paths.c3project`)',
+    reason: REASON,
+  };
+}
+
+// ---- evaluate ---------------------------------------------------------------
+
+// Both wrappers below build a SYNCHRONOUS resolver closure (audit-core's
+// evaluateFile/evaluateConfig call it without awaiting) that encodes this
+// repo's path-resolution and display policy, then delegate the actual
+// probe/finding-building to audit-core.
+
+export async function evaluateFile(component, entry, repoRoot = REPO_ROOT, projectRoot = repoRoot) {
+  const resolveFile = (e) => {
+    const root = e.base === 'project' ? projectRoot : repoRoot;
+    const disambiguator =
+      projectRoot !== repoRoot ? ` (project root: ${basename(projectRoot)})` : '';
+    return { path: join(root, e.path), probe: 'file', target: `${e.path}${disambiguator}` };
+  };
+  return coreEvaluateFile(component, entry, resolveFile);
+}
+
+export async function evaluateConfig(component, entry, repoRoot = REPO_ROOT, projectRoot = repoRoot) {
+  const resolveConfig = (e) => {
+    // No component currently declares a `config` expect without an explicit `in:`,
+    // so this default is inert today. Unlike the marker check above, it does NOT
+    // fall back to the legacy `.genvid-agent.json` name.
+    const inFile = e.in ?? '.gvt-agent.json';
+    const root = e.base === 'project' ? projectRoot : repoRoot;
+    const disambiguator =
+      projectRoot !== repoRoot ? ` (project root: ${basename(projectRoot)})` : '';
+    return {
+      path: join(root, inFile),
+      source: inFile,
+      target: `${e.key} in ${inFile}${disambiguator}`,
+    };
+  };
+  return coreEvaluateConfig(component, entry, resolveConfig);
+}
+
+// The plugin's own manifest, read once per run. It is the source of truth for
+// which server version the agents actually talk to (its `mcpServers` pins),
+// so the MCP check compares against it rather than anything the consuming repo
+// has installed (ADR 0021). An unreadable manifest yields `null`, and every
+// MCP entry then reports that no pin was found.
+let pluginManifest;
+function loadPluginManifest() {
+  if (pluginManifest === undefined) {
+    try {
+      pluginManifest = JSON.parse(
+        readFileSync(join(PLUGIN_ROOT, '.claude-plugin', 'plugin.json'), 'utf8'),
+      );
+    } catch {
+      pluginManifest = null;
+    }
+  }
+  return pluginManifest;
+}
+
+// 1. Version — the pin the plugin's plugin.json launches for this server
+//    (`npx -y <package>@<pin> server`), looked up by the entry's scoped
+//    `package`.
+// 2. Reachability — run that exact pinned spec with `--version` from a sealed
+//    temp directory (see lib/mcp-check.mjs), so the invoking directory and its
+//    ancestors cannot change the result. Skipped when there is no pin to probe.
+async function evaluateMcp(component, entry) {
+  const pin = findPinnedVersion(loadPluginManifest(), entry.server, entry.package);
+  const probe = pin
+    ? probeMcpPackage(`${entry.package}@${pin}`, { spawn: spawnSync })
+    : { status: null, stdout: '', error: undefined };
+  return evaluateMcpExpectation({ component, entry, pin, probe });
+}
+
+// ---- discovery ambiguity ----------------------------------------------------
+
+// Pure classifier for the c3-domain-manager auto-discovery ambiguity: the
+// server resolves its project root by scanning depth-1 child dirs of the repo
+// root for a `project.c3proj` marker, and aborts if 2+ candidates are found.
+// Precedence mirrors upstream `resolveRootFolder`'s explicit > env > discovery
+// order, and there are now two distinct suppressors: `explicitOverride` (a
+// true `--project-dir` / `.mcp.json` pin — tier 1, checked first) and
+// `envOverride` (a live `C3_PROJECT_DIR` — tier 2, checked next). Either one
+// suppresses the check entirely. Only after both are absent does a root-level
+// marker short-circuit discovery (the server never even scans children), and
+// only then does the child-dir count decide.
+export function classifyDiscovery({
+  rootHasMarker,
+  childDirsWithMarker,
+  explicitOverride,
+  envOverride,
+}) {
+  if (typeof explicitOverride === 'string' && explicitOverride.trim() !== '') {
+    return { fires: false, reason: 'suppressed-mcp' };
+  }
+  if (typeof envOverride === 'string' && envOverride.trim() !== '') {
+    return { fires: false, reason: 'suppressed-env' };
+  }
+  if (rootHasMarker) return { fires: false, reason: 'root-short-circuit' };
+  const matches = childDirsWithMarker ?? [];
+  if (matches.length >= 2) return { fires: true, matches };
+  return { fires: false, reason: matches.length === 1 ? 'single' : 'none' };
+}
+
+// Mirrors c3-domain-manager's (@genvidtech/mcp-utils@0.8.0) resolveRootFolder
+// discovery: a depth-1 scan of repoRoot's child directories for a
+// `project.c3proj` marker. Ground-truthed fidelity fact: upstream's scan does
+// NO name-based filtering — `node_modules` and dot-directories are scanned
+// like any other child dir — so this deliberately does not exclude them
+// either (see the regression-lock test in audit.test.mjs).
+// Reviewed baseline: {0.5.1, 0.7.0, 0.8.0, 0.10.0}. `resolveRootFolder.js` and
+// its only import `mcpError.js` are byte-identical across the first three, so the
+// dm 0.7.0 -> 0.8.0 bump (which moved the range ^0.5.1 -> ^0.7.0) required no
+// change here. The dm 0.8.0 -> 0.9.0 bump moved the range again (^0.7.0 ->
+// ^0.8.0) and also required no change: the closure diff was byte-identical, and
+// `diff -rq` over dist/ showed only exposeDocs.*, index.d.ts(.map) and
+// index.js.map differing — all outside the mirrored closure. Note that bump was
+// the first triggered by a *construct3-chef* release rather than a dm one; chef
+// moved the same range.
+//
+// The dm 0.9.0 -> 0.10.1 bump moved the range to ^0.10.0 and is the FIRST whose
+// closure diff came back NON-identical: mcp-utils 0.10.0 refactored the file so a
+// new plural `resolveRootFolders` owns the discovery walk and the singular
+// `resolveRootFolder` is a thin narrowing wrapper over it. The mirror still needs
+// no logic change, but that conclusion now rests on semantic equivalence rather
+// than byte-identity, established by decomposing the diff:
+//   - the walk body (scan, prune, depth-1 collection) is identical except that it
+//     returns `{paths: [...]}` where it used to return `{path: ...}`;
+//   - NO name-based filtering was added, so this mirror's deliberate inclusion of
+//     `node_modules` and dot-directories remains faithful (regression-locked in
+//     audit.test.mjs);
+//   - the singular narrows 1 path to `{path, source}` and >=2 to the ambiguity
+//     `mcpError`, whose message is byte-identical to the old one;
+//   - `mcpError.js` is still byte-identical, and the one differing sibling
+//     (`walkFiles.js`) is outside the import closure — which is only node:fs,
+//     node:path and mcpError.js.
+// Note dm's ADAPTER also changed for the first time (locations.js gained
+// multi-root discovery: resolveProjectRoots, deriveProjectId, buildRegistry), so
+// ADR 0007 part 1 failed too. That surface is dm's plural/multi-project path; the
+// plugin configures one single-project `server` invocation, so only the singular
+// semantics mirrored here are exercised.
+// See ADR 0009, and ADR 0015 for this non-identical-closure escalation.
+export async function scanC3ProjectMarkers(repoRoot) {
+  const rootHasMarker = await fileExists(join(repoRoot, 'project.c3proj'));
+  const childDirsWithMarker = [];
+  let entries;
+  try {
+    entries = await fs.readdir(repoRoot, { withFileTypes: true });
+  } catch {
+    entries = [];
+  }
+  for (const e of entries) {
+    if (!e.isDirectory()) continue; // no name filtering — matches upstream resolveRootFolder
+    if (await fileExists(join(repoRoot, e.name, 'project.c3proj'))) {
+      childDirsWithMarker.push(e.name);
+    }
+  }
+  return { rootHasMarker, childDirsWithMarker };
+}
+
+// Pure 4-branch mirror of `resolveRootFolder`'s pick, once discovery has
+// already determined it's unambiguous (2+ matches is handled as an ambiguity
+// finding elsewhere — this function deliberately returns null rather than
+// picking one, so it must never be treated as "the" answer when ambiguous).
+export function resolveDiscoveryPick({ repoRoot, rootHasMarker, childDirsWithMarker }) {
+  if (rootHasMarker) return repoRoot;
+  const matches = childDirsWithMarker ?? [];
+  if (matches.length >= 2) return null; // ambiguous — root-divergence must NOT fire here (the ambiguity warning owns this)
+  if (matches.length === 1) return join(repoRoot, matches[0]);
+  return repoRoot; // 0 matches — cwd fallback
+}
+
+// Parses a workspace-root `.mcp.json` for a c3-domain-manager server entry that pins
+// the project root, so the discovery-ambiguity check can suppress a false-positive
+// warning when the consumer has overridden the plugin's bare-args launch. A same-named
+// .mcp.json entry fully replaces the plugin-declared server (Claude Code MCP config:
+// same-name entry wins, fields not merged), so a --project-dir / env.C3_PROJECT_DIR pin
+// there means the server never runs auto-discovery. Values may be literal ${...} tokens;
+// presence of a non-empty value is enough to know discovery is suppressed. Returns null
+// on any absence/parse failure (the common case — most repos have no .mcp.json).
+export async function resolveMcpProjectDirOverride(repoRoot) {
+  let parsed;
+  try {
+    parsed = JSON.parse(await fs.readFile(join(repoRoot, '.mcp.json'), 'utf8'));
+  } catch {
+    return null;
+  }
+  const entry = parsed?.mcpServers?.['c3-domain-manager'];
+  if (!entry || typeof entry !== 'object') return null;
+  // 1. --project-dir in args (flag+value as two separate elements is the documented
+  //    Claude Code form; also defensively accept a single `--project-dir=<val>` token).
+  const args = Array.isArray(entry.args) ? entry.args : [];
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === '--project-dir') {
+      const val = args[i + 1];
+      if (typeof val === 'string') return val;
+    } else if (typeof a === 'string' && a.startsWith('--project-dir=')) {
+      return a.slice('--project-dir='.length);
+    }
+  }
+  // 2. env.C3_PROJECT_DIR fallback
+  const envVal = entry.env?.C3_PROJECT_DIR;
+  if (typeof envVal === 'string') return envVal;
+  return null;
+}
+
+export async function checkDiscoveryAmbiguity(
+  repoRoot,
+  env = process.env,
+  explicitOverride = null,
+  scan = null,
+) {
+  const { rootHasMarker, childDirsWithMarker } = scan ?? (await scanC3ProjectMarkers(repoRoot));
+  const verdict = classifyDiscovery({
+    rootHasMarker,
+    childDirsWithMarker,
+    explicitOverride,
+    envOverride: env?.C3_PROJECT_DIR,
+  });
+  if (!verdict.fires) return null; // healthy repos add NOTHING to findings
+  const dirs = verdict.matches.join(', ');
+  return {
+    kind: 'discovery',
+    component: 'gvt-construct3',
+    target: 'project.c3proj auto-discovery',
+    ok: false,
+    severity: 'warning',
+    detail:
+      `ambiguous C3 root — ${verdict.matches.length} sibling directories contain \`project.c3proj\` (${dirs}); ` +
+      `c3-domain-manager auto-discovery aborts and the server fails to start (-32000)`,
+    reason:
+      'The plugin launches c3-domain-manager with no --project-dir, so it resolves the project root by ' +
+      'filesystem discovery; two or more candidate roots is a fatal ambiguity. Remove or relocate the extra ' +
+      'project.c3proj, or pin the root with C3_PROJECT_DIR / --project-dir.',
+  };
+}
+
+// ---- root divergence ---------------------------------------------------------
+
+// Softer companion to the discovery-ambiguity check above: even when
+// discovery is unambiguous (a single pick, or the 0-match cwd fallback), the
+// root c3-domain-manager's bare-args launch would auto-discover can still
+// differ from the root the audit validated (`paths.c3project`-derived
+// `projectRoot`). That's not a guaranteed crash — the server still starts,
+// just possibly on a different (still-valid) project — so this is advisory
+// `info`, not `warning`. Suppressed by the same two overrides as discovery
+// ambiguity (an explicit --project-dir/.mcp.json pin, or a live
+// C3_PROJECT_DIR env var), since either one means the server ignores both
+// discovery and paths.c3project entirely.
+export function checkRootDivergence({ repoRoot, projectRoot, scan, env = process.env, explicitOverride = null }) {
+  // Suppressed when an override pins the root: the server ignores BOTH discovery and
+  // paths.c3project, so divergence is moot. Same trim-truthiness rule as classifyDiscovery.
+  // (Deliberate 2-line duplication rather than a shared predicate — flagged for review.)
+  if (typeof explicitOverride === 'string' && explicitOverride.trim() !== '') return null;
+  const envOverride = env?.C3_PROJECT_DIR;
+  if (typeof envOverride === 'string' && envOverride.trim() !== '') return null;
+
+  const pick = resolveDiscoveryPick({
+    repoRoot,
+    rootHasMarker: scan.rootHasMarker,
+    childDirsWithMarker: scan.childDirsWithMarker,
+  });
+  // pick === null → ≥2-match ambiguous; that's the discovery-ambiguity warning's job,
+  // divergence must NOT also fire there.
+  if (pick === null) return null;
+  if (resolve(pick) === resolve(projectRoot)) return null; // agree — no finding
+
+  return {
+    kind: 'discovery-divergence',
+    component: 'gvt-construct3',
+    target: 'C3 project root',
+    ok: false,
+    severity: 'info',
+    detail:
+      `resolved C3 root diverges — the audit validated \`${projectRoot}\` (from ` +
+      `.gvt-agent.json paths.c3project) but c3-domain-manager's bare-args auto-discovery ` +
+      `would pick \`${pick}\`, so the server may operate on a different project than the audit checked`,
+    reason:
+      'The plugin launches c3-domain-manager with no --project-dir; it auto-discovers its ' +
+      'root from the filesystem, which can differ from the paths.c3project root the audit ' +
+      'validates. Align paths.c3project with the discoverable project, or pin the root with ' +
+      'C3_PROJECT_DIR / --project-dir.',
+  };
+}
+
+// ---- report -----------------------------------------------------------------
+
+export function formatReport(findings) {
+  const errors = findings.filter((f) => f.severity === 'error');
+  const warnings = findings.filter((f) => f.severity === 'warning');
+  const infos = findings.filter((f) => f.severity === 'info');
+  const oks = findings.filter((f) => f.ok);
+  // Required = findings that are either satisfied (ok) or a hard error;
+  // 'warning' findings are advisory and excluded from the denominator, same
+  // as 'info'. (Numerically identical to the old "severity !== 'info'"
+  // formula whenever no 'warning' findings exist.)
+  const requiredTotal = findings.filter((f) => f.ok || f.severity === 'error').length;
+
+  const lines = [];
+  lines.push('## gvt-construct3 Audit Results');
+  lines.push('');
+
+  if (errors.length > 0) {
+    lines.push('### Errors (must fix)');
+    for (const f of errors) lines.push(formatFinding(f));
+    lines.push('');
+  }
+  if (warnings.length > 0) {
+    lines.push('### Warnings (advisory — will break at runtime)');
+    for (const f of warnings) lines.push(formatFinding(f));
+    lines.push('');
+  }
+  if (infos.length > 0) {
+    lines.push('### Info (optional)');
+    for (const f of infos) lines.push(formatFinding(f));
+    lines.push('');
+  }
+
+  lines.push('### Summary');
+  lines.push(`- ${oks.length} of ${requiredTotal} required expectations satisfied.`);
+  if (errors.length > 0) {
+    lines.push(
+      `- ${errors.length} required expectation${errors.length === 1 ? '' : 's'} unmet.`,
+    );
+  }
+  if (warnings.length > 0) {
+    lines.push(
+      `- ${warnings.length} advisory warning${warnings.length === 1 ? '' : 's'} (runtime-breaking).`,
+    );
+  }
+  if (infos.length > 0) {
+    lines.push(
+      `- ${infos.length} optional expectation${infos.length === 1 ? '' : 's'} unmet.`,
+    );
+  }
+
+  return lines.join('\n');
+}
+
+function formatFinding(f) {
+  const target =
+    f.kind === 'tool'
+      ? `tool \`${f.target}\``
+      : f.kind === 'mcp'
+        ? `MCP server \`${f.target}\``
+        : `\`${f.target}\``;
+  const reason = f.reason ? ` Reason: ${f.reason}` : '';
+  return `- **${f.component}** expects ${target} — ${f.detail}.${reason}`;
+}

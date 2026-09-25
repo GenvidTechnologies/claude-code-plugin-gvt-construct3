@@ -50,9 +50,12 @@ The plugin is distributed through the [`claude-code-gvt-marketplace`](https://gi
 ## Commands
 
 Everything runs from the **repo root**. `commands.validate` in `.gvt-agent.json` is
-`node scripts/ci/gate.mjs && claude plugin validate plugin`:
+`npm ci --prefix plugin --ignore-scripts --no-audit --no-fund && node scripts/ci/gate.mjs && claude plugin validate plugin`:
 
 ```bash
+# Install plugin/'s dependencies (needed once per checkout/worktree; validate runs it)
+npm ci --prefix plugin --ignore-scripts --no-audit --no-fund
+
 # Both test suites, floor-asserted (this is what commands.validate and CI both run)
 node scripts/ci/gate.mjs
 
@@ -72,8 +75,12 @@ the globs. Don't re-state a floor here; read it from the gate.
 
 `plugin/` carries a `package.json` and a committed `package-lock.json` so the host can
 perform a lockfile-gated dependency install. There is still no build step and no lint
-config — plain ESM `.mjs` run directly by Node, tests via the built-in `node:test`
-runner only, and zero dependencies today.
+config: plain ESM `.mjs` runs directly under Node, and tests use the built-in
+`node:test` runner only. There is one runtime dependency, `@genvidtech/audit-core`,
+pinned exactly
+([ADR 0022](wiki/decisions/0022-audit-core-adoption-and-npm-ci-in-validate.md)).
+Claude Code installs it into a consumer's plugin cache. A git checkout needs the
+`npm ci` above, and without it the audit exits 2 with a message saying so.
 
 > **A bare `cd plugin &&` test glob fails *open*, and `commands.validate` no longer carries
 > one.** The glob is relative to `plugin/`, so from the repo root it matches nothing, prints
@@ -133,3 +140,9 @@ Releasing is a cross-repo workflow (bump `plugin/.claude-plugin/plugin.json`, mo
 **When a release bumps the pinned chef / dm versions, run `/gvt-dev:reconcile-mcp-pin` before tagging** — and read [Verifying an MCP pin bump](wiki/pin-bump-verification.md) first. It covers what `reconcile-mcp-pin` does *not*: the `audit.mjs` discovery-check mirror of `resolveRootFolder`, the count anchors (now carried by that same wiki page), and the ways this verification silently fakes a pass.
 
 > **This gate is on *tagging*, not on the bump itself.** A pin bump is routinely planned and landed through `/gvt-dev:plan-task` — that does **not** discharge the obligation above, which still fires before the release is tagged. Two things follow. First, a bump branch merging without `reconcile-mcp-pin` having run is *normal*, not an escape; record in the PR what verification was actually performed so the release step can judge the remainder. Second, when a bump's own planning already did the equivalent work — packed the tarballs, diffed the registration name sets, probed `resources/list` live, discharged the ADR 0007/0009 mirror check — say so explicitly at release time rather than assuming either that it counts or that it doesn't. The skill's runbook and an inline verification can differ in *both* directions: #107's inline pass covered the live resource probe and the mirror escalation, which `reconcile-mcp-pin` does not, while skipping the artifact shape the release history expects.
+
+**A `[not-yet-due]` acceptance row is owed at release, and nothing else will remind you.** `/gvt-dev:plan-task` marks a pledged row `[not-yet-due]` when it can only be graded after the change ships. #95's R13 is one: the plugin cache for the released version must contain `node_modules/@genvidtech/audit-core`. Both reviewing gates skip such a row by design, and a PR carrying `Closes #N` closes the one issue that records it. So:
+
+- A PR whose issue still carries an ungraded `[not-yet-due]` row uses `Refs #N`, not `Closes #N`.
+- Before tagging, sweep the issues this release closes or references for `[not-yet-due]` rows.
+- Grade each row once the marketplace ref has moved, record the evidence on the issue, then close it.

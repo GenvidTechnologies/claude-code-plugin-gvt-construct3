@@ -10,10 +10,10 @@ generated: { by: process:plan-task, at: 2026-09-19T00:00:00Z }
 # The npm surface and the CI gate
 
 This repo carries a `plugin/package.json` and a committed `plugin/package-lock.json`
-so a host can perform a **lockfile-gated dependency install**. Today the dependency
-set is empty. That is not a placeholder — it is a working gate with one half armed
-and unfired, and the distinction is worth stating precisely because it decides
-whether the landing was meaningful.
+so a host can perform a **lockfile-gated dependency install**. The surface landed
+with an empty dependency set (#119). Since #95 it carries one real dependency,
+`@genvidtech/audit-core`, pinned exactly. The section on the empty set below is kept
+as the record of why the surface was worth landing before anything needed it.
 
 ## Why `plugin/` and nowhere else
 
@@ -42,10 +42,14 @@ Split the two halves:
 
 - **The CI half is live today.** `npm ci` was measured firing on both failure modes
   against a manifest with `dependencies: {}`.
-- **The host-install half is armed but unfired.** With nothing to install there is no
-  `node_modules/` to create. It becomes load-bearing when a real dependency is named —
-  and at that moment the lockfile is already committed, already tracked and already
-  CI-enforced, which is the whole prerequisite.
+- **The host-install half had nothing to install yet.** With no dependencies there
+  was no `node_modules/` to create. It became load-bearing when #95 named
+  `@genvidtech/audit-core`. By then the lockfile was already committed, tracked and
+  CI-enforced, which was the whole prerequisite. Claude Code's plugin docs state that
+  a copied marketplace plugin gets `npm ci --ignore-scripts` in its cache: the install
+  needs a lockfile, times out at 60 s, and cannot be disabled. A git checkout or a
+  local-directory marketplace plugin gets no install, which is why the audit CLI
+  runs a usability preflight.
 
 The two `npm ci` arms, with their verbatim messages:
 
@@ -108,14 +112,19 @@ so the two paths cannot drift apart by construction. Don't copy a floor into pro
 point at the gate. Floors are `>=`, so adding tests never breaks CI — only losing
 them, or matching nothing, does.
 
-## The one deliberate asymmetry
+## `npm ci` runs in both paths now — the asymmetry was retired
 
-`npm ci` runs **in CI only**, not in `commands.validate`. That is a decision, not
-drift. `commands.validate` is required to stay hermetic — it runs as a plain `node`
-process and must not make registry calls. With zero dependencies `npm ci` is cheap
-today, but the moment a real dependency lands it becomes network- and cache-dependent.
-Keeping the lockfile arm in CI preserves hermeticity by construction rather than by
-luck.
+ADR 0019 originally kept `npm ci` in CI only, so that `commands.validate` stayed
+hermetic. That held while the dependency set was empty. Once the audit imported
+`@genvidtech/audit-core`, a fresh checkout or worktree could not run the plugin
+suite without an install. So `commands.validate` now begins with
+`npm ci --prefix plugin --ignore-scripts --no-audit --no-fund`
+([ADR 0022](/decisions/0022-audit-core-adoption-and-npm-ci-in-validate.md)). The
+cost is a registry call, or a cache hit, on every validate. That is accepted for
+the maintainer's git checkout only. Consumers are unaffected, because Claude Code
+performs their install once per cached plugin version and their audit makes no
+registry call. CI and `commands.validate` both pass `--ignore-scripts`, matching
+the install Claude Code performs.
 
 ## Do not wire a red-on-main checker into CI
 

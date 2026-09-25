@@ -61,9 +61,16 @@ and I/O and calls the lib.
 network. The live fetch stays human-validated; the pure transform stays
 unit-tested.
 
-There is no build step, no `package.json`, no lint config — the scripts and libs
-are plain ESM `.mjs` run directly by Node, and tests use the built-in `node:test`
-runner only.
+There is no build step and no lint config. The scripts and libs are plain ESM
+`.mjs` run directly by Node, and tests use the built-in `node:test` runner only.
+Runtime dependencies are declared in `plugin/package.json` with a committed
+lockfile. Claude Code installs them when it copies the plugin into its cache; a
+git checkout needs `npm ci --prefix plugin`, which `commands.validate` runs. Today
+there is one dependency, `@genvidtech/audit-core`
+([ADR 0022](/decisions/0022-audit-core-adoption-and-npm-ci-in-validate.md)). A
+script that imports a dependency should sit behind a usability preflight, as
+`audit-c3-conventions`'s CLI does. Without one, a missing install surfaces as a
+bare module-resolution error.
 
 ## Mutation-test the extraction, and tell "untested" from "untestable"
 

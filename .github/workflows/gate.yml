@@ -86,7 +86,7 @@ jobs:
       # verifying nothing. Step 1 is the structural backstop for that.
       - name: Lockfile honesty (npm ci)
         working-directory: plugin
-        run: npm ci --no-audit --no-fund
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       # STEP 3 — both test suites, floor-asserted, with printed evidence.
       #

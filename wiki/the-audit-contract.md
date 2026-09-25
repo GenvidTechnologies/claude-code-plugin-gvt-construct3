@@ -113,15 +113,40 @@ Rooted repos (no `paths.c3project`) are unaffected — `base` is just another
 data-driven `expects` field, not a script-level check
 ([ADR 0005](/decisions/0005-non-rooted-c3-project-support.md)).
 
-## Supporting libs
+## Mechanism and policy
 
-- **`scripts/lib/frontmatter.mjs`** — a *minimal* hand-rolled YAML parser scoped
-  to the exact frontmatter shapes used: top-level scalars, one level of nesting
-  for `metadata.expects`, arrays of objects. It does **not** handle multiline
-  scalars, anchors, or deep nesting — keep frontmatter within those shapes or
-  replace the parser.
-- **`scripts/lib/config-resolve.mjs`** — resolves dotted keys (`features.c3`)
-  against parsed JSON, reporting *where* a path broke.
+The audit's **mechanism** comes from the published
+[`@genvidtech/audit-core`](https://github.com/GenvidTechnologies/audit-core)
+package, pinned exactly in `plugin/package.json`
+([ADR 0022](/decisions/0022-audit-core-adoption-and-npm-ci-in-validate.md)). It
+provides component discovery (`walkComponents`), the frontmatter parser
+(`extractFrontmatter`), dotted-key resolution (`resolveKey`, which reports *where*
+a path broke), the existence probes, and the `file` / `config` / `tool`
+evaluators. The **policy** stays here, per gvt-dev's ADR-0049 mechanism/policy
+split:
+
+- **`scripts/lib/audit.mjs`** contains the path resolution. Its `evaluateFile` /
+  `evaluateConfig` wrappers hand audit-core a synchronous resolver. The resolver
+  picks the root (`base: project`), defaults the config source to
+  `.gvt-agent.json`, and appends the ` (project root: …)` suffix to `target`.
+  The same file also holds the C3 marker, discovery-ambiguity and root-divergence
+  checks, severity, the tally, and `formatReport`.
+- **`scripts/lib/mcp-check.mjs`** is the `mcp` evaluator. audit-core has no
+  equivalent.
+- **`scripts/lib/preflight.mjs`** checks that audit-core can actually be
+  imported, before anything else runs. The CLI `scripts/audit.mjs` runs it
+  first and exits **2** with a message naming the package and the
+  `npm ci --prefix <plugin root>` fix. Without it, the failure would be a bare
+  module-resolution error.
+
+Every `expects`-derived finding carries a `required` boolean alongside `severity`.
+The tally still reads only `severity`. `target` is display text: never match on
+it, because it can carry the project-root suffix.
+
+The parser is a hand-rolled YAML subset: top-level scalars, block scalars
+(`|` / `>`), one level of nesting for `metadata.expects`, and arrays of objects.
+It does not handle anchors or deep nesting, so keep frontmatter within those
+shapes.
 
 ## MCP probing
 
