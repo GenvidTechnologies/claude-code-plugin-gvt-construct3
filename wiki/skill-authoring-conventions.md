@@ -1,7 +1,7 @@
 ---
 type: practice-note
 title: Skill authoring conventions
-description: Frontmatter keys are fixed; scripts split a pure lib from a thin I/O CLI with tests at a path validation actually globs; mutation-testing an extraction tells an untested branch from a non-discriminating one, which must be annotated rather than tested; a test imports the function it checks, never an inline copy; remediation prose must never describe a check the script does not yet implement; and prose must never restate a value a declarative source already owns.
+description: Frontmatter keys are fixed; scripts split a pure lib from a thin I/O CLI with tests at a path validation actually globs; mutation-testing an extraction tells an untested branch from a non-discriminating one, which must be annotated rather than tested; a test imports the function it checks, never an inline copy; a test that proves a loop ends needs a stub that yields, or the per-test timeout never fires; remediation prose must never describe a check the script does not yet implement; and prose must never restate a value a declarative source already owns.
 tags: [skills, frontmatter, scripts, testing, grounding, drift]
 status: stable
 stale_after: 2027-08-18
@@ -127,6 +127,29 @@ importable.
 > `semverGte` "for unit-testing without importing the full script", while the
 > audit ran its own private copy. Nothing linked the two. #124/#126 moved the
 > function into `lib/mcp-check.mjs` and pointed the tests at that export.
+
+## A test that proves a loop ends needs a stub that yields
+
+`node:test`'s per-test `{ timeout }` is a timer, and a timer only fires when the
+event loop gets a turn. A fake transport that answers **synchronously**, pushing
+its reply before `send()` returns, lets an unbounded `await` loop run on
+microtasks alone, so the event loop never gets a turn. The per-test timeout never
+fires; the whole test file dies instead, or the suite stalls until something
+outside it gives up. A hang then reads as "the runner is broken", not "this loop
+never terminates".
+
+So when a test's job is to prove termination (pagination that must stop, a retry
+that must give up, a read that must time out), make the stub hand control back
+between replies, e.g. by queueing each reply with `setImmediate`. Then give the
+test its own `{ timeout }`, so the red run fails that one test by name.
+
+> **Precedent.** #134's review found that `scripts/lib/mcp-surface.mjs`'s
+> `listAll` looped forever on a repeated `nextCursor`. The new test, written
+> against the existing synchronous fake transport with `{ timeout: 2000 }`,
+> did not fail as one named test when run before the fix: the TAP output was
+> `not ok 1 - scripts\test\mcp-surface.test.mjs`, `# pass 4`, `# fail 1` for a
+> file of 20 tests. It was red, which was enough to confirm the defect, but
+> only because the fix then turned it into a clean 20/20.
 
 ## Two patterns for a skill that targets a tool
 
