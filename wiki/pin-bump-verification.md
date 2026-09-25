@@ -259,6 +259,12 @@ exercised. Were that to change, the mirror's ambiguity semantics would genuinely
 question — in the plural path two marker-bearing siblings are a **success returning
 both**, not the `mcpError` the mirror reports as a discovery-ambiguity finding.
 
+**The dm `0.10.1` → `0.11.0` bump (#130) passed ADR 0007 outright** — both parts,
+no escalation. Part 1: `dist/adapters/locations.js` byte-identical (`cmp`
+exit 0). Part 2: the range stayed `^0.10.0`, and the published `mcp-utils` versions
+were `0.0.1` through `0.10.0` with no `0.11.0`, so the range could only resolve to
+`0.10.0`, already in the reviewed baseline. No ADR 0009/0015 escalation was owed.
+
 Part 2 will expire again the moment `mcp-utils 0.11.0` publishes.
 
 ## The explorer allow-list is *not* chef's `READ_ONLY` set
@@ -353,6 +359,21 @@ Start the pinned server over stdio and speak MCP to it: send `initialize`, then 
 JSON-RPC from stdout. A throwaway Node script parameterised by package spec is enough —
 scratchpad, not the repo, per `/gvt-dev:build-probe`.
 
+Three setup facts the throwaway script needs, each of which cost an iteration at #130:
+
+- **A packed tarball carries no `node_modules`.** Run `npm install --omit=dev
+  --ignore-scripts` inside the extracted `package/` before starting the server — its
+  runtime dependencies (`@genvidtech/mcp-utils`, the MCP SDK) are not in the tarball. Seal the parent scratch dir with a `{}` `package.json`
+  first — `%TEMP%` is itself an npm project.
+- **Resolve the server's script path to absolute when you also set the child's `cwd`.**
+  A relative `<dir>/package/dist/cli.js` resolves against the *new* cwd and points
+  nowhere. With the child's stderr discarded, the probe sees no reply and reports only
+  its own timeout — the discarded-stderr trap above, firing on the instrument rather
+  than the measurement. Keep stderr visible until the probe has worked once.
+- **c3-domain-manager needs no project to answer `resources/list`.** With no
+  `project.c3proj` marker it warns, falls back to its cwd, and serves normally, so no
+  fixture project is required.
+
 Measured this way on 2026-09-01, before rewriting any reference:
 
 | Pinned server | `resources/list` entries |
@@ -361,6 +382,7 @@ Measured this way on 2026-09-01, before rewriting any reference:
 | `@genvidtech/construct3-chef@2.0.0` | **59** — re-probed 2026-09-18 (#120); purely additive, all 8 new entries are `docs:///decisions/0034-…` through `0041-…`, nothing repathed or removed |
 | `@genvidtech/c3-domain-manager@0.9.0` | **37** |
 | `@genvidtech/c3-domain-manager@0.10.1` | **40** — re-probed 2026-09-15 (#107) |
+| `@genvidtech/c3-domain-manager@0.11.0` | **41** — probed 2026-09-23 (#130); purely additive, the one new entry is `docs:///decisions/0030-classification-coverage-gate`; nothing repathed or removed. The 0.10.1 arm, re-probed in the same run, still returned 40 — the control that the harness discriminates |
 
 Both 2026-09-01 figures matched the counts the bump issues claimed, which is worth
 noting in the other direction: **the probe is cheap enough that confirming a correct
@@ -415,7 +437,7 @@ in `plugin/.claude-plugin/plugin.json`'s `mcpServers`.
 | construct3-chef | `regP("…")` (project-scoped) | `dist/mcp/server.js` | **37** at `2.0.0` — includes `list-ops`, moved in from `opsRegistry.js` at this bump |
 | construct3-chef | `reg("…")` (unscoped) | `dist/mcp/server.js` | **1** at `2.0.0` — `list-projects` only |
 | construct3-chef | total | — | **38** at `2.0.0` — was **37** at `1.2.0` (`reg()` **36** + `list-ops` **1**), **35**, **31** |
-| c3-domain-manager | `registerProjectTool` + one direct `registerTool` | `dist/mcp/server.js` | **15** at `0.10.1` — was **14** at `0.7.0` → `0.9.0`, **13** before |
+| c3-domain-manager | `registerProjectTool` + one direct `registerTool` | `dist/mcp/server.js` | **15** at `0.11.0` — identical name set to `0.10.1` (`regenerate` gained a parameter, not a tool); was **14** at `0.7.0` → `0.9.0`, **13** before |
 
 > **dm changed its registration idiom at `0.10.0` — a bare `registerTool(` grep now
 > returns 2, not 15.** Per-project tools register through a `registerProjectTool(name, …)`
