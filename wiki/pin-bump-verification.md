@@ -433,9 +433,10 @@ Two riders worth carrying forward:
   c3-domain-manager `0.9.0` (37 resources) and construct3-chef `1.2.0` (51 resources),
   both matching the table above. It also returned 1 at dm `0.10.1` and `0.11.0` and at
   chef `2.0.0`. So the empty reading was wrong, not a version difference. How it was
-  taken is not recorded. **The actionable half still holds:** the template's `list`
-  callback expands it into concrete `resources/list` entries, so the concrete URIs are
-  what a consumer addresses. The template count is a separate, stable fact.
+  taken is not recorded. **The actionable half still holds:** every probed version also
+  lists its documents as concrete `docs:///…` entries in `resources/list`. Those URIs are
+  what a consumer addresses and what a bump can move, so diff `resources/list`, not the
+  template count.
 - **Both bundled servers register the `docs` scheme.** chef serves
   `docs:///reference/cli`; c3-domain-manager serves
   `docs:///reference/domain-architecture`. A resource is therefore only addressable as
