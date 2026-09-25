@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 // Dev-workspace audit digest.
 //
+// It runs the **gvt-dev** plugin's `audit-conventions` audit against this
+// workspace (this repo consumes gvt-dev). It does NOT run this plugin's own
+// `audit-c3-conventions`, and its parser anchors on gvt-dev's report format.
+// To compare `audit-c3-conventions` output between two refs, see #136.
+//
 // NOT part of the shipped plugin/ artifact and NOT wired into
 // .gvt-agent.json's commands.validate — run it directly, e.g.:
 //
