@@ -34,7 +34,7 @@ import {
   resolveMcpProjectDirOverride,
   checkRootDivergence,
   formatReport,
-} from '../audit.mjs';
+} from '../lib/audit.mjs';
 
 // ---- marker tests -----------------------------------------------------------
 
