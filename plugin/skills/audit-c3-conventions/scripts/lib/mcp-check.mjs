@@ -68,6 +68,7 @@ export function evaluateMcpExpectation({ component, entry, pin, probe }) {
     component: component.name,
     target: server,
     ok: false,
+    required,
     severity: required ? 'error' : 'info',
     detail,
     reason: entry.reason,
@@ -90,7 +91,7 @@ export function evaluateMcpExpectation({ component, entry, pin, probe }) {
     );
   }
 
-  return { kind: 'mcp', component: component.name, target: server, ok: true, detail: pin };
+  return { kind: 'mcp', component: component.name, target: server, ok: true, required, detail: pin };
 }
 
 // Runs `npx -y <spec> --version` from a freshly created, empty-manifest

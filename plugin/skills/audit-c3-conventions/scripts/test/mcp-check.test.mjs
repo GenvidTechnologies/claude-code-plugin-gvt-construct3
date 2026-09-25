@@ -155,6 +155,7 @@ test('evaluateMcpExpectation: pin equal to minVersion is ok', () => {
     component: 'construct3-chef',
     target: 'construct3-chef',
     ok: true,
+    required: true,
     detail: '2.0.0',
   });
 });
@@ -193,6 +194,52 @@ test('evaluateMcpExpectation: probe.error surfaces as not-reachable with the err
   assert.equal(finding.severity, 'error');
   assert.match(finding.detail, /not reachable via npx/);
   assert.match(finding.detail, /boom/);
+});
+
+// ---- evaluateMcpExpectation: required -------------------------------------
+
+test('evaluateMcpExpectation: required default → required: true on an ok finding', () => {
+  const finding = evaluateMcpExpectation({
+    component: { name: 'construct3-chef' },
+    entry: { server: 'construct3-chef', reason: 'x' },
+    pin: '2.0.0',
+    probe: { status: 0, stdout: '2.0.0\n' },
+  });
+  assert.equal(finding.ok, true);
+  assert.equal(finding.required, true);
+});
+
+test('evaluateMcpExpectation: required default → required: true on a failing finding', () => {
+  const finding = evaluateMcpExpectation({
+    component: { name: 'construct3-chef' },
+    entry: { server: 'construct3-chef', reason: 'x' },
+    pin: null,
+    probe: { status: 0, stdout: '' },
+  });
+  assert.equal(finding.ok, false);
+  assert.equal(finding.required, true);
+});
+
+test('evaluateMcpExpectation: required: false entry → required: false on an ok finding', () => {
+  const finding = evaluateMcpExpectation({
+    component: { name: 'construct3-chef' },
+    entry: { server: 'construct3-chef', required: false, reason: 'x' },
+    pin: '2.0.0',
+    probe: { status: 0, stdout: '2.0.0\n' },
+  });
+  assert.equal(finding.ok, true);
+  assert.equal(finding.required, false);
+});
+
+test('evaluateMcpExpectation: required: false entry → required: false on a failing finding', () => {
+  const finding = evaluateMcpExpectation({
+    component: { name: 'construct3-chef' },
+    entry: { server: 'construct3-chef', required: false, reason: 'x' },
+    pin: null,
+    probe: { status: 0, stdout: '' },
+  });
+  assert.equal(finding.ok, false);
+  assert.equal(finding.required, false);
 });
 
 // ---- probeMcpPackage ------------------------------------------------------

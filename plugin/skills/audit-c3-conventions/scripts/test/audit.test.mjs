@@ -11,6 +11,12 @@ import { join, resolve, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 
+// evaluateFile/evaluateConfig are this repo's wrappers over
+// @genvidtech/audit-core's evaluators (see ../lib/audit.mjs); evaluateTool
+// has no wrapper here (lib/audit.mjs calls the core evaluator directly), so
+// the `required` tests below import it straight from the package.
+import { evaluateTool } from '@genvidtech/audit-core';
+
 // ---- helpers ----------------------------------------------------------------
 
 async function mkTmp() {
@@ -288,6 +294,7 @@ test('evaluateFile: file present → ok', async () => {
     );
     assert.equal(finding.ok, true);
     assert.equal(finding.target, 'domain-config.json');
+    assert.equal(finding.required, true);
   } finally {
     await rmTmp(dir);
   }
@@ -303,6 +310,7 @@ test('evaluateFile: required file missing → error, no (optional) in detail', a
     );
     assert.equal(finding.ok, false);
     assert.equal(finding.severity, 'error');
+    assert.equal(finding.required, true);
     assert.ok(!finding.detail.includes('(optional)'), 'detail should not contain "(optional)"');
   } finally {
     await rmTmp(dir);
@@ -319,6 +327,7 @@ test('evaluateFile: optional file missing → info, (optional) in detail', async
     );
     assert.equal(finding.ok, false);
     assert.equal(finding.severity, 'info');
+    assert.equal(finding.required, false);
     assert.ok(finding.detail.includes('(optional)'), 'detail should contain "(optional)"');
   } finally {
     await rmTmp(dir);
@@ -335,6 +344,7 @@ test('evaluateConfig: key present in custom in: target → ok', async () => {
       dir,
     );
     assert.equal(finding.ok, true);
+    assert.equal(finding.required, true);
   } finally {
     await rmTmp(dir);
   }
@@ -351,7 +361,25 @@ test('evaluateConfig: missing key → error, detail includes "path broke at"', a
     );
     assert.equal(finding.ok, false);
     assert.equal(finding.severity, 'error');
+    assert.equal(finding.required, true);
     assert.ok(finding.detail.includes('path broke at'), `expected "path broke at" in: ${finding.detail}`);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('evaluateConfig: missing key, required: false → info, required: false', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.writeFile(join(dir, 'my-config.json'), JSON.stringify({}));
+    const finding = await evaluateConfig(
+      { name: 'test-skill' },
+      { key: 'foo.bar', in: 'my-config.json', required: false, reason: 'r' },
+      dir,
+    );
+    assert.equal(finding.ok, false);
+    assert.equal(finding.severity, 'info');
+    assert.equal(finding.required, false);
   } finally {
     await rmTmp(dir);
   }
@@ -367,10 +395,42 @@ test('evaluateConfig: in: file absent → error, detail includes "not found"', a
     );
     assert.equal(finding.ok, false);
     assert.equal(finding.severity, 'error');
+    assert.equal(finding.required, true);
     assert.ok(finding.detail.includes('not found'), `expected "not found" in: ${finding.detail}`);
   } finally {
     await rmTmp(dir);
   }
+});
+
+// ---- evaluateTool required tests ---------------------------------------------
+// evaluateTool comes straight from @genvidtech/audit-core (lib/audit.mjs calls
+// it with no local wrapper); `node` is guaranteed present on PATH in this test
+// run, and the bogus command name is guaranteed absent.
+
+test('evaluateTool: command present → ok, required: true', () => {
+  const finding = evaluateTool({ name: 'test-skill' }, { command: 'node', reason: 'r' });
+  assert.equal(finding.ok, true);
+  assert.equal(finding.required, true);
+});
+
+test('evaluateTool: required command missing → error, required: true', () => {
+  const finding = evaluateTool(
+    { name: 'test-skill' },
+    { command: 'gvt-construct3-nonexistent-tool', reason: 'r' },
+  );
+  assert.equal(finding.ok, false);
+  assert.equal(finding.severity, 'error');
+  assert.equal(finding.required, true);
+});
+
+test('evaluateTool: optional command missing → info, required: false', () => {
+  const finding = evaluateTool(
+    { name: 'test-skill' },
+    { command: 'gvt-construct3-nonexistent-tool', required: false, reason: 'r' },
+  );
+  assert.equal(finding.ok, false);
+  assert.equal(finding.severity, 'info');
+  assert.equal(finding.required, false);
 });
 
 // ---- resolveProjectRoot tests -----------------------------------------------
