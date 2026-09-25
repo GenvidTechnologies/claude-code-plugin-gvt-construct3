@@ -354,22 +354,42 @@ Not against the issue's rename table, and not only against the tarball.
 - A **live `resources/list`** skips all of that and returns the names the server actually
   serves.
 
-Start the pinned server over stdio and speak MCP to it: send `initialize`, then the
-`notifications/initialized` notification, then `resources/list`, reading newline-delimited
-JSON-RPC from stdout. A throwaway Node script parameterised by package spec is enough —
-scratchpad, not the repo, per `/gvt-dev:build-probe`.
+Run the kept probe, `scripts/mcp-surface.mjs` (#134), with the old and new pins
+side by side:
 
-Three setup facts the throwaway script needs, each of which cost an iteration at #130:
+```bash
+node scripts/mcp-surface.mjs @genvidtech/c3-domain-manager@0.10.1 @genvidtech/c3-domain-manager@0.11.0
+```
 
-- **A packed tarball carries no `node_modules`.** Run `npm install --omit=dev
-  --ignore-scripts` inside the extracted `package/` before starting the server — its
-  runtime dependencies (`@genvidtech/mcp-utils`, the MCP SDK) are not in the tarball. Seal the parent scratch dir with a `{}` `package.json`
-  first — `%TEMP%` is itself an npm project.
+For each spec it installs the package into a sealed temp dir and starts it over stdio
+with `server`. It then sends `initialize` and the `notifications/initialized`
+notification, followed by `tools/list`, `resources/list` and `resources/templates/list`.
+It prints each spec's counts and sorted names, then the added/removed set difference
+between consecutive specs. Always pass the **old** pin as well as the new one. The old
+arm reproducing its recorded count is the control that the probe discriminates; a new
+arm alone proves nothing. Before #134 this probe was rewritten from scratch on four
+bumps (#88/#89, #107, #120, #130).
+
+It fails loudly, with the server's stderr, when the server exits early, times out,
+returns a JSON-RPC error, or lists no tools or no resources. It never prints a count of
+0 as a result. `--server <cmd…>` probes an already-installed server offline (put
+`--timeout`/`--keep` before it).
+
+The script handles the setup facts that each cost an iteration at #130. Keep them in
+mind when reading its code, or if you ever probe by hand:
+
+- **A packed tarball carries no `node_modules`.** The script sidesteps this by running
+  `npm install <spec> --omit=dev --ignore-scripts` rather than `npm pack`, which also
+  needs no `tar` binary. It seals the temp dir with a `{}` `package.json` first, because
+  `%TEMP%` is itself an npm project.
 - **Resolve the server's script path to absolute when you also set the child's `cwd`.**
   A relative `<dir>/package/dist/cli.js` resolves against the *new* cwd and points
   nowhere. With the child's stderr discarded, the probe sees no reply and reports only
-  its own timeout — the discarded-stderr trap above, firing on the instrument rather
-  than the measurement. Keep stderr visible until the probe has worked once.
+  its own timeout: the discarded-stderr trap above, firing on the instrument rather
+  than the measurement.
+- **On Windows, wait for the server to exit before removing its temp dir.** The dir is
+  the child's cwd, so removing it right after `kill()` fails with `EPERM`. This was
+  measured on the script's first live run.
 - **c3-domain-manager needs no project to answer `resources/list`.** With no
   `project.c3proj` marker it warns, falls back to its cwd, and serves normally, so no
   fixture project is required.
@@ -405,18 +425,18 @@ reading of the issue would not have established.
 
 Two riders worth carrying forward:
 
-- **`resourceTemplates` — this rider is DISPUTED; re-measure before relying on it.**
-  As recorded on 2026-09-01 it read: *"came back empty on both servers"*, on the
-  reasoning that the registered `docs:///{+path}` template's `list` callback expands
-  into concrete `resources/list` entries rather than surfacing as a template. A
-  `resources/templates/list` probe on 2026-09-15 (#107) instead returned **1** for
-  c3-domain-manager at **both `0.9.0` and `0.10.1`** — including the very version the
-  original rider was measured against, so this is a **measurement conflict, not a
-  change introduced by a bump**. The two runs likely asked different questions (an
-  `initialize` capability field vs. an explicit `resources/templates/list` call), but
-  that was not established, so neither figure is retired here. **What survives
-  unchanged is the actionable half:** don't read an empty `resourceTemplates` as "no
-  template registered" — the expansion behaviour is real either way.
+- **`resourceTemplates`: both servers register exactly one template, `docs:///{+path}`.**
+  The 2026-09-01 record said templates *"came back empty on both servers"*. A #107 probe
+  returned 1 for c3-domain-manager, which left the two figures in conflict. #134 settled
+  it on 2026-09-25 by calling `resources/templates/list` explicitly. It returned **1**
+  (`docs:///{+path}`) at the **same versions** the empty reading was taken against:
+  c3-domain-manager `0.9.0` (37 resources) and construct3-chef `1.2.0` (51 resources),
+  both matching the table above. It also returned 1 at dm `0.10.1` and `0.11.0` and at
+  chef `2.0.0`. So the empty reading was wrong, not a version difference. How it was
+  taken is not recorded. **The actionable half still holds:** every probed version also
+  lists its documents as concrete `docs:///…` entries in `resources/list`. Those URIs are
+  what a consumer addresses and what a bump can move, so diff `resources/list`, not the
+  template count.
 - **Both bundled servers register the `docs` scheme.** chef serves
   `docs:///reference/cli`; c3-domain-manager serves
   `docs:///reference/domain-architecture`. A resource is therefore only addressable as

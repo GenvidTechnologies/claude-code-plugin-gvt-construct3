@@ -2,10 +2,11 @@
 // The shared test gate: runs every suite in this repo and proves each one
 // actually ran.
 //
-// UNLIKE the three CLIs in scripts/ (check-doc-anchors, check-index-mirrors,
-// audit-snapshot), which are deliberately NOT wired into .gvt-agent.json's
-// commands.validate, this script IS the exception — commands.validate and CI
-// both call it, so it is the one place the suite floors are maintained.
+// UNLIKE the CLIs in scripts/ (check-doc-anchors, check-index-mirrors,
+// audit-snapshot, mcp-surface), which are deliberately NOT wired into
+// .gvt-agent.json's commands.validate, this script IS the exception —
+// commands.validate and CI both call it, so it is the one place the suite
+// floors are maintained.
 //
 //   node scripts/ci/gate.mjs
 //
@@ -93,10 +94,11 @@ const SUITES = [
       'scripts/test/doc-anchors.test.mjs',
       'scripts/test/floor-stale.test.mjs',
       'scripts/test/index-mirrors.test.mjs',
+      'scripts/test/mcp-surface.test.mjs',
       'scripts/test/plugin-manifest.test.mjs',
       'scripts/test/test-surface.test.mjs',
     ],
-    minPass: 75,
+    minPass: 95,
   },
 ];
 
