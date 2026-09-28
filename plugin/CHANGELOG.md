@@ -45,8 +45,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **`audit-c3-conventions` now runs on the shared `@genvidtech/audit-core`
-  library.** The plugin's first runtime dependency is pinned exactly at `0.2.0` in
-  `plugin/package.json`. It brings `yaml` as its only dependency of its own. Claude
+  library.** The plugin's first runtime dependency is pinned exactly at `0.2.1` in
+  `plugin/package.json` (adopted at `0.2.0`, bumped within this release; 0.2.1's
+  shipped code differs only in a type-declaration comment and its `VERSION`
+  constant, #139). It brings `yaml` as its only dependency of its own. Claude
   Code installs both into the plugin cache when it installs or updates the plugin;
   consumers run no command. From audit-core the audit takes component discovery,
   the frontmatter parser, dotted-key resolution, the existence probes and the

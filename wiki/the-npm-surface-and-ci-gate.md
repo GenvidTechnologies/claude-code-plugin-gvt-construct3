@@ -2,8 +2,8 @@
 type: practice-note
 title: The npm surface and the CI gate
 description: >-
-  Why the manifest and lockfile live in plugin/ and nowhere else, why an empty dependency set still makes a real gate, the four measured ways a check here passes while verifying nothing — npm ci walking up to an ancestor manifest, a glob matched from the wrong directory, a wrong path reporting as a deleted lockfile, and a reporter whose counters cannot be grepped — and what to do when a test-count floor moves: the file-count floor is derived from a declared inventory, so only the pass-count floor is ever a number you touch by hand.
-tags: [ci, npm, lockfile, verification, fail-open, plugin-artifact]
+  Why the manifest and lockfile live in plugin/ and nowhere else, why an empty dependency set still makes a real gate, the four measured ways a check here passes while verifying nothing — npm ci walking up to an ancestor manifest, a glob matched from the wrong directory, a wrong path reporting as a deleted lockfile, and a reporter whose counters cannot be grepped — and what to do when a test-count floor moves: the file-count floor is derived from a declared inventory, so only the pass-count floor is ever a number you touch by hand. Also how to bump the audit-core pin and prove the audit's behaviour did not change.
+tags: [ci, npm, lockfile, verification, fail-open, plugin-artifact, audit-core, pin-bump]
 status: stable
 generated: { by: process:plan-task, at: 2026-09-19T00:00:00Z }
 ---
@@ -125,6 +125,45 @@ the maintainer's git checkout only. Consumers are unaffected, because Claude Cod
 performs their install once per cached plugin version and their audit makes no
 registry call. CI and `commands.validate` both pass `--ignore-scripts`, matching
 the install Claude Code performs.
+
+## Bumping the `@genvidtech/audit-core` pin
+
+The MCP pins have their own page ([Verifying an MCP pin bump](pin-bump-verification.md)).
+This dependency does not, and its checks are different: nothing here is a tool surface,
+and the question is only whether the audit still behaves the same. Worked out on #139
+(0.2.0 → 0.2.1). Do the steps in this order, because step 2 cannot be done afterwards.
+
+1. **Diff the two published tarballs before trusting the issue.** `npm pack` both
+   versions in a scratch directory sealed with a `{}` `package.json` (otherwise npm
+   resolves against `%TEMP%`'s own manifest), extract them, and `diff -r`. #139 said the
+   only shipped change was a `.d.ts` comment. The diff also showed the exported `VERSION`
+   constant and the package's own `package.json` changing. Neither mattered, but only the
+   diff could say so. Compare `dependencies` and `engines` explicitly: a new runtime
+   dependency is what consumers would actually receive.
+2. **Capture the audit at the repo root before installing anything.** Run `audit.mjs`
+   from the repo root with `C3_PROJECT_DIR` unset, normalise stdout and stderr with
+   `scripts/lib/audit-diff.mjs`'s `normalise`, and save them with the exit code. Take it
+   twice and `cmp` the two runs, so a later difference can't be noise. Re-run it after
+   step 3 and `cmp` against the baseline. Once the install happens, nothing can rebuild
+   the "before", so this row is point-in-time.
+3. **Install exactly that version, and nothing else.**
+   `npm install @genvidtech/audit-core@<v> --save-exact --prefix plugin --ignore-scripts`.
+   Then read `git diff plugin/package-lock.json`: only the audit-core entry (version,
+   `resolved`, `integrity`) and the root `dependencies` line should move. Check the
+   `integrity` against `npm view @genvidtech/audit-core@<v> dist.integrity`.
+4. **Run the before/after harness after committing.**
+   `node scripts/audit-diff.mjs origin/main HEAD` installs each side from its own
+   lockfile, so it compares the two pins on four fixture projects, not just what is on
+   disk. It needs the bump committed. Exit 0 means every fixture matched on stdout,
+   stderr and exit code, and its built-in control still separates two different repos.
+5. **Run the gate.** Three tests (`frontmatter`, `frontmatter-branches`,
+   `config-resolve`) import audit-core directly. ADR 0022 names them as the early warning
+   for a behaviour change in a bump.
+6. **The CHANGELOG entry depends on the release.** If the pin being replaced has never
+   been released, correct the `[Unreleased]` entry that introduced it rather than adding a
+   second bullet, since no consumer ever received the old pin. Once a pin has shipped, a
+   bump gets its own entry. ADR 0022 keeps naming the version it adopted; it is a record,
+   and is not swept.
 
 ## Do not wire a red-on-main checker into CI
 
