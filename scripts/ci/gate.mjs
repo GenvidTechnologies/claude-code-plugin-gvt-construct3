@@ -90,6 +90,7 @@ const SUITES = [
     glob: 'scripts/test/*.test.mjs',
     // The file-count floor is this list's length — see the header comment.
     expect: [
+      'scripts/test/audit-diff.test.mjs',
       'scripts/test/audit-snapshot.test.mjs',
       'scripts/test/doc-anchors.test.mjs',
       'scripts/test/floor-stale.test.mjs',
@@ -98,7 +99,7 @@ const SUITES = [
       'scripts/test/plugin-manifest.test.mjs',
       'scripts/test/test-surface.test.mjs',
     ],
-    minPass: 95,
+    minPass: 119,
   },
 ];
 
