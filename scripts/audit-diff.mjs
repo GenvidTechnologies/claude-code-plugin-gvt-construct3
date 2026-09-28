@@ -38,7 +38,8 @@
 // differ. If they don't, the fixture pair can't tell two different repos
 // apart and the run fails regardless of what the before/after diffs found.
 //
-// Exit codes: 0 every fixture identical and the control distinguishes; 1 a
+// Exit codes: 0 every fixture identical (output and exit code) and the
+// control distinguishes; 1 a
 // fixture differs, is not-run (either side's audit exited 2 — missing
 // plugin dependencies or a failed preflight), or the control is inert, or a
 // side failed to resolve/install/run; 2 a usage error (bad argument, or a
@@ -153,6 +154,9 @@ function resolveSide(ref) {
   }
   const sha = resolveRef(ref);
   const parent = mkdtempSync(join(tmpdir(), 'gvt-construct3-audit-diff-'));
+  // Track the dir before `git worktree add` can fail, so a failed add
+  // doesn't leak it.
+  scratchDirs.push(parent);
   const wtPath = join(parent, 'wt');
   const add = git(['worktree', 'add', '--detach', toPosix(wtPath), sha]);
   if (add.error) {
@@ -162,7 +166,6 @@ function resolveSide(ref) {
     throw new Error(`git worktree add failed for "${ref}" (${sha}):\n${(add.stderr || '').trim()}`);
   }
   createdWorktrees.push(wtPath);
-  scratchDirs.push(parent);
   return { ref, sha, isWorktree: false, root: wtPath };
 }
 

@@ -193,6 +193,10 @@ It checks each ref out into a temporary worktree and installs that ref's own
 project in `scripts/test/fixtures/audit-diff/`, with the fixture as the working
 directory. For each fixture it prints `IDENTICAL` or a unified diff, alongside
 each side's exit code, and it fails when its control fixture matches `rooted`.
+It exits `0` only when every fixture is identical, in output and exit code, and
+the control distinguishes. It exits `1` on any difference, on an inert control,
+or when a side could not run; an audit that stops at its dependency preflight
+counts as not run. It exits `2` on a usage error or a ref that doesn't resolve.
 Every run makes live `npx` MCP probes, so a registry failure can show up as a
 difference. Read the diff before believing it.
 

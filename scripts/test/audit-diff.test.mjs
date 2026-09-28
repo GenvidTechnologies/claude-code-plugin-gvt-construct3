@@ -106,6 +106,12 @@ test('fixtureVerdict: a genuine stdout difference is reported as different', () 
   assert.deepEqual(fixtureVerdict(before, after), { verdict: 'different' });
 });
 
+test('fixtureVerdict: identical output with a different exit code is reported as different', () => {
+  const before = { status: 0, stdout: 'a', stderr: '' };
+  const after = { status: 1, stdout: 'a', stderr: '' };
+  assert.deepEqual(fixtureVerdict(before, after), { verdict: 'different' });
+});
+
 // ---------------------------------------------------------------------
 // control check — R6
 // ---------------------------------------------------------------------

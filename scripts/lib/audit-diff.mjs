@@ -92,7 +92,9 @@ export function fixtureVerdict(before, after) {
         'plugin dependencies are missing, or the audit failed its preflight (exit 2)',
     };
   }
-  if (combinedOutput(before) === combinedOutput(after)) {
+  // The exit code is part of the audit's behaviour: identical text with a
+  // different status is still a difference.
+  if (before.status === after.status && combinedOutput(before) === combinedOutput(after)) {
     return { verdict: 'identical' };
   }
   return { verdict: 'different' };
