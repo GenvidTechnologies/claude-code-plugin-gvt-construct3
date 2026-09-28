@@ -176,7 +176,29 @@ The verdict logic is the pure `scripts/lib/mcp-check.mjs`; `audit.mjs` only read
 |---|---|
 | `0` | All required expectations met |
 | `1` | An `error` finding |
-| `2` | Unexpected script error |
+| `2` | The dependency preflight failed (`plugin/node_modules` is missing or incomplete; run `npm ci --prefix plugin`), or an unexpected script error |
+
+## Verifying a change leaves the output unchanged
+
+When a change to `audit-c3-conventions` should not change what it reports, check that
+with the kept harness `scripts/audit-diff.mjs` (#136), not a one-off comparison:
+
+```bash
+node scripts/audit-diff.mjs                  # origin/main vs the working tree
+node scripts/audit-diff.mjs v3.0.0 HEAD      # any two refs
+```
+
+It checks each ref out into a temporary worktree and installs that ref's own
+`plugin/` dependencies. It then runs the ref's `audit.mjs` against each fixture
+project in `scripts/test/fixtures/audit-diff/`, with the fixture as the working
+directory. For each fixture it prints `IDENTICAL` or a unified diff, alongside
+each side's exit code, and it fails when its control fixture matches `rooted`.
+It exits `0` only when every fixture is identical, in output and exit code, and
+the control distinguishes. It exits `1` on any difference, on an inert control,
+or when a side could not run; an audit that stops at its dependency preflight
+counts as not run. It exits `2` on a usage error or a ref that doesn't resolve.
+Every run makes live `npx` MCP probes, so a registry failure can show up as a
+difference. Read the diff before believing it.
 
 [^claude-md]: CLAUDE.md, "The convention contract & the audit".
 
