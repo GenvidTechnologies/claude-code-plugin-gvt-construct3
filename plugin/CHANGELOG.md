@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-09-28
+
 ### Added
 - **The plugin subtree now carries a `package.json` and a committed
   `package-lock.json`.** Two new files — `plugin/package.json` and
