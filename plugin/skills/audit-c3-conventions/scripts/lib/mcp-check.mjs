@@ -132,21 +132,39 @@ export function buildNpxInvocation(spec, platform) {
 // machine). The empty `{}` package.json stops npm's upward walk at the
 // sealed directory. See ADR 0021.
 //
-//   spec    — the exact spec to probe, e.g. "@genvidtech/construct3-chef@2.0.0".
-//   spawn   — injected spawn function (spawnSync's signature); required, so
-//             this is exercisable without ever shelling out to real npx.
-//   tmpRoot — defaults to os.tmpdir(); overridable for tests.
-export function probeMcpPackage(spec, { spawn, tmpRoot = os.tmpdir() } = {}) {
+// `spec` is validated against the @scope/name@x.y.z allow-list
+// before it reaches a shell (on win32 it is spliced into one cmd.exe command
+// string). Validation rather than quoting, because cmd.exe can't reliably
+// escape `"` or `%`. A rejected spec never reaches spawn and creates no
+// probe directory. See ADR 0023.
+//
+//   spec     — the exact spec to probe, e.g. "@genvidtech/construct3-chef@2.0.0".
+//   spawn    — injected spawn function (spawnSync's signature); required, so
+//              this is exercisable without ever shelling out to real npx.
+//   tmpRoot  — defaults to os.tmpdir(); overridable for tests.
+//   platform — defaults to process.platform; overridable for tests so both
+//              the win32 and non-win32 invocation shapes are exercisable on
+//              any host.
+export function probeMcpPackage(spec, { spawn, tmpRoot = os.tmpdir(), platform = process.platform } = {}) {
+  if (!isProbeableSpec(spec)) {
+    return {
+      status: null,
+      stdout: '',
+      error: new Error(`refusing to probe ${JSON.stringify(spec)}: not of the form @scope/name@x.y.z`),
+    };
+  }
+
   const dir = mkdtempSync(join(tmpRoot, 'gvt-construct3-mcp-probe-'));
 
   try {
     // Inside the try so a failed write still removes the dir and is reported
     // as a probe error rather than thrown out of the audit.
     writeFileSync(join(dir, 'package.json'), '{}');
-    const result = spawn('npx', ['-y', spec, '--version'], {
+    const inv = buildNpxInvocation(spec, platform);
+    const result = spawn(inv.command, inv.args, {
       cwd: dir,
       encoding: 'utf8',
-      shell: process.platform === 'win32',
+      shell: inv.shell,
     });
     return {
       status: result.status ?? null,

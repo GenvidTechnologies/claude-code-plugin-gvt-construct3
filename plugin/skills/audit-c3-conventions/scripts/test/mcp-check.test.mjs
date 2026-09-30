@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, readFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, rmSync, readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import os from 'node:os';
@@ -198,6 +198,24 @@ test('evaluateMcpExpectation: probe.error surfaces as not-reachable with the err
   assert.match(finding.detail, /boom/);
 });
 
+test('evaluateMcpExpectation: a rejected spec reads as not reachable via npx', () => {
+  const probe = probeMcpPackage('@genvidtech/x@1.0.0 & echo INJECTED', {
+    spawn: () => {
+      throw new Error('spawn must not be called for a rejected spec');
+    },
+  });
+  const finding = evaluateMcpExpectation({
+    component: { name: 'construct3-chef' },
+    entry: { server: 'construct3-chef', required: true, reason: 'x' },
+    pin: '2.0.0',
+    probe,
+  });
+  assert.equal(finding.ok, false);
+  assert.equal(finding.severity, 'error');
+  assert.match(finding.detail, /not reachable via npx/);
+  assert.match(finding.detail, /refusing to probe/);
+});
+
 // ---- evaluateMcpExpectation: required -------------------------------------
 
 test('evaluateMcpExpectation: required default → required: true on an ok finding', () => {
@@ -271,8 +289,10 @@ test('probeMcpPackage: seals the probe from process.cwd() and cleans up afterwar
     assert.equal(resultB.status, 0);
 
     for (const call of calls) {
-      assert.equal(call.cmd, 'npx');
-      assert.equal(call.args[1], spec);
+      assert.equal(
+        [call.cmd, ...call.args].join(' ').split(/\s+/).filter((t) => t === spec).length,
+        1,
+      );
       assert.equal(call.pkgJson, '{}');
       assert.equal(call.existedDuringCall, true, 'the sealed dir exists while spawn runs');
       assert.ok(!call.opts.cwd.startsWith(dirA), 'probe cwd is not under dirA');
@@ -316,6 +336,54 @@ test('probeMcpPackage: platform win32 passes one command string with shell and n
     assert.equal(call.opts.shell, true);
     assert.equal(call.pkgJson, '{}');
     assert.equal(existsSync(call.opts.cwd), false);
+  } finally {
+    rmSync(tmpRoot, { recursive: true, force: true });
+  }
+});
+
+test('probeMcpPackage: platform linux passes npx an args array without shell', () => {
+  const tmpRoot = mkdtempSync(join(os.tmpdir(), 'gvt-construct3-mcp-check-test-linux-'));
+  const spec = '@genvidtech/c3-domain-manager@0.11.0';
+  const calls = [];
+
+  const fakeSpawn = (cmd, args, opts) => {
+    const pkgJson = readFileSync(join(opts.cwd, 'package.json'), 'utf8').trim();
+    calls.push({ cmd, args, opts, pkgJson });
+    return { status: 0, stdout: '0.11.0\n' };
+  };
+
+  try {
+    const result = probeMcpPackage(spec, { spawn: fakeSpawn, tmpRoot, platform: 'linux' });
+
+    assert.equal(result.status, 0);
+    assert.equal(calls.length, 1);
+    const call = calls[0];
+    assert.equal(call.cmd, 'npx');
+    assert.deepEqual(call.args, ['-y', spec, '--version']);
+    assert.equal(call.opts.shell, false);
+    assert.equal(call.pkgJson, '{}');
+    assert.equal(existsSync(call.opts.cwd), false);
+  } finally {
+    rmSync(tmpRoot, { recursive: true, force: true });
+  }
+});
+
+test('probeMcpPackage: a malformed spec never reaches spawn and creates no probe dir', () => {
+  const tmpRoot = mkdtempSync(join(os.tmpdir(), 'gvt-construct3-mcp-check-test-malformed-'));
+  const spec = '@genvidtech/x@1.0.0 & echo INJECTED';
+  let spawnCalls = 0;
+  const fakeSpawn = () => {
+    spawnCalls += 1;
+    return { status: 0, stdout: '' };
+  };
+
+  try {
+    const result = probeMcpPackage(spec, { spawn: fakeSpawn, tmpRoot });
+
+    assert.equal(spawnCalls, 0);
+    assert.deepEqual(readdirSync(tmpRoot), []);
+    assert.equal(result.status, null);
+    assert.match(result.error.message, /refusing to probe/);
   } finally {
     rmSync(tmpRoot, { recursive: true, force: true });
   }
