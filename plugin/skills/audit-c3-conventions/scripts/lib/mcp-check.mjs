@@ -94,6 +94,29 @@ export function evaluateMcpExpectation({ component, entry, pin, probe }) {
   return { kind: 'mcp', component: component.name, target: server, ok: true, required, detail: pin };
 }
 
+// Matches exactly a scoped package name plus an exact `x.y.z` version, e.g.
+// `@genvidtech/construct3-chef@2.0.0` — nothing looser (no ranges, no
+// unscoped names, no trailing junk) is considered probeable.
+export const PROBE_SPEC_RE = /^@[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*@\d+\.\d+\.\d+$/;
+
+// True when `spec` is exactly a scoped-package-name@x.y.z string — the only
+// shape safe to hand to a probe invocation.
+export function isProbeableSpec(spec) {
+  return typeof spec === 'string' && PROBE_SPEC_RE.test(spec);
+}
+
+// Builds the { command, args, shell } spawn triple for probing `spec` via
+// npx. On win32 npx is a `.cmd` shim that needs a shell, so it's passed as
+// one shell-interpreted command string with no args array (an args array
+// alongside `shell: true` is deprecated as DEP0190); elsewhere it's the
+// plain executable with its args split out and no shell.
+export function buildNpxInvocation(spec, platform) {
+  if (platform === 'win32') {
+    return { command: `npx -y ${spec} --version`, args: [], shell: true };
+  }
+  return { command: 'npx', args: ['-y', spec, '--version'], shell: false };
+}
+
 // Runs `npx -y <spec> --version` from a freshly created, empty-manifest
 // directory, so neither the invoking directory nor any of its ancestors can
 // change the result.

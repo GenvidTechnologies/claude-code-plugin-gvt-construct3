@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, readFileSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 
 import {
@@ -9,6 +10,7 @@ import {
   semverGte,
   evaluateMcpExpectation,
   probeMcpPackage,
+  isProbeableSpec,
 } from '../lib/mcp-check.mjs';
 
 // ---- findPinnedVersion -------------------------------------------------
@@ -333,4 +335,51 @@ test('probeMcpPackage: a throwing spawn is caught, not re-thrown, and the dir is
   assert.equal(result.error.message, 'boom');
   assert.ok(capturedCwd, 'spawn was called with a cwd');
   assert.equal(existsSync(capturedCwd), false);
+});
+
+// ---- isProbeableSpec --------------------------------------------------
+
+test('isProbeableSpec: accepts every spec plugin.json pins', () => {
+  const pluginJsonPath = resolve(
+    dirname(fileURLToPath(import.meta.url)),
+    '../../../../.claude-plugin/plugin.json',
+  );
+  const manifest = JSON.parse(readFileSync(pluginJsonPath, 'utf8'));
+
+  const pinnedSpecs = [];
+  for (const server of Object.values(manifest.mcpServers ?? {})) {
+    for (const arg of server.args ?? []) {
+      if (typeof arg === 'string' && /^@[^/]+\/[^@]+@\d+\.\d+\.\d+$/.test(arg)) {
+        pinnedSpecs.push(arg);
+      }
+    }
+  }
+
+  assert.ok(pinnedSpecs.length >= 2, 'expected at least 2 pinned specs in plugin.json');
+  for (const spec of pinnedSpecs) {
+    assert.equal(isProbeableSpec(spec), true, `expected ${spec} to be probeable`);
+  }
+});
+
+test('isProbeableSpec: rejects wrong-shape and shell-metacharacter specs', () => {
+  const badSpecs = [
+    '@genvidtech/x@1.0.0 & echo INJECTED',
+    '@genvidtech/x"@1.0.0',
+    '@genvidtech/x y@1.0.0',
+    '@genvidtech/x|y@1.0.0',
+    '@genvidtech/x@^1.0.0',
+    '@genvidtech/%PATH%@1.0.0',
+    '@genvidtech/x@1.0.0>out',
+    'construct3-chef@1.0.0',
+    '@genvidtech/x@latest',
+    '@genvidtech/x@>=1.0.0',
+    '',
+    undefined,
+    42,
+    '@genvidtech/x@1.0.0\n',
+  ];
+
+  for (const spec of badSpecs) {
+    assert.equal(isProbeableSpec(spec), false, `expected ${JSON.stringify(spec)} to be rejected`);
+  }
 });
