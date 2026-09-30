@@ -99,6 +99,14 @@ gate parses those lines by **literal prefix**, never a regex — an escape seque
 survives a shell round-trip as valid-but-different still compiles and still matches,
 just not what was meant.
 
+TAP's totals don't tell you whether a *named* test ran, though. With
+`--test-name-pattern`, a pattern that matches no test still reports
+`tests 1 / pass 1 / fail 0` and exits 0: the one "test" counted is the file itself.
+Measured 2026-09-30 in #142: `--test-name-pattern="zzz-no-such-test"` and the real
+`"semver: higher patch"` print identical summaries. To confirm a named test ran, grep
+the full-file TAP for its own line, `^ok [0-9]+ - <name>`, and treat a count of 0 as
+"did not run", not as "passed".
+
 The general shape behind all four: **a check that can degrade to "matches everything"
 or "matches nothing" is not a check.** Before adding one, say what it would print on a
 known-bad input. If the answer is "the same thing", it is decorative. Every step in

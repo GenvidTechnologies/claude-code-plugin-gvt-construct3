@@ -63,7 +63,8 @@ node scripts/ci/gate.mjs
 # Validate the plugin manifest + structure (run before any release/PR)
 claude plugin validate plugin
 
-# Run a single test by name
+# Run a single test by name. A pattern matching NO test still prints "pass 1", so
+# confirm the name ran: add --test-reporter=tap and grep '^ok [0-9]+ - <name>'
 cd plugin && node --test --test-name-pattern="semver: higher patch" skills/audit-c3-conventions/scripts/test/audit.test.mjs
 
 # Run the audit validator against a consuming repo (CLAUDE_PLUGIN_ROOT points at plugin/)
