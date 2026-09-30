@@ -62,9 +62,9 @@
 //   rather than running `npm ci` with no manifest in that directory — npm
 //   would otherwise walk up to an ancestor's `package.json` and install the
 //   wrong thing (wiki/the-npm-surface-and-ci-gate.md).
-// - npm is resolved the way scripts/mcp-surface.mjs's `runNpm` does (copied
-//   here rather than imported — that helper is module-private there, by
-//   design, so each CLI owns its own copy).
+// - npm is resolved via scripts/lib/npm-invocation.mjs's `buildNpmInvocation`,
+//   the shared decision logic scripts/mcp-surface.mjs's `runNpm` also defers
+//   to.
 // - Paths handed to `git` as arguments are POSIX-slashed. `mkdtempSync`
 //   returns a native (backslash, on Windows) path, and a worktree/diff path
 //   embedding one has been the failure mode elsewhere in this repo's
@@ -89,6 +89,7 @@ import {
   computeExitCode,
   formatReport,
 } from './lib/audit-diff.mjs';
+import { buildNpmInvocation } from './lib/npm-invocation.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolvePath(__dirname, '..');
@@ -109,18 +110,16 @@ function toPosix(p) {
   return p.split('\\').join('/');
 }
 
-// Locates npm's own CLI entry point next to the running node binary, the
-// same approach scripts/mcp-surface.mjs's runNpm uses and for the same
-// reason: on Windows, npm ships as `npm.cmd`, a bare `spawn('npm', ...)`
-// fails to resolve it, and Node refuses to spawn a `.cmd` without `shell:
-// true` — running npm-cli.js directly with node sidesteps both.
+// Defers to scripts/lib/npm-invocation.mjs for how to invoke npm — on
+// Windows, npm.cmd needs a shell, and DEP0190 wants one validated command
+// string rather than an args array paired with `shell: true`.
 function runNpm(args, cwd) {
-  const npmCli = join(dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js');
-  if (existsSync(npmCli)) {
-    return spawnSync(process.execPath, [npmCli, ...args], { cwd, encoding: 'utf8' });
+  try {
+    const inv = buildNpmInvocation(args, { platform: process.platform, execPath: process.execPath, exists: existsSync });
+    return spawnSync(inv.command, inv.args, { cwd, encoding: 'utf8', shell: inv.shell });
+  } catch (error) {
+    return { status: null, stdout: '', stderr: '', error };
   }
-  const command = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  return spawnSync(command, args, { cwd, encoding: 'utf8', shell: process.platform === 'win32' });
 }
 
 function git(args, opts = {}) {
