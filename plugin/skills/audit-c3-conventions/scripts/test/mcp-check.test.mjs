@@ -292,6 +292,33 @@ test('probeMcpPackage: seals the probe from process.cwd() and cleans up afterwar
   }
 });
 
+test('probeMcpPackage: platform win32 passes one command string with shell and no args', () => {
+  const tmpRoot = mkdtempSync(join(os.tmpdir(), 'gvt-construct3-mcp-check-test-win32-'));
+  const spec = '@genvidtech/c3-domain-manager@0.11.0';
+  const calls = [];
+
+  const fakeSpawn = (cmd, args, opts) => {
+    const pkgJson = readFileSync(join(opts.cwd, 'package.json'), 'utf8').trim();
+    calls.push({ cmd, args, opts, pkgJson });
+    return { status: 0, stdout: '0.11.0\n' };
+  };
+
+  try {
+    const result = probeMcpPackage(spec, { spawn: fakeSpawn, tmpRoot, platform: 'win32' });
+
+    assert.equal(result.status, 0);
+    assert.equal(calls.length, 1);
+    const call = calls[0];
+    assert.equal(call.cmd, `npx -y ${spec} --version`);
+    assert.deepEqual(call.args, []);
+    assert.equal(call.opts.shell, true);
+    assert.equal(call.pkgJson, '{}');
+    assert.equal(existsSync(call.opts.cwd), false);
+  } finally {
+    rmSync(tmpRoot, { recursive: true, force: true });
+  }
+});
+
 test('probeMcpPackage: a throwing spawn is caught, not re-thrown, and the dir is still removed', () => {
   let capturedCwd;
   const throwingSpawn = (cmd, args, opts) => {
