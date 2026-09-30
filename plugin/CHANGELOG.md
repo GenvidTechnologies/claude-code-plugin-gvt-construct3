@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-09-30
+
 ### Fixed
 - **`audit-c3-conventions` no longer prints a `DEP0190` deprecation warning on
   Windows, and its MCP probe can no longer be tricked by a malformed spec (#142).**
