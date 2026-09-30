@@ -8,6 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **`audit-c3-conventions` no longer prints a `DEP0190` deprecation warning on
+  Windows, and its MCP probe can no longer be tricked by a malformed spec (#142).**
+  On Windows, `probeMcpPackage` passed `npx` an args array together with
+  `shell: true`. `npx` is `npx.cmd` there and needs a shell. Node 24 deprecates the
+  combination because the arguments are joined into the `cmd.exe` line unescaped.
+  So a spec carrying `& echo X` made an unreachable package read as reachable
+  (status 0). The probe now rejects any spec that isn't `@scope/name@x.y.z` before
+  it creates the probe directory, and it reports the rejection as the usual
+  `not reachable via npx` finding. On Windows it passes `npx` one command string
+  with no args array. On other platforms it passes an args array with no shell.
+  Verdicts for the pinned specs don't change. ADR 0023 records the decision.
+- **Dev workspace:** the `npm` fallback in `scripts/audit-diff.mjs` and
+  `scripts/mcp-surface.mjs` had the same args-array-plus-shell pairing
+  (`DEP0190`). Both now use the shared `scripts/lib/npm-invocation.mjs`, which
+  allow-lists each argument before building a single `npm.cmd` command string on
+  Windows (#142).
+
 ## [3.1.0] - 2026-09-28
 
 ### Added

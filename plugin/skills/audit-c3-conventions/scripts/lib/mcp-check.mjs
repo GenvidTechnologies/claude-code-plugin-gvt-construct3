@@ -94,6 +94,29 @@ export function evaluateMcpExpectation({ component, entry, pin, probe }) {
   return { kind: 'mcp', component: component.name, target: server, ok: true, required, detail: pin };
 }
 
+// Matches exactly a scoped package name plus an exact `x.y.z` version, e.g.
+// `@genvidtech/construct3-chef@2.0.0` — nothing looser (no ranges, no
+// unscoped names, no trailing junk) is considered probeable.
+export const PROBE_SPEC_RE = /^@[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*@\d+\.\d+\.\d+$/;
+
+// True when `spec` is exactly a scoped-package-name@x.y.z string — the only
+// shape safe to hand to a probe invocation.
+export function isProbeableSpec(spec) {
+  return typeof spec === 'string' && PROBE_SPEC_RE.test(spec);
+}
+
+// Builds the { command, args, shell } spawn triple for probing `spec` via
+// npx. On win32 npx is a `.cmd` shim that needs a shell, so it's passed as
+// one shell-interpreted command string with no args array (an args array
+// alongside `shell: true` is deprecated as DEP0190); elsewhere it's the
+// plain executable with its args split out and no shell.
+export function buildNpxInvocation(spec, platform) {
+  if (platform === 'win32') {
+    return { command: `npx -y ${spec} --version`, args: [], shell: true };
+  }
+  return { command: 'npx', args: ['-y', spec, '--version'], shell: false };
+}
+
 // Runs `npx -y <spec> --version` from a freshly created, empty-manifest
 // directory, so neither the invoking directory nor any of its ancestors can
 // change the result.
@@ -109,21 +132,39 @@ export function evaluateMcpExpectation({ component, entry, pin, probe }) {
 // machine). The empty `{}` package.json stops npm's upward walk at the
 // sealed directory. See ADR 0021.
 //
-//   spec    — the exact spec to probe, e.g. "@genvidtech/construct3-chef@2.0.0".
-//   spawn   — injected spawn function (spawnSync's signature); required, so
-//             this is exercisable without ever shelling out to real npx.
-//   tmpRoot — defaults to os.tmpdir(); overridable for tests.
-export function probeMcpPackage(spec, { spawn, tmpRoot = os.tmpdir() } = {}) {
+// `spec` is validated against the @scope/name@x.y.z allow-list
+// before it reaches a shell (on win32 it is spliced into one cmd.exe command
+// string). Validation rather than quoting, because cmd.exe can't reliably
+// escape `"` or `%`. A rejected spec never reaches spawn and creates no
+// probe directory. See ADR 0023.
+//
+//   spec     — the exact spec to probe, e.g. "@genvidtech/construct3-chef@2.0.0".
+//   spawn    — injected spawn function (spawnSync's signature); required, so
+//              this is exercisable without ever shelling out to real npx.
+//   tmpRoot  — defaults to os.tmpdir(); overridable for tests.
+//   platform — defaults to process.platform; overridable for tests so both
+//              the win32 and non-win32 invocation shapes are exercisable on
+//              any host.
+export function probeMcpPackage(spec, { spawn, tmpRoot = os.tmpdir(), platform = process.platform } = {}) {
+  if (!isProbeableSpec(spec)) {
+    return {
+      status: null,
+      stdout: '',
+      error: new Error(`refusing to probe ${JSON.stringify(spec)}: not of the form @scope/name@x.y.z`),
+    };
+  }
+
   const dir = mkdtempSync(join(tmpRoot, 'gvt-construct3-mcp-probe-'));
 
   try {
     // Inside the try so a failed write still removes the dir and is reported
     // as a probe error rather than thrown out of the audit.
     writeFileSync(join(dir, 'package.json'), '{}');
-    const result = spawn('npx', ['-y', spec, '--version'], {
+    const inv = buildNpxInvocation(spec, platform);
+    const result = spawn(inv.command, inv.args, {
       cwd: dir,
       encoding: 'utf8',
-      shell: process.platform === 'win32',
+      shell: inv.shell,
     });
     return {
       status: result.status ?? null,

@@ -165,8 +165,19 @@ package name (`npx construct3-chef` would 404), at the **pinned** version rather
 whose project satisfies the spec makes npx run a local bin instead of fetching, and
 `os.tmpdir()` alone can itself be such a project.
 
+The spec is checked against a strict `@scope/name@x.y.z` allow-list
+before it reaches a shell. On Windows `npx` is `npx.cmd`, which Node spawns only
+through `cmd.exe`, so the probe passes one command string with no args array there.
+An args array alongside `shell: true` is deprecated (`DEP0190`) and is concatenated
+into the command line unescaped. On other platforms it passes an args array with no
+shell. The spec is validated rather than quoted, because `cmd.exe` can't reliably
+escape `"` or `%`. A spec that fails the check never reaches `spawn` and creates no
+probe directory. It surfaces as the ordinary `not reachable via npx` finding with a
+`refusing to probe` detail.
+
 The decision and the measurements behind it are in
-[ADR 0021](/decisions/0021-mcp-check-reads-the-plugin-pin-and-probes-sealed.md).
+[ADR 0021](/decisions/0021-mcp-check-reads-the-plugin-pin-and-probes-sealed.md) and
+[ADR 0023](/decisions/0023-validate-spec-before-a-windows-shell-string.md).
 The verdict logic is the pure `scripts/lib/mcp-check.mjs`; `audit.mjs` only reads
 `plugin.json` and supplies the real `spawnSync`.
 

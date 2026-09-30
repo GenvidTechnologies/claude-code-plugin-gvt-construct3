@@ -59,7 +59,7 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve as resolvePath } from 'node:path';
+import { join, resolve as resolvePath } from 'node:path';
 import { createInterface } from 'node:readline';
 
 import {
@@ -69,6 +69,7 @@ import {
   probeSurface,
   resolveBinEntry,
 } from './lib/mcp-surface.mjs';
+import { buildNpmInvocation } from './lib/npm-invocation.mjs';
 
 const USAGE = [
   'Usage:',
@@ -169,21 +170,16 @@ function removeTempDir(tmpDir) {
   }
 }
 
-// Locates npm's own CLI entry point next to the running node binary and
-// runs it with `process.execPath`, so `npm install` never depends on how
-// `npm` resolves on PATH. On Windows, npm ships as `npm.cmd`, a bare
-// `spawn('npm', ...)` fails to resolve it, and Node >=20 refuses to spawn a
-// `.cmd` file at all without `shell: true` — running npm-cli.js directly
-// with node sidesteps both, and works identically off Windows. Falls back
-// to a shell-invoked `npm`/`npm.cmd` only when npm-cli.js isn't where a
-// standard Node install puts it (e.g. some non-standard node distributions).
+// Defers to scripts/lib/npm-invocation.mjs for how to invoke npm — on
+// Windows, npm.cmd needs a shell, and DEP0190 wants one validated command
+// string rather than an args array paired with `shell: true`.
 function runNpm(args, cwd) {
-  const npmCli = join(dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js');
-  if (existsSync(npmCli)) {
-    return spawnSync(process.execPath, [npmCli, ...args], { cwd, encoding: 'utf8' });
+  try {
+    const inv = buildNpmInvocation(args, { platform: process.platform, execPath: process.execPath, exists: existsSync });
+    return spawnSync(inv.command, inv.args, { cwd, encoding: 'utf8', shell: inv.shell });
+  } catch (error) {
+    return { status: null, stdout: '', stderr: '', error };
   }
-  const command = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  return spawnSync(command, args, { cwd, encoding: 'utf8', shell: process.platform === 'win32' });
 }
 
 async function runSpec(spec, opts) {
