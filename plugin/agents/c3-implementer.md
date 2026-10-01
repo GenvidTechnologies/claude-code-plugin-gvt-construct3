@@ -34,7 +34,7 @@ accuracy, not capability gating.)
 - `read-domain-index` — find files by feature area
 - `search` — regex search across extracted files (`type`: `dsl`, `ts`, `layout`, `md`, `json`, `idx`; `path`: optional subdirectory; `context`: lines around each match)
 - `search-docs` — look up C3 ACE reference (param names/types, expression syntax, condition/action ids) before authoring a recipe; covers custom addons always, and built-ins/layouts/scripting/Expression-language when the `c3-reference` cache is present (produced by the `build-reference` skill)
-- `resolve-anchor` — look up a DSL coordinate (line/SID/name) → JSON path + SID for stable recipe targeting
+- `resolve-anchor` — look up a DSL coordinate (line/SID/name) → JSON path + SID; target recipes by the SID, since the JSON path is positional and shifts when earlier siblings are inserted or removed
 - `validate-project` — dry-run sync of `project.c3proj` vs disk; reports drift before you `sync-project` (non-mutating)
 - `generate-sids` — mint fresh unique SIDs seeded from the registry (non-mutating); use these instead of hand-picking (gotcha #14)
 - `list-ops` — list the project's user-defined ops (parameterized recipe templates) with their parameters; use it to discover which `op-<name>` tools exist before applying one
@@ -132,9 +132,9 @@ High-frequency rules for authoring recipes. The full numbered list with details 
 11. **Dead sibling actions after a script replacement** — when a replacement script assigns a variable, audit the block for sibling `System.add-to-eventvar` / `set-eventvar-value` on the same variable (double-apply trap).
 12. **Dead-code removal must sweep all references** — when a recipe removes a `when:` condition, block, or write site, `rg` the whole repo for every reference. Readers left on a dead value become doubly dead.
 13. **`add-function` shorthand ignores `category`** — emits `functionCategory: ""`; verify and patch the JSON after apply.
-14. **Never hand-pick SIDs** — use `generateUniqueSid()` from construct3-chef (`c3/sidUtils.js`). Hand-picked values over `Number.MAX_SAFE_INTEGER` lose precision and C3 rejects the layout. An instance has exactly **one** `sid`; `sceneGraphData` references relatives by `uid`, not SID, so do not propagate a SID change into it.
+14. **Never hand-pick SIDs** — mint them with the `generate-sids` tool, which seeds from the project's SID registry. Hand-picked values over `Number.MAX_SAFE_INTEGER` lose precision and C3 rejects the layout. An instance has exactly **one** `sid`; `sceneGraphData` references relatives by `uid`, not SID, so do not propagate a SID change into it.
 15. **`template-name` on `Create object` must be a non-empty quoted name** (e.g. `"\"MyTemplate\""`). Empty values make C3 pick an arbitrary instance — non-deterministic (this is the recipe-param half; the runtime crash it causes is a *platform* gotcha, below).
-16. **Duplicate SID in a target file blocks `apply-recipe`** (`buildSidIndex` throws). `validate-recipe` does NOT catch it. Fix as a prep commit — reassign one occurrence to a fresh 15-digit SID, regenerate.
+16. **Duplicate SID in a target file blocks `apply-recipe`** — chef cannot index that file's SIDs, so the apply fails. `validate-recipe` does NOT catch it. Fix as a prep commit — reassign one occurrence to a fresh 15-digit SID minted with `generate-sids`, regenerate.
 
 ## C3 platform gotchas (canonical: `${CLAUDE_PLUGIN_ROOT}/docs/c3/construct3-guide.md`)
 
@@ -161,6 +161,7 @@ If making the change pass requires editing TypeScript files under the project's 
 6. **Fix and re-validate** — iterate until clean
 7. **Apply** — `apply-recipe` with txId from validation (auto-regenerates via the **bundled** chef — in a consuming repo, treat this as a *dry run* of the mutation and re-finalize `extracted/` with the repo-pinned command; see [Finalizing regeneration](#finalizing-regeneration--the-version-skew-dsl-drift-trap))
 8. **Verify** — `read-dsl` again to confirm changes
+9. **Report** — hand back per [Hand-back report](#hand-back-report).
 
 ## Finalizing regeneration — the version-skew DSL-drift trap
 
@@ -187,9 +188,21 @@ chef output. MCP `regenerate`/`apply-recipe` auto-regen is fine for *previewing*
 mutation, but the committed `extracted/` output must come from the repo-pinned
 command so it matches CI and the pre-push hook.
 
-**Before staging**, verify `git status` shows no skew-only drift: annotation-only
-changes (e.g. `(≠)` added on `comparison=` lines) in sheets your recipe didn't
-target are version-skew noise, not your change — revert them.
+### Positional renumbering is expected drift — never revert it
+
+A second kind of `extracted/` drift is caused by your change and must be committed with it. Generated identifiers are **positional**:
+
+- A script action's generated name, `<Sheet>_Event<N>_Act<M>` — in the DSL marker `script { // → <name>` and in the extracted TypeScript — numbers the action within its block. Inserting or removing an action renames every later script action **in that block**.
+- `Event<N>` counts events depth-first across the **whole sheet**. Inserting or removing a counting event renumbers every later event **in that sheet**, so script names change in events your recipe never targeted.
+- The SID registry is **one project-wide file**. Its location column records JSON array paths (e.g. `events[3].actions[1]`), so the same insert shifts the location rows of every later sibling, in a file that also holds rows for sheets you never touched.
+
+Which event kinds advance the counter is chef's rule and is not restated here: read `(construct3-chef, docs:///reference/generators)` § "C3 Event Numbering" before predicting a rename.
+
+None of this is version-skew noise. Reverting it leaves `extracted/` stale against the source JSON and fails the consumer's freshness check.
+
+After the insert, `git grep -F` each old generated name across the repo, outside `extracted/`, and confirm nothing still references it. A hit in a TypeScript module or test is a cross-domain edit — stop and report it (see [Cross-domain edits](#cross-domain-edits--stop-and-report-do-not-inline)).
+
+**Before staging**, sort every `extracted/` change into one of three classes. **Your change** — stage it. **Positional renumbering** ([above](#positional-renumbering-is-expected-drift--never-revert-it)) — renamed `Event<N>`/`Act<M>` script names in events your recipe didn't target, and shifted rows in the shared SID registry — stage it too, and never revert it. **Version-skew noise** — annotation-only changes (e.g. `(≠)` added on `comparison=` lines) in sheets your recipe didn't target — revert it. The revert rule applies to the third class only: a renamed identifier or a shifted registry row is never annotation-only.
 
 ## Commit Protocol
 
@@ -198,3 +211,12 @@ target are version-skew noise, not your change — revert them.
 - **Finalize `extracted/` with the consumer's repo-pinned generation command, not MCP `regenerate`, and confirm `git status` shows no version-skew-only DSL drift before staging** (see [Finalizing regeneration](#finalizing-regeneration--the-version-skew-dsl-drift-trap)).
 - Stage eventSheet JSON, layout JSON, AND extracted files together.
 - Use `git commit -n` if the orchestrator runs validation separately.
+
+## Hand-back report
+
+When you hand control back to the orchestrator, report:
+
+- **What changed** — the sheets, layouts, and objects your recipes touched, and the commits you made.
+- **Renamed generated identifiers, old → new** — every generated script name your change renumbered (e.g. `MySheet_Event12_Act3` → `MySheet_Event12_Act5`), read from the removed and added `// →` markers in your `extracted/` diff, plus how many SID-registry location rows shifted. Report them even when you expected them: a reviewer grading a "delta limited to X" criterion needs this list to tell expected renumbering from an unexpected change. If nothing was renamed, say so.
+- **Remaining references** — the result of the old-name `git grep`: none, or the files that still name an old identifier and that you did not edit (they are a cross-domain hand-back).
+- **Reverted noise** — any version-skew-only drift you reverted, so it is not mistaken for missing work.
