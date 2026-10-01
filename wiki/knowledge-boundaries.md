@@ -57,10 +57,13 @@ settles it, as amended by
 a `docs/c3` doc refers to construct3-chef by **capability**, and links to it by
 naming the `construct3-chef` server together with the `docs:///` URI of the
 resource. It never names chef's functions, modules, file paths, internal APIs,
-or MCP tools — **not even correct ones**. The normative form ships in
-[`plugin/CONVENTIONS.md`](../plugin/CONVENTIONS.md); this page deliberately does
-not restate it, so there is one canonical statement rather than two that can
-drift.
+or MCP tools — **not even correct ones**. The *link form* (server plus `docs:///`
+URI) ships in [`plugin/CONVENTIONS.md`](../plugin/CONVENTIONS.md) § Naming the
+docs resource, where a forker can read it. The capability-not-symbol rule itself
+is not restated in the shipped plugin: its canonical statement is ADR 0010,
+extended to agent bodies by
+[ADR 0024](/decisions/0024-agent-bodies-name-mcp-tools-never-chef-internals.md),
+which lets an agent body name chef's MCP tools but nothing beneath them.
 
 So: *"mint SIDs with your toolchain's generator"*, never *"call `mintUniqueSid()`
 from `src/c3/sidUtils.ts`"*.
