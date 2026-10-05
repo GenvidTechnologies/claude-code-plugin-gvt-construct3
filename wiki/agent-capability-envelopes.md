@@ -60,6 +60,20 @@ Because `c3-explorer`'s `tools:` is a hard allow-list, a read tool that a server
 bump adds but the list omits becomes **uncallable**. That makes tool-surface
 reconciliation a functional check, not a docs chore.
 
+## Name chef's tools, never chef's internals
+
+The same callable surface decides what an agent body may *name*. An agent body
+may name chef's MCP tools and the `(construct3-chef, docs:///…)` resource pair,
+because those are what the agent calls and what every pin bump reconciles. It
+never names chef's functions, modules, or source paths, not even correct ones:
+the agent cannot call them, and nothing reports it when they rot.
+`generateUniqueSid` stayed in `c3-implementer` gotcha #14 for six weeks after #69
+removed the same instruction from `docs/c3` (#145).
+[ADR 0024](/decisions/0024-agent-bodies-name-mcp-tools-never-chef-internals.md)
+records the rule. It extends the `docs/c3` rule in
+[The knowledge boundaries](/knowledge-boundaries.md) § "Name chef's *capability*,
+never chef's *symbol*" to agent bodies.
+
 [^claude-md]: CLAUDE.md, "Components" and "Respect each agent's capability
 envelope".
 
