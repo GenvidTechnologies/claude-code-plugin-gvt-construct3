@@ -65,6 +65,16 @@ each applies. Those are recon tools, not gate checks, and `diff-addon-aces` /
 > own `audit-c3-conventions` deliberately stays limited to contract
 > presence/reachability. See [Knowledge boundaries](#knowledge-boundaries).
 
+## Recommended: word regeneration-delta criteria to allow positional renumbering
+
+If your planning workflow pledges acceptance criteria for event-sheet changes, a criterion that bounds what regeneration may change ("the `extracted/` diff contains only the added actions") must not assume generated identifiers stay put. They are positional. Inserting or removing an action renames the generated script names (`<Sheet>_Event<N>_Act<M>`) of later actions in the same block. Inserting or removing a counting event renumbers `Event<N>` for every later event in that sheet. The project-wide SID registry's location rows shift with them. That drift is expected, and `c3-implementer` does not revert it. Which event kinds count is owned by the `construct3-chef` server's `docs:///reference/generators` resource.
+
+Word the criterion so the renumbering is allowed and still checked, for example:
+
+> The regeneration delta is limited to the added actions, plus positional renumbering of later generated script names and SID-registry locations; `git grep` for each renamed script name's old form finds no remaining reference.
+
+Planners read your repo's `CLAUDE.md` (or wiki), not this plugin, so put that sentence, or your own version of it, where they will find it. `c3-implementer` lists every renamed identifier (old → new) in its hand-back, which is what makes such a criterion gradable.
+
 ## Optional, project-owned context the plugin's agents read at runtime
 
 The genericized agents read project-specific conventions from the **consuming repo's `CLAUDE.md`** when present (they are not baked into the plugin):

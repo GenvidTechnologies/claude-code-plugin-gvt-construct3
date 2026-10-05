@@ -8,6 +8,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`c3-implementer` treats positional renumbering as expected regeneration drift
+  (#144).** Generated script names (`<Sheet>_Event<N>_Act<M>`) are positional.
+  Inserting or removing an action renames later script actions in its block.
+  Inserting or removing a counting event renumbers `Event<N>` for every later
+  event in the sheet. The project-wide SID registry's location rows shift with
+  them. A new subsection of "Finalizing regeneration" says this drift is caused
+  by the change and is committed with it, never reverted. It links the counting
+  rule as the `construct3-chef` server's `docs:///reference/generators` resource
+  rather than restating it. "Before staging" now sorts `extracted/` drift into
+  three classes (your change, positional renumbering, version-skew noise), and
+  only the third is reverted. After an insert, the agent searches for each old
+  generated name to confirm nothing still references it.
+- **`c3-implementer` has a hand-back report (#144).** It lists what changed,
+  every renamed generated identifier as old → new with the count of shifted
+  SID-registry rows, any remaining references to old names, and any reverted
+  noise. Recipe Workflow gains step 9, which points to it.
+- **`CONVENTIONS.md` recommends how to word a regeneration-delta acceptance
+  criterion (#144)** so that it allows positional renumbering and still checks
+  it, with a template to paste into the consuming repo's `CLAUDE.md` or wiki.
+  Planners read the consuming repo, not this plugin.
+
+### Changed
+- **`c3-implementer` gotcha #16 no longer names chef's internal `buildSidIndex`
+  (#145).** It now describes the duplicate-SID failure in terms of what the agent
+  observes, and mints the replacement SID with `generate-sids`. Behaviour is
+  unchanged. ADR 0024 records the rule: agent bodies may name chef's MCP tools,
+  never chef's functions, modules or source paths.
+
+### Fixed
+- **`c3-explorer` claimed DSL cross-references are "stable across edits"
+  (#144).** They are positional: a generated script name, a DSL line number and a
+  JSON path all change when an earlier event or action is inserted or removed.
+  The explorer now gives each location's SID as the durable anchor, labels
+  cross-references as positional, and warns when a finding is about to become a
+  scope criterion. Both agents' `resolve-anchor` descriptions also called its
+  output "stable"; they now say only the SID survives edits. **If a plan, report
+  or criterion anchors on a `<Sheet>_Event<N>_Act<M>` name or a JSON path,
+  re-anchor it on the SID.**
+- **`c3-implementer` gotcha #14 told the agent to call `generateUniqueSid()` from
+  `c3/sidUtils.js`, which chef no longer has (#145).** It now points to the
+  `generate-sids` tool. Its precision, one-`sid`, and `sceneGraphData`-by-`uid`
+  guidance is unchanged. #69 removed the same instruction from `docs/c3` but
+  missed this agent body.
+
 ## [3.1.1] - 2026-09-30
 
 ### Fixed

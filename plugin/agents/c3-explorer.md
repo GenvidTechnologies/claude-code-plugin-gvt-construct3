@@ -32,7 +32,7 @@ This is your full read-only surface across both pinned servers (`construct3-chef
 - `read-sid-registry` — the sorted registry of every SID used across eventSheets, layouts, and objectTypes
 - `read-addon` — addon ACEs and properties, plus the bundled package's own version/metadata decoded straight from the `.c3addon` (no manual unzip)
 - `search` — regex search across extracted files. `type` selects file set (`dsl` default, `ts`, `layout`, `md`, `json`, `idx`). `path` restricts to a subdirectory or single file. `context` adds surrounding lines (like `grep -C`)
-- `resolve-anchor` — look up a DSL coordinate by line number, SID, or name pattern; returns JSON path + SID for stable cross-references
+- `resolve-anchor` — look up a DSL coordinate by line number, SID, or name pattern; returns the JSON path and SID. Only the SID survives edits — the JSON path is positional (see Tips)
 - `list-event-sheets` / `list-layouts` — list all C3 files (paginated — `offset`/`limit`; large projects may need multiple calls). As of chef `1.1.0`, `list-layouts` returns **only `.json` files** — stray non-`.json` files under `layouts/` are no longer listed, so its absence from the output is not evidence a file is missing from disk
 - `list-global-layers` — each global layer with its source layout, overriding layouts, and instance count
 - `list-include-tree` — transitive include tree for an eventSheet (supports `functions` flag and `flat` mode)
@@ -72,7 +72,7 @@ Report what these surface; deciding *how* to resolve a drift (downgrade `project
 - **Start with `read-domain-index`** to find which files handle a feature area (it reports the project's actual domain counts — don't assume a fixed number).
 - **Use `search`** for symbol usage — DSL files contain only actual logic, not import preambles. Use `path` to target a single file or subdirectory
 - **`read-layout`** shows template bindings, scene-graph hierarchy, and container groups
-- **DSL cross-references** (e.g., `MyEventSheet_Event48_Act1`) are stable across edits — use them in reports
+- **DSL cross-references are positional, not stable.** A generated script name such as `MyEventSheet_Event48_Act1` encodes the event's position in the sheet and the action's position in its block, as do DSL line numbers and JSON paths like `events[3].actions[1]`. Inserting or removing an earlier event or action can rename them. The exact counting rule is in chef's tooling reference, which you cannot fetch, so hand that question to the orchestrator. In reports, give each location's SID as its durable anchor, and treat the cross-reference as a navigation aid valid only for the tree you read.
 - **DSL index files** are also on disk at `extracted/**/*.dsl.idx.txt` — you can Read/Grep them directly
 - **Tracing global variable writes**: Always grep the DSL file for the variable name (e.g., `search` for `someGlobalVar`). This catches both script assignments (`runtime.globalVars.X = ...`) and event actions (`System.set-eventvar-value(variable=X, ...)`). Script-only analysis misses event actions and can lead to wrong conclusions like "this function doesn't modify the variable."
 
@@ -120,4 +120,4 @@ You are read-only here as everywhere: never write to `wikiDir` or `rawDir`. Addi
 
 ## Output
 
-Return structured findings. Always include file paths and DSL cross-references so the orchestrator or other agents can act on your report.
+Return structured findings. Always include file paths, and for each event or action you point at give its SID — the anchor that survives edits — alongside any DSL cross-reference, so the orchestrator or other agents can act on your report. Label generated script names, DSL line numbers, and JSON paths as positional: they describe the tree as you read it. If a finding is likely to become a plan's scope criterion ("the regeneration delta is limited to X"), say that the criterion must allow for positional renumbering of later generated names and SID-registry locations rather than list today's identifiers as fixed.
