@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-10-05
+
 ### Added
 - **`c3-implementer` treats positional renumbering as expected regeneration drift
   (#144).** Generated script names (`<Sheet>_Event<N>_Act<M>`) are positional.
