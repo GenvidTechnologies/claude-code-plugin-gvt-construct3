@@ -58,9 +58,13 @@ from `npm pack`.
 | same | #60 argued `resolveRootFolder` was unaffected because 0.7.0's features looked unrelated | An argument from release notes — precisely the evidence a silent drift leaves undisturbed. [ADR 0007](/decisions/0007-verifying-the-resolverootfolder-mirror.md) replaces it with a mechanical two-part check |
 | chef 1.1.0 / dm 0.8.0 (#73/#74) | Both bodies again named only `plugin.json` as the pin site | **Omitted `c3-implementer.md` again** — the same file, the second consecutive bump |
 | same | #73 asserted **both** agents carry hard `tools:` allow-lists | Only `c3-explorer` does; `c3-implementer` has no `tools:` key and says so in its own body |
+| dm 0.11.1 (#147) | Pin sites given as `plugin.json` "plus any agent-doc prose naming the pinned version" | **Did not name `c3-implementer.md`**, which writes the version bare (`@0.11.0`, lines 63 and 65), so a `c3-domain-manager@` grep misses it too. This issue was **filed by hand**, not auto-filed |
 
 **`c3-implementer.md` is not an anecdote — it is the predictable failure mode.**
-Three data points across two consecutive bumps: assume the pin-location list is
+Four data points across three bumps, including a hand-filed issue, so the omission
+is not an artifact of bot-generated bodies. Find pin sites by grepping the **bare
+version string** (`0.11.0`), not `<package>@<version>`, because `c3-implementer.md`
+writes `@<version>` without the package name. Assume the pin-location list is
 short until you have grepped it yourself, and check `plugin/agents/c3-implementer.md`
 **first**, since it is the one that goes missing every time.
 
