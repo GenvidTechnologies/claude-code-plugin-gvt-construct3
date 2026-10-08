@@ -191,9 +191,18 @@ uses, so no `tar`), then reports:
   classified: a CHANGELOG history line or an unrelated `0.11.1` belonging to chef is
   yours to dismiss.
 
-Exit 0 means every check passed, 1 means some check failed or errored, and 2 means
-bad arguments. An unreadable file is an `[ERROR]`, never `[IDENTICAL]`. Run against dm
-`0.11.0` → `0.11.1` it reproduced #147's hand-run result exactly, and exited 0.
+Exit 0 means no check failed or errored (informational and not-applicable checks don't
+count against it), 1 means some check failed or errored, and 2 means bad arguments. An
+unreadable file is an `[ERROR]`, never `[IDENTICAL]`. A failure to remove the temp dirs
+afterwards is only a stderr warning and does not change the exit code; `--keep` leaves
+them in place and prints where. Run against dm `0.11.0` → `0.11.1` it reproduced #147's
+hand-run result exactly, and exited 0.
+
+Two limits. It needs the network, for the installs and for `npm view`. And on Windows,
+if npm's own `npm-cli.js` isn't found beside `node.exe`, the fallback route through
+`npm.cmd` refuses range characters (`^`, `<`, `>`, spaces) rather than pass them
+through a shell, so part 2 reports `[ERROR]` for any real range. That fails closed and
+never reads as a pass, but it means part 2 must then be checked by hand.
 
 ### When part 2 fails — the ADR 0009 escalation
 

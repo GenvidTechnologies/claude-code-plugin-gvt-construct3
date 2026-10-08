@@ -4,9 +4,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   parseReviewedBaseline,
@@ -319,7 +319,7 @@ function offline(extra = [], { newDir = 'new', oldDir = 'old', published = '0.10
   const tree = makePluginTree();
   try {
     return run([
-      '--from-dirs', join(FIX, oldDir), join(FIX, newDir),
+      '--from-dirs', resolve(FIX, oldDir), resolve(FIX, newDir),
       '--published', published,
       '--plugin-root', tree,
       ...extra,
@@ -342,9 +342,54 @@ test('cli: all-pass exits 0, locations.js identical, dist differences listed wit
   assert.match(r.stdout, /overall: OK/);
 });
 
-test('cli: package.json field differences are listed (bin/dependencies untouched here, version-only fixture)', () => {
+test('cli: package.json field differences are listed with old and new values (bin differs in the fixture)', () => {
   const r = offline();
   assert.match(r.stdout, /\[INFORMATIONAL\] package\.json fields that differ/);
+  assert.match(r.stdout, /bin:\s+old: \{"dm":"dist\/cli\.js"\}\s+new: \{"dm":"dist\/cli\.js","dm2":"dist\/cli2\.js"\}/);
+});
+
+// Copies the old/new fixtures into a temp dir, optionally rewriting the package
+// name on both sides or the new package.json text, so a fixture can vary
+// without committing another copy.
+function withFixtureCopy({ rewriteNew, rewriteName }, fn) {
+  const base = mkdtempSync(join(realpathSync.native(tmpdir()), 'pin-bump-fix-'));
+  try {
+    cpSync(join(FIX, 'old'), join(base, 'old'), { recursive: true });
+    cpSync(join(FIX, 'new'), join(base, 'new'), { recursive: true });
+    for (const side of ['old', 'new']) {
+      const p = join(base, side, 'package.json');
+      let text = readFileSync(p, 'utf8');
+      if (rewriteName) text = text.replace('@genvidtech/c3-domain-manager', rewriteName);
+      if (side === 'new' && rewriteNew) text = rewriteNew(text);
+      writeFileSync(p, text);
+    }
+    return fn(base);
+  } finally {
+    rmSync(base, { recursive: true, force: true });
+  }
+}
+
+test('cli: an unparseable new package.json is a part 2 ERROR, never not-applicable', () => {
+  withFixtureCopy({ rewriteNew: (t) => t.slice(0, t.length - 30) }, (base) => {
+    const r = offline([], { oldDir: join(base, 'old'), newDir: join(base, 'new') });
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.match(r.stdout, /\[ERROR\] ADR 0007 part 2/);
+    assert.match(r.stdout, /cannot read the new package\.json/);
+    assert.doesNotMatch(r.stdout, /NOT-APPLICABLE\] ADR 0007 part 2/);
+    assert.match(r.stdout, /\[ERROR\] package\.json fields that differ/);
+    assert.match(r.stdout, /overall: NOT OK/);
+  });
+});
+
+test('cli: a --from-dirs package.json that does not match its spec is a usage error', () => {
+  const wrongVersion = offline([], { specs: [`${DM}@0.11.0`, `${DM}@0.11.2`] });
+  assert.equal(wrongVersion.status, 2);
+  assert.equal(wrongVersion.stdout, '');
+  assert.match(wrongVersion.stderr, /--from-dirs new dir declares .*c3-domain-manager@0\.11\.1, but the new spec is .*@0\.11\.2/);
+  assert.match(wrongVersion.stderr, /Usage:/);
+  const wrongName = offline([], { specs: ['@genvidtech/construct3-chef@0.11.0', '@genvidtech/construct3-chef@0.11.1'] });
+  assert.equal(wrongName.status, 2);
+  assert.match(wrongName.stderr, /--from-dirs old dir declares/);
 });
 
 test('cli: changed locations.js exits 1', () => {
@@ -355,7 +400,7 @@ test('cli: changed locations.js exits 1', () => {
 });
 
 test('cli: identical package.json fails the control and reports nothing else', () => {
-  const r = offline([], { newDir: 'old' });
+  const r = offline([], { newDir: 'old', specs: [SPECS[0], SPECS[0]] });
   assert.equal(r.status, 1);
   assert.equal(r.stdout, '');
   assert.match(r.stderr, /control FAILED/);
@@ -387,9 +432,11 @@ test('cli: pin-site sweep lists real hits, excludes node_modules and binaries', 
 
 test('cli: a package other than c3-domain-manager gets not-applicable for part 1', () => {
   const other = ['@genvidtech/construct3-chef@0.11.0', '@genvidtech/construct3-chef@0.11.1'];
-  const r = offline([], { specs: other });
-  assert.equal(r.status, 0, r.stdout + r.stderr);
-  assert.match(r.stdout, /\[NOT-APPLICABLE\] ADR 0007 part 1/);
+  withFixtureCopy({ rewriteName: '@genvidtech/construct3-chef' }, (base) => {
+    const r = offline([], { specs: other, oldDir: join(base, 'old'), newDir: join(base, 'new') });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(r.stdout, /\[NOT-APPLICABLE\] ADR 0007 part 1/);
+  });
 });
 
 test('cli: mismatched package names are a usage error', () => {

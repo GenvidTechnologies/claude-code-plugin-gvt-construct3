@@ -33,7 +33,9 @@
 //   --from-dirs <oldPkgDir> <newPkgDir>   skip install; dirs are package roots
 //   --published <v1,v2,...>               skip `npm view`; "" = no match
 //   --plugin-root <dir>                   sweep root override (default plugin/)
-// The specs are still required (they carry the package name and old version).
+// The specs are still required (they carry the package name and old version),
+// and each --from-dirs package.json must declare the matching name and version
+// (mismatch = usage error, exit 2).
 //
 // Exit codes: 0 when every check is pass/identical/not-applicable/informational;
 // 1 when any check fails or errors, an install fails, or the control fails;
@@ -82,6 +84,7 @@ const USAGE = [
   'Usage:',
   '  node scripts/pin-bump-check.mjs [--keep] <old-spec> <new-spec>',
   '  node scripts/pin-bump-check.mjs --from-dirs <oldPkgDir> <newPkgDir> [--published <v1,v2>] [--plugin-root <dir>] <old-spec> <new-spec>',
+  '  (--from-dirs, --published and --plugin-root are offline/test options; each --from-dirs package.json must match its spec name and version)',
   '  (specs look like @genvidtech/c3-domain-manager@0.11.1 and must name the same package)',
 ].join('\n');
 
@@ -152,10 +155,18 @@ function removeTempDir(dir) {
   }
 }
 
-function installSpec(spec, tmpBase) {
+// Creates a temp dir sealed with a `{}` package.json and registers it in
+// tmpDirs BEFORE anything can throw, so cleanup (and --keep's listing) sees it.
+function makeSealedDir(tmpBase, tmpDirs) {
   const tmpDir = mkdtempSync(join(tmpBase, 'gvt-construct3-pin-bump-'));
+  tmpDirs.push(tmpDir);
   // Seal FIRST — see design decisions.
   writeFileSync(join(tmpDir, 'package.json'), '{}\n');
+  return tmpDir;
+}
+
+function installSpec(spec, tmpBase, tmpDirs) {
+  const tmpDir = makeSealedDir(tmpBase, tmpDirs);
   const install = runNpm(['install', spec, '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'], tmpDir);
   if (install.error) throw new Error(`could not run npm install for ${spec}: ${install.error.message}`);
   if (install.status !== 0) {
@@ -172,11 +183,13 @@ function readSide(path) {
   }
 }
 
-function readJsonSafe(path) {
+// Never collapses an unreadable/unparseable file into an empty object: the
+// caller must see ok:false and turn it into an 'error' verdict.
+function readJson(path) {
   try {
-    return JSON.parse(readFileSync(path, 'utf8'));
-  } catch {
-    return null;
+    return { ok: true, value: JSON.parse(readFileSync(path, 'utf8')) };
+  } catch (err) {
+    return { ok: false, error: err.message };
   }
 }
 
@@ -207,10 +220,15 @@ function collectSweepFiles(root) {
   return files;
 }
 
-function mcpUtilsCheck({ oldPkg, newPkg, args, baseline, newRoot, tmpBase }) {
-  const oldRange = mcpUtilsRange(oldPkg);
-  const newRange = mcpUtilsRange(newPkg);
+function mcpUtilsCheck({ oldPkg, newPkg, args, baseline, newRoot, tmpBase, tmpDirs }) {
   const name = 'ADR 0007 part 2: mcp-utils range vs reviewed baseline';
+  for (const [label, pkg] of [['old', oldPkg], ['new', newPkg]]) {
+    if (!pkg.ok) {
+      return { name, verdict: 'error', message: `cannot read the ${label} package.json: ${pkg.error}` };
+    }
+  }
+  const oldRange = mcpUtilsRange(oldPkg.value);
+  const newRange = mcpUtilsRange(newPkg.value);
   if (!newRange) {
     return { name, verdict: 'not-applicable', message: `${args.name}@${args.newVersion} declares no ${MCP_UTILS} dependency` };
   }
@@ -220,14 +238,15 @@ function mcpUtilsCheck({ oldPkg, newPkg, args, baseline, newRoot, tmpBase }) {
     oldRange === newRange ? 'range did not move' : 'range MOVED',
     `reviewed baseline: {${baseline.join(', ')}}`,
   ];
-  const resolved = newRoot ? readJsonSafe(join(newRoot, 'node_modules', ...MCP_UTILS.split('/'), 'package.json')) : null;
-  details.push(`sealed install resolved ${MCP_UTILS}: ${resolved?.version ?? '(not available)'} (informational)`);
+  const resolved = newRoot ? readJson(join(newRoot, 'node_modules', ...MCP_UTILS.split('/'), 'package.json')) : null;
+  details.push(`sealed install resolved ${MCP_UTILS}: ${resolved?.ok ? (resolved.value?.version ?? '(not available)') : '(not available)'} (informational)`);
 
   let resolvable;
   if (args.published !== null) {
     resolvable = args.published.split(',').map((s) => s.trim()).filter(Boolean);
   } else {
-    const view = runNpm(['view', `${MCP_UTILS}@${newRange}`, 'version', '--json'], tmpBase);
+    // Sealed cwd: an unsealed %TEMP% can itself be an npm project.
+    const view = runNpm(['view', `${MCP_UTILS}@${newRange}`, 'version', '--json'], makeSealedDir(tmpBase, tmpDirs));
     if (view.error || view.status !== 0) {
       return {
         name,
@@ -247,10 +266,10 @@ function mcpUtilsCheck({ oldPkg, newPkg, args, baseline, newRoot, tmpBase }) {
   return { name, verdict: r.verdict, message: r.message, details };
 }
 
-function buildChecks(args, oldDir, newDir, newRoot, tmpBase) {
+function buildChecks(args, oldDir, newDir, newRoot, tmpBase, tmpDirs) {
   const checks = [];
-  const oldPkg = readJsonSafe(join(oldDir, 'package.json'));
-  const newPkg = readJsonSafe(join(newDir, 'package.json'));
+  const oldPkg = readJson(join(oldDir, 'package.json'));
+  const newPkg = readJson(join(newDir, 'package.json'));
 
   // Control (R4): the two package.json files must differ.
   const control = compareBytes(readSide(join(oldDir, 'package.json')), readSide(join(newDir, 'package.json')));
@@ -301,16 +320,24 @@ function buildChecks(args, oldDir, newDir, newRoot, tmpBase) {
     checks.push({ name: 'ADR 0007 part 2: mcp-utils range vs reviewed baseline', verdict: 'error', message: `cannot read the reviewed baseline: ${err.message}` });
     baseline = null;
   }
-  if (baseline) checks.push(mcpUtilsCheck({ oldPkg, newPkg, args, baseline, newRoot, tmpBase }));
+  if (baseline) checks.push(mcpUtilsCheck({ oldPkg, newPkg, args, baseline, newRoot, tmpBase, tmpDirs }));
 
   // package.json fields.
-  const diffs = diffPackageFields(oldPkg, newPkg);
-  checks.push({
-    name: 'package.json fields that differ',
-    verdict: 'informational',
-    message: diffs.length ? diffs.map((d) => d.field).join(', ') : 'none of the watched fields differ',
-    details: diffs.flatMap((d) => [`${d.field}:`, `  old: ${JSON.stringify(d.old) ?? '(absent)'}`, `  new: ${JSON.stringify(d.new) ?? '(absent)'}`]),
-  });
+  if (!oldPkg.ok || !newPkg.ok) {
+    checks.push({
+      name: 'package.json fields that differ',
+      verdict: 'error',
+      message: `cannot read package.json: ${[!oldPkg.ok && `old: ${oldPkg.error}`, !newPkg.ok && `new: ${newPkg.error}`].filter(Boolean).join('; ')}`,
+    });
+  } else {
+    const diffs = diffPackageFields(oldPkg.value, newPkg.value);
+    checks.push({
+      name: 'package.json fields that differ',
+      verdict: 'informational',
+      message: diffs.length ? diffs.map((d) => d.field).join(', ') : 'none of the watched fields differ',
+      details: diffs.flatMap((d) => [`${d.field}:`, `  old: ${JSON.stringify(d.old) ?? '(absent)'}`, `  new: ${JSON.stringify(d.new) ?? '(absent)'}`]),
+    });
+  }
 
   // Pin-site sweep.
   const root = args.pluginRoot ?? DEFAULT_PLUGIN_ROOT;
@@ -343,6 +370,25 @@ function main() {
     return;
   }
 
+  if (args.fromDirs) {
+    const sides = [
+      ['old', args.fromDirs[0], args.oldVersion],
+      ['new', args.fromDirs[1], args.newVersion],
+    ];
+    for (const [label, dir, version] of sides) {
+      const pkg = readJson(join(dir, 'package.json'));
+      // An unreadable package.json is NOT a usage error: the checks report it
+      // as an 'error' verdict instead. Only a readable mismatch is rejected here.
+      if (!pkg.ok) continue;
+      if (pkg.value?.name !== args.name || pkg.value?.version !== version) {
+        console.error(`--from-dirs ${label} dir declares ${pkg.value?.name}@${pkg.value?.version}, but the ${label} spec is ${args.name}@${version}`);
+        console.error(USAGE);
+        process.exitCode = 2;
+        return;
+      }
+    }
+  }
+
   const tmpBase = realpathSync.native(tmpdir());
   const tmpDirs = [];
   let result;
@@ -353,14 +399,12 @@ function main() {
     if (args.fromDirs) {
       [oldDir, newDir] = args.fromDirs;
     } else {
-      const oldRoot = installSpec(`${args.name}@${args.oldVersion}`, tmpBase);
-      tmpDirs.push(oldRoot);
-      newRoot = installSpec(`${args.name}@${args.newVersion}`, tmpBase);
-      tmpDirs.push(newRoot);
+      const oldRoot = installSpec(`${args.name}@${args.oldVersion}`, tmpBase, tmpDirs);
+      newRoot = installSpec(`${args.name}@${args.newVersion}`, tmpBase, tmpDirs);
       oldDir = join(oldRoot, 'node_modules', ...args.name.split('/'));
       newDir = join(newRoot, 'node_modules', ...args.name.split('/'));
     }
-    result = buildChecks(args, oldDir, newDir, newRoot, tmpBase);
+    result = buildChecks(args, oldDir, newDir, newRoot, tmpBase, tmpDirs);
   } catch (err) {
     console.error(err.message);
     process.exitCode = 1;
