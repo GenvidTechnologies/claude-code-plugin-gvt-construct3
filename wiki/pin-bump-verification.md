@@ -159,6 +159,42 @@ published packages**:[^adr-0007]
 practice — `audit.mjs` was left untouched as a **verified** conclusion rather than an
 assumed one.[^adr-0007]
 
+**Run both parts with the kept script, not by hand.** `scripts/pin-bump-check.mjs`
+(#148) replaces the ad-hoc `cmp` / `diff -rq` / `npm view` commands that every bump
+from #60 to #147 wrote fresh, each one a fresh chance at the fake passes listed above:
+
+```bash
+node scripts/pin-bump-check.mjs @genvidtech/c3-domain-manager@0.11.0 @genvidtech/c3-domain-manager@0.11.1
+```
+
+It installs both specs into sealed temp dirs (the same path `scripts/mcp-surface.mjs`
+uses, so no `tar`), then reports:
+
+- a **control**: the two `package.json` files must compare as different, or the run
+  aborts with exit 1 before any verdict, because a comparator that can't say
+  "different" can't be trusted to say "identical";
+- **part 1**: `dist/adapters/locations.js`, byte-compared, for `c3-domain-manager`
+  only (any other package gets an explicit `[NOT-APPLICABLE]`, not a silent skip);
+- a recursive `dist/` comparison, listing every differing file and the corpus size on
+  each side (`corpus: 80 file(s) old, 80 file(s) new` at #147). A differing `dist/` is
+  informational, but an empty one is an error;
+- **part 2**: both versions' `@genvidtech/mcp-utils` ranges, and the published versions
+  the new range resolves to (`npm view`), checked against the reviewed baseline. The
+  script reads that baseline from the `Reviewed baseline: {…}` comment in `audit.mjs`,
+  so **widening the baseline means editing that comment**, and the script picks it up.
+  A version outside it reports `FAILS procedurally — escalate per ADR 0009` and exits
+  1. The escalation itself (the closure diff below) is still done by hand;
+- the `package.json` fields that differ (`bin`, `dependencies`, …), so a CHANGELOG
+  "nothing changed" claim can name what was compared;
+- every line under `plugin/` (`node_modules` excluded) containing the **bare** old
+  version: the `c3-implementer.md` pin site included. Hits are printed, not
+  classified: a CHANGELOG history line or an unrelated `0.11.1` belonging to chef is
+  yours to dismiss.
+
+Exit 0 means every check passed, 1 means some check failed or errored, and 2 means
+bad arguments. An unreadable file is an `[ERROR]`, never `[IDENTICAL]`. Run against dm
+`0.11.0` → `0.11.1` it reproduced #147's hand-run result exactly, and exited 0.
+
 ### When part 2 fails — the ADR 0009 escalation
 
 Part 2 is a **cheap proxy**: "the range cannot move" is easy to evaluate and, when
