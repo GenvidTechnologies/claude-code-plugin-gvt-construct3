@@ -198,6 +198,13 @@ afterwards is only a stderr warning and does not change the exit code; `--keep` 
 them in place and prints where. Run against dm `0.11.0` → `0.11.1` it reproduced #147's
 hand-run result exactly, and exited 0.
 
+**Run it twice: before editing the pin sites, and again after.** The sweep searches
+for the *old* version. Before the edit, its hits are the to-do list, including the
+`c3-implementer.md` site. After the edit, only history should remain: CHANGELOG
+entries, test fixtures, and prose such as "Since `@0.11.0`", which is correct as
+written. A hit in `plugin.json`, an agent's pin heading, or `toolchain-config.md` after
+the edit means a site was missed.
+
 Two limits. It needs the network, for the installs and for `npm view`. And on Windows,
 if npm's own `npm-cli.js` isn't found beside `node.exe`, the fallback route through
 `npm.cmd` refuses range characters (`^`, `<`, `>`, spaces) rather than pass them
