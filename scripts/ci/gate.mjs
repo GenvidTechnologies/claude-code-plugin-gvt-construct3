@@ -97,10 +97,11 @@ const SUITES = [
       'scripts/test/index-mirrors.test.mjs',
       'scripts/test/mcp-surface.test.mjs',
       'scripts/test/npm-invocation.test.mjs',
+      'scripts/test/pin-bump-check.test.mjs',
       'scripts/test/plugin-manifest.test.mjs',
       'scripts/test/test-surface.test.mjs',
     ],
-    minPass: 125,
+    minPass: 173,
   },
 ];
 
