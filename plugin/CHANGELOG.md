@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **The bundled `c3-domain-manager` pin moves `@0.11.0` → `@0.11.1`.** No code
+  changed: the packed `dist/` trees are identical (`diff -rq` exit 0), and the
+  same 15 tool names register at both versions, so `c3-explorer`'s allow-list
+  needs no change. A live `resources/list` goes 41 → 42, purely additive
+  (`docs:///reference/key-dependencies`, the server's dependency adoption
+  history), so no resource citation moves. The package's `bin` entry drops its
+  leading `./`, which npm was already normalising on publish, so the
+  `npx -y … server` launch is unchanged. The `minVersion` floor holds at `0.6.1`,
+  so this is *not* breaking for consumers. The ADR 0007 mirror check passes
+  cleanly: `dist/adapters/locations.js` is byte-identical, and
+  `@genvidtech/mcp-utils` stays at `^0.10.0`, whose newest published version
+  (`0.10.0`) is already in the reviewed baseline. (#147)
+
 ## [3.2.0] - 2026-10-05
 
 ### Added
