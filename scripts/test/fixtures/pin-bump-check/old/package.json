@@ -1,0 +1,6 @@
+{
+  "name": "@genvidtech/c3-domain-manager",
+  "version": "0.11.0",
+  "bin": {"dm": "dist/cli.js"},
+  "dependencies": {"@genvidtech/mcp-utils": "^0.10.0"}
+}

@@ -3,7 +3,11 @@
 // range must come back as 'error', never as identical/pass.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   parseReviewedBaseline,
   compareBytes,
@@ -251,6 +255,12 @@ test('exitCodeFor: 0 only when every check is good', () => {
   assert.equal(exitCodeFor({ checks: [c('pass'), c('error')] }), 1);
 });
 
+test('exitCodeFor: informational is good, but only informational is not an excuse for an error', () => {
+  const c = (verdict) => ({ name: 'n', verdict });
+  assert.equal(exitCodeFor({ checks: [c('identical'), c('informational')] }), 0);
+  assert.equal(exitCodeFor({ checks: [c('informational'), c('error')] }), 1);
+});
+
 test('exitCodeFor: no checks is not a pass', () => {
   assert.equal(exitCodeFor({ checks: [] }), 1);
   assert.equal(exitCodeFor({}), 1);
@@ -279,4 +289,119 @@ test('formatReport: all-good result reports OK', () => {
   const text = formatReport({ checks: [{ name: 'range', verdict: 'pass', message: 'fine' }] }).join('\n');
   assert.match(text, /\[PASS\] range - fine/);
   assert.match(text, /overall: OK/);
+});
+
+// --- CLI end-to-end (offline: --from-dirs / --published / --plugin-root)
+
+const SCRIPT = fileURLToPath(new URL('../pin-bump-check.mjs', import.meta.url));
+const FIX = fileURLToPath(new URL('./fixtures/pin-bump-check/', import.meta.url));
+const DM = '@genvidtech/c3-domain-manager';
+const SPECS = [`${DM}@0.11.0`, `${DM}@0.11.1`];
+
+function run(argv) {
+  const r = spawnSync(process.execPath, [SCRIPT, ...argv], { encoding: 'utf8' });
+  return { status: r.status, stdout: r.stdout, stderr: r.stderr };
+}
+
+// node_modules is gitignored, so the sweep tree is built at runtime rather
+// than committed as a fixture.
+function makePluginTree() {
+  const root = mkdtempSync(join(realpathSync.native(tmpdir()), 'pin-bump-tree-'));
+  mkdirSync(join(root, 'agents'), { recursive: true });
+  mkdirSync(join(root, 'node_modules', 'dep'), { recursive: true });
+  writeFileSync(join(root, 'agents', 'impl.md'), 'pin: @genvidtech/c3-domain-manager@0.11.0\nunrelated 10.11.0 line\n');
+  writeFileSync(join(root, 'node_modules', 'dep', 'README.md'), 'vendored 0.11.0\n');
+  writeFileSync(join(root, 'blob.bin'), Buffer.from('bin\0 0.11.0\n'));
+  return root;
+}
+
+function offline(extra = [], { newDir = 'new', oldDir = 'old', published = '0.10.0', specs = SPECS } = {}) {
+  const tree = makePluginTree();
+  try {
+    return run([
+      '--from-dirs', join(FIX, oldDir), join(FIX, newDir),
+      '--published', published,
+      '--plugin-root', tree,
+      ...extra,
+      ...specs,
+    ]);
+  } finally {
+    rmSync(tree, { recursive: true, force: true });
+  }
+}
+
+test('cli: all-pass exits 0, locations.js identical, dist differences listed with corpus', () => {
+  const r = offline();
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(r.stderr, '');
+  assert.match(r.stdout, /\[IDENTICAL\] ADR 0007 part 1: dist\/adapters\/locations\.js/);
+  assert.match(r.stdout, /corpus: 2 file\(s\) old, 3 file\(s\) new/);
+  assert.match(r.stdout, /differs: index\.js/);
+  assert.match(r.stdout, /only in new: extra\.js/);
+  assert.match(r.stdout, /\[PASS\] ADR 0007 part 2/);
+  assert.match(r.stdout, /overall: OK/);
+});
+
+test('cli: package.json field differences are listed (bin/dependencies untouched here, version-only fixture)', () => {
+  const r = offline();
+  assert.match(r.stdout, /\[INFORMATIONAL\] package\.json fields that differ/);
+});
+
+test('cli: changed locations.js exits 1', () => {
+  const r = offline([], { newDir: 'new-changed-locations' });
+  assert.equal(r.status, 1);
+  assert.match(r.stdout, /\[DIFFERENT\] ADR 0007 part 1/);
+  assert.match(r.stdout, /overall: NOT OK/);
+});
+
+test('cli: identical package.json fails the control and reports nothing else', () => {
+  const r = offline([], { newDir: 'old' });
+  assert.equal(r.status, 1);
+  assert.equal(r.stdout, '');
+  assert.match(r.stderr, /control FAILED/);
+  assert.match(r.stderr, /compare identical/);
+});
+
+test('cli: a published version outside the baseline FAILS procedurally', () => {
+  const r = offline([], { published: '0.10.0,0.11.0' });
+  assert.equal(r.status, 1);
+  assert.match(r.stdout, /FAILS procedurally - escalate per ADR 0009|FAILS procedurally — escalate per ADR 0009/);
+  assert.match(r.stdout, /outside the reviewed baseline: 0\.11\.0/);
+});
+
+test('cli: an empty published list is an error, not a pass', () => {
+  const r = offline([], { published: '' });
+  assert.equal(r.status, 1);
+  assert.match(r.stdout, /\[ERROR\] ADR 0007 part 2/);
+  assert.doesNotMatch(r.stdout, /\[PASS\] ADR 0007 part 2/);
+});
+
+test('cli: pin-site sweep lists real hits, excludes node_modules and binaries', () => {
+  const r = offline();
+  assert.match(r.stdout, /agents\/impl\.md:1: pin: @genvidtech\/c3-domain-manager@0\.11\.0/);
+  assert.match(r.stdout, /1 line\(s\) across 1 file\(s\)/);
+  assert.doesNotMatch(r.stdout, /vendored/);
+  assert.doesNotMatch(r.stdout, /blob\.bin/);
+  assert.doesNotMatch(r.stdout, /10\.11\.0 line/);
+});
+
+test('cli: a package other than c3-domain-manager gets not-applicable for part 1', () => {
+  const other = ['@genvidtech/construct3-chef@0.11.0', '@genvidtech/construct3-chef@0.11.1'];
+  const r = offline([], { specs: other });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /\[NOT-APPLICABLE\] ADR 0007 part 1/);
+});
+
+test('cli: mismatched package names are a usage error', () => {
+  const r = run([`${DM}@0.11.0`, '@genvidtech/construct3-chef@0.11.1']);
+  assert.equal(r.status, 2);
+  assert.equal(r.stdout, '');
+  assert.match(r.stderr, /different packages/);
+  assert.match(r.stderr, /Usage:/);
+});
+
+test('cli: wrong spec count is a usage error', () => {
+  const r = run([SPECS[0]]);
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /exactly two specs/);
 });

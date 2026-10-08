@@ -221,10 +221,13 @@ export function sweepPinSites(files, version) {
   return hits;
 }
 
-const GOOD = new Set(['pass', 'identical', 'not-applicable']);
+// 'informational' is a check that reports facts a bump is EXPECTED to change
+// (dist differences, package.json fields, pin-site hits); it never fails the run.
+// A check that could not be performed is 'error', not 'informational'.
+const GOOD = new Set(['pass', 'identical', 'not-applicable', 'informational']);
 
 /**
- * 0 only if every check is pass/identical/not-applicable.
+ * 0 only if every check is pass/identical/not-applicable/informational.
  * @param {{ checks: { verdict: string }[] }} result
  */
 export function exitCodeFor(result) {
