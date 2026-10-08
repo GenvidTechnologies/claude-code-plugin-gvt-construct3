@@ -58,9 +58,13 @@ from `npm pack`.
 | same | #60 argued `resolveRootFolder` was unaffected because 0.7.0's features looked unrelated | An argument from release notes — precisely the evidence a silent drift leaves undisturbed. [ADR 0007](/decisions/0007-verifying-the-resolverootfolder-mirror.md) replaces it with a mechanical two-part check |
 | chef 1.1.0 / dm 0.8.0 (#73/#74) | Both bodies again named only `plugin.json` as the pin site | **Omitted `c3-implementer.md` again** — the same file, the second consecutive bump |
 | same | #73 asserted **both** agents carry hard `tools:` allow-lists | Only `c3-explorer` does; `c3-implementer` has no `tools:` key and says so in its own body |
+| dm 0.11.1 (#147) | Pin sites given as `plugin.json` "plus any agent-doc prose naming the pinned version" | **Did not name `c3-implementer.md`**, which writes the version bare (`@0.11.0`, lines 63 and 65), so a `c3-domain-manager@` grep misses it too. This issue was **filed by hand**, not auto-filed |
 
 **`c3-implementer.md` is not an anecdote — it is the predictable failure mode.**
-Three data points across two consecutive bumps: assume the pin-location list is
+Four data points across three bumps, including a hand-filed issue, so the omission
+is not an artifact of bot-generated bodies. Find pin sites by grepping the **bare
+version string** (`0.11.0`), not `<package>@<version>`, because `c3-implementer.md`
+writes `@<version>` without the package name. Assume the pin-location list is
 short until you have grepped it yourself, and check `plugin/agents/c3-implementer.md`
 **first**, since it is the one that goes missing every time.
 
@@ -265,6 +269,11 @@ exit 0). Part 2: the range stayed `^0.10.0`, and the published `mcp-utils` versi
 were `0.0.1` through `0.10.0` with no `0.11.0`, so the range could only resolve to
 `0.10.0`, already in the reviewed baseline. No ADR 0009/0015 escalation was owed.
 
+**The dm `0.11.0` → `0.11.1` bump (#147) passed ADR 0007 outright too**, on the
+same evidence. Part 1: `dist/adapters/locations.js` byte-identical (`cmp` exit 0).
+All of `dist/` was identical too (`diff -rq` exit 0). Part 2: the range stayed
+`^0.10.0`, and the newest published `mcp-utils` was still `0.10.0`.
+
 Part 2 will expire again the moment `mcp-utils 0.11.0` publishes.
 
 ## The explorer allow-list is *not* chef's `READ_ONLY` set
@@ -403,6 +412,7 @@ Measured this way on 2026-09-01, before rewriting any reference:
 | `@genvidtech/c3-domain-manager@0.9.0` | **37** |
 | `@genvidtech/c3-domain-manager@0.10.1` | **40** — re-probed 2026-09-15 (#107) |
 | `@genvidtech/c3-domain-manager@0.11.0` | **41** — probed 2026-09-23 (#130); purely additive, the one new entry is `docs:///decisions/0030-classification-coverage-gate`; nothing repathed or removed. The 0.10.1 arm, re-probed in the same run, still returned 40 — the control that the harness discriminates |
+| `@genvidtech/c3-domain-manager@0.11.1` | **42** — probed 2026-10-08 (#147) with `scripts/mcp-surface.mjs`; purely additive, the one new entry is `docs:///reference/key-dependencies`; nothing repathed or removed. The 0.11.0 arm, re-probed in the same run, still returned 41. Tools 15 → 15 with identical names, templates 1 → 1 |
 
 Both 2026-09-01 figures matched the counts the bump issues claimed, which is worth
 noting in the other direction: **the probe is cheap enough that confirming a correct
@@ -457,7 +467,7 @@ in `plugin/.claude-plugin/plugin.json`'s `mcpServers`.
 | construct3-chef | `regP("…")` (project-scoped) | `dist/mcp/server.js` | **37** at `2.0.0` — includes `list-ops`, moved in from `opsRegistry.js` at this bump |
 | construct3-chef | `reg("…")` (unscoped) | `dist/mcp/server.js` | **1** at `2.0.0` — `list-projects` only |
 | construct3-chef | total | — | **38** at `2.0.0` — was **37** at `1.2.0` (`reg()` **36** + `list-ops` **1**), **35**, **31** |
-| c3-domain-manager | `registerProjectTool` + one direct `registerTool` | `dist/mcp/server.js` | **15** at `0.11.0` — identical name set to `0.10.1` (`regenerate` gained a parameter, not a tool); was **14** at `0.7.0` → `0.9.0`, **13** before |
+| c3-domain-manager | `registerProjectTool` + one direct `registerTool` | `dist/mcp/server.js` | **15** at `0.11.1` — identical name set to `0.11.0` (#147); **15** at `0.11.0` — identical name set to `0.10.1` (`regenerate` gained a parameter, not a tool); was **14** at `0.7.0` → `0.9.0`, **13** before |
 
 > **dm changed its registration idiom at `0.10.0` — a bare `registerTool(` grep now
 > returns 2, not 15.** Per-project tools register through a `registerProjectTool(name, …)`
