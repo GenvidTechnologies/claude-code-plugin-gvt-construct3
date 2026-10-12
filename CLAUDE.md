@@ -54,7 +54,8 @@ Everything runs from the **repo root**. `commands.validate` in `.gvt-agent.json`
 `npm ci --prefix plugin --ignore-scripts --no-audit --no-fund && node scripts/ci/gate.mjs && claude plugin validate plugin`:
 
 ```bash
-# Install plugin/'s dependencies (needed once per checkout/worktree; validate runs it)
+# Install plugin/'s dependencies (needed once per checkout/worktree, and AGAIN after
+# switching to a branch whose plugin/package-lock.json differs; validate runs it)
 npm ci --prefix plugin --ignore-scripts --no-audit --no-fund
 
 # Both test suites, floor-asserted (this is what commands.validate and CI both run)

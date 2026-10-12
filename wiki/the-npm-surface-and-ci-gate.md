@@ -134,6 +134,14 @@ performs their install once per cached plugin version and their audit makes no
 registry call. CI and `commands.validate` both pass `--ignore-scripts`, matching
 the install Claude Code performs.
 
+**A bare `node scripts/ci/gate.mjs` does not reinstall, so `plugin/node_modules`
+follows the last install, not the branch you are on.** Switching to a branch whose
+`plugin/package-lock.json` differs leaves the previous branch's dependencies in
+place. Observed 2026-10-12: after the audit-core 0.3.0 branch, `main` still had
+0.3.0 installed, and its `frontmatter-branches` test would have failed for a reason
+unrelated to the branch. Re-run `npm ci --prefix plugin` after switching, or run the
+full `commands.validate`, which starts with it.
+
 ## Bumping the `@genvidtech/audit-core` pin
 
 The MCP pins have their own page ([Verifying an MCP pin bump](pin-bump-verification.md)).
@@ -148,6 +156,16 @@ and the question is only whether the audit still behaves the same. Worked out on
    constant and the package's own `package.json` changing. Neither mattered, but only the
    diff could say so. Compare `dependencies` and `engines` explicitly: a new runtime
    dependency is what consumers would actually receive.
+
+   **Then measure the effect on this repo, not just the files.** A file diff says what
+   changed, not what that does to *this repo's* frontmatter. Import each extracted
+   version's `src/index.mjs` by `file:///` URL (the newer one needs its own dependencies
+   installed beside it). Run each version's `walkComponents` over `plugin/`, and diff the
+   result component by component: the `expects`, plus any new keys such as `readError`
+   or `parseError`. On the 0.3.0 bump (#152) this is what found the one real change. Of
+   6 components, only `create-c3-op`'s `mcp` reason differed: 0.3.0 cut it at
+   `(construct3-chef`, because ` #` starts a YAML comment (#151). The file diff could
+   not have shown that.
 2. **Capture the audit at the repo root before installing anything.** Run `audit.mjs`
    from the repo root with `C3_PROJECT_DIR` unset, normalise stdout and stderr with
    `scripts/lib/audit-diff.mjs`'s `normalise`, and save them with the exit code. Take it
@@ -164,9 +182,12 @@ and the question is only whether the audit still behaves the same. Worked out on
    lockfile, so it compares the two pins on four fixture projects, not just what is on
    disk. It needs the bump committed. Exit 0 means every fixture matched on stdout,
    stderr and exit code, and its built-in control still separates two different repos.
-5. **Run the gate.** Three tests (`frontmatter`, `frontmatter-branches`,
-   `config-resolve`) import audit-core directly. ADR 0022 names them as the early warning
-   for a behaviour change in a bump.
+5. **Run the gate.** Four test files import audit-core directly: `frontmatter`,
+   `frontmatter-branches`, `config-resolve` and `audit`. (`preflight` only names the
+   package inside mocked error strings.) ADR 0022 names the first three as the early
+   warning for a behaviour change in a bump. On 0.3.0 that warning fired as intended:
+   one `frontmatter-branches` test went red, because `parseYaml` now returns `{}` for
+   malformed input.
 6. **The CHANGELOG entry depends on the release.** If the pin being replaced has never
    been released, correct the `[Unreleased]` entry that introduced it rather than adding a
    second bullet, since no consumer ever received the old pin. Once a pin has shipped, a
