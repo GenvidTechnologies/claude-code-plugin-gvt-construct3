@@ -173,11 +173,17 @@ full `owner/repo#<id>` form and apply `blocked-upstream` (see above).
 ## Mutation recipes
 
 The exact commands the triage skill runs to apply **approved** changes. `{id}`,
-`{type}`, `{text}`, `{canonical}`, `{other}`, `{title}`, `{body}`, `{tmpfile}`,
-`{triagedLabel}`, and `{needsInfoLabel}` are substituted by the skill. (There are
-no `{p}`/`{a}` substitutions — this repo has no priority or area labels.)
+`{type}`, `{otherTypes}`, `{text}`, `{canonical}`, `{other}`, `{title}`, `{body}`,
+`{tmpfile}`, `{triagedLabel}`, and `{needsInfoLabel}` are substituted by the skill.
+`{otherTypes}` is the comma-separated category set `bug,enhancement,documentation,question`
+**with `{type}` removed**. (There are no `{p}`/`{a}` substitutions — this repo has no
+priority or area labels.)
 
-- Set category: `gh issue edit {id} --remove-label "bug,enhancement,documentation,question" --add-label "{type}"`
+- Set category: `gh issue edit {id} --add-label "{type}" --remove-label "{otherTypes}"`. The
+  remove list must never contain `{type}` itself. When one `gh issue edit` call both adds
+  and removes the same label, which one wins is not deterministic. On 2026-10-12 the old
+  recipe, which removed the whole category set, dropped the label it had just added on
+  #151 (`bug`) and kept it on #152 (`enhancement`). Read the labels back after the edit.
 - Edit body (language fix / fill missing info): `gh issue edit {id} --body-file {tmpfile}` — the skill writes the approved new body to `{tmpfile}` first
 - Comment: `gh issue comment {id} --body "{text}"`
 - Flag missing info: `gh issue edit {id} --add-label {needsInfoLabel}` (i.e. `question`; pair with a Comment saying what's missing)
