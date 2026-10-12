@@ -355,6 +355,12 @@ editing the bundle or an agent body:
 node scripts/check-doc-anchors.mjs plugin/docs/c3/*.md plugin/agents/*.md
 ```
 
+It exits **2** on a usage error: when it is given no paths, or when a path can't
+be read. Before 2026-10-12 both cases printed `checked=0 dead=0` and exited 0, so
+a typo'd glob, or running it with no arguments, looked like a clean pass. A
+`checked=` figure of 0 is still worth reading as "nothing linked", not as
+evidence.
+
 It complements, rather than replaces, the three greps above: those catch
 referrers to a heading **you** are removing, while this catches a link whose
 target never existed or has already gone. See
