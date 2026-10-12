@@ -220,7 +220,9 @@ this bundle ([ADR 0012](/decisions/0012-retiring-docs-into-the-wiki-bundle.md)),
 reports a stable set of findings that are **known cost, not regression**. Subtract these
 before treating any output as a problem.
 
-Measured against **gvt-dev 4.26.0** (at `0a6bacc`, v3.0.0):
+Re-measured against **gvt-dev 4.33.0** on 2026-10-12 (at `71c7c6b`). Only the Practice
+Coverage row moved from the first measurement, which was against gvt-dev 4.26.0 at `0a6bacc`,
+v3.0.0:
 
 | Signal | Expected | Cause |
 |---|---|---|
@@ -228,7 +230,7 @@ Measured against **gvt-dev 4.26.0** (at `0a6bacc`, v3.0.0):
 | retired-token findings | **8** | The four deliberate retired-token citations this repo carries on purpose, each emitted twice because `scanRetiredTokens` unions the docs-root and wiki-dir walks and this repo's overrides make them the same directory. Tracked upstream as gvt-dev #453. |
 | orphaned-doc findings | **0** | **Not a pass**, same as before — but the mechanism changed. It used to be silently inert (`scanOrphanedDocs` looked for a `TOC.md` that this bundle names `index.md`). 4.26.0 now *announces* the skip, on the same ADR-0053 bundle-ownership grounds. Index completeness is still checked by hand. |
 | skip-notes | **2** (`info`) | New at 4.26.0: one `… were not link-checked` line naming the wiki file count, one `orphan check skipped` line. Both are the two rows above declaring themselves. |
-| Practice Coverage → Environment | **`partial adoption`** | **False.** `scripts/lib/practice-detect.mjs` hard-codes `SCHEMA_DOC = 'docs/wiki-schema.md'` and never consults `config.paths`, so this repo's `"docs/wiki-schema.md": "wiki/wiki-schema.md"` override is ignored — 5 of 6 signals present. gvt-dev **#467** (distinct from #390, which is `maintain-wiki`'s copy of the same hard-coding). |
+| Practice Coverage → Environment | **`adopted`** | **Correct since gvt-dev 4.30.0**, which fixed **#467** (closed 2026-10-11). `scripts/lib/practice-detect.mjs` now resolves the schema doc through `config.paths`, so this repo's `"docs/wiki-schema.md": "wiki/wiki-schema.md"` override is honoured. Up to 4.29.0 it hard-coded `SCHEMA_DOC = 'docs/wiki-schema.md'` and reported a false `partial adoption`, with 5 of 6 signals present. #390, `maintain-wiki`'s copy of the same hard-coding, is still open and did not gate this row. |
 | exit code | **0** | Only `error` severity moves the exit code; everything above is `warning` or `info`. |
 | scanned line | `scanned 21 file(s) under wiki/, CLAUDE.md` | `resolveDocsRoot` derives the docs-tier root from the `docs/TOC.md` override, so the scanners walk `wiki/`. The figure is one per `.md` under `wiki/` sitting outside `hygiene.excludePaths`, plus `CLAUDE.md` — currently 20 + 1. |
 
@@ -348,7 +350,8 @@ also said "when #390 lands the Practice Coverage row returns … to `adopted`", 
 `scripts/lib/practice-detect.mjs` and is tracked separately as **gvt-dev #467**. Fixing
 #390 alone would not have moved this row. **A residue row should cite the issue that
 gates *it*, not the nearest issue about the same bug** — the two can be fixed on
-different schedules.
+different schedules. That is what happened: #467 shipped in gvt-dev 4.30.0 and the row
+returned to `adopted`, while #390 is still open (re-measured 2026-10-12 on 4.33.0).
 
 Re-measure on the next gvt-dev bump rather than carrying this table forward — which is
 why this page's `stale_after` sits in the six-month bucket for version-pinned content
