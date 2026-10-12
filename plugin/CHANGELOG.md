@@ -27,9 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   components instead of rejecting (audit-core#5). Its dependency stays `yaml ^2.9.0`.
   `audit-c3-conventions` now reports a component whose file can't be read, or whose
   frontmatter is malformed, as an **error** finding naming the file and the parser's
-  `code: message`, and the audit exits 1. Before, such a component would have been
-  skipped and its `metadata.expects` would have silently disappeared from the report.
-  At the repo root the audit output is byte-identical before and after the bump.
+  `code: message`, and the audit exits 1. Under 0.2.1, an unreadable component
+  crashed the whole audit, and malformed frontmatter was partly parsed. With 0.3.0
+  but without this change, both kinds would have been skipped, and their
+  `metadata.expects` would have silently disappeared from the report. One other
+  parse change: `''` inside a single-quoted scalar now unescapes to `'`, where 0.2.1
+  kept both quotes. No shipped frontmatter uses it. At the repo root the audit output
+  is byte-identical before and after the bump.
 
 ### Fixed
 - **`create-c3-op`'s `mcp` reason is no longer cut off at `(construct3-chef` (#151).**

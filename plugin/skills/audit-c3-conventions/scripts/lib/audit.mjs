@@ -163,10 +163,20 @@ export function evaluateComponentLoad(component) {
     ok: false,
     severity: 'error',
     required: true,
-    detail: `${isRead ? 'file could not be read' : 'frontmatter is malformed'} (${err.code}: ${err.message})`,
+    detail: `${isRead ? 'file could not be read' : 'frontmatter is malformed'} (${loadErrorText(err)})`,
     reason:
       'Its `metadata.expects` cannot be evaluated, so its expectations would otherwise be silently missing from the audit.',
   };
+}
+
+// `code: message` for a load error. A Node fs message already starts with its
+// code ("ENOENT: no such file…"), so the code is not prefixed twice. A yaml
+// message can end with a colon that introduces a source excerpt audit-core
+// drops, so a trailing colon is removed.
+function loadErrorText({ code, message }) {
+  const text = String(message ?? '').trim().replace(/:$/, '');
+  if (!code || text.startsWith(`${code}:`)) return text;
+  return `${code}: ${text}`;
 }
 
 // Every finding main() records for one walked component. An unreadable or
@@ -588,6 +598,10 @@ export function formatReport(findings) {
 }
 
 function formatFinding(f) {
+  const reasonText = f.reason ? ` Reason: ${f.reason}` : '';
+  if (f.kind === 'component') {
+    return `- **${f.component}** could not be loaded from \`${f.target}\` — ${f.detail}.${reasonText}`;
+  }
   const target =
     f.kind === 'tool'
       ? `tool \`${f.target}\``

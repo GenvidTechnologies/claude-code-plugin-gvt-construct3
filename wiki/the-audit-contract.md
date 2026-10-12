@@ -159,8 +159,9 @@ A component whose file can't be read (`readError`), or whose frontmatter `yaml`
 rejects (`parseError`), comes back from `walkComponents` with `expects: null`.
 `evaluateComponentLoad` in `scripts/lib/audit.mjs` reports it as an **error**
 finding (`required: true`) that names the component file and carries the
-`code: message`. The audit then exits 1. Before #152 such a component was
-skipped, and its expectations silently disappeared from the report.
+`code: message`. The audit then exits 1. Under 0.2.1, an unreadable component
+crashed the whole walk, and malformed frontmatter was partly parsed. 0.3.0's two
+new shapes would have been skipped silently without this check.
 
 ## MCP probing
 

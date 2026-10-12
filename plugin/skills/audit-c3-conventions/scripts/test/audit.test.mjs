@@ -1400,9 +1400,39 @@ test('evaluateComponentLoad: malformed frontmatter via real walkComponents → e
     assert.equal(f.target, 'skills/bad/SKILL.md');
     assert.ok(f.detail.includes(`${bad[0].parseError.code}: `));
     assert.match(f.detail, /malformed/);
+    // yaml's first message line ends with a colon introducing an excerpt that
+    // audit-core drops; the detail carries the message without it.
+    assert.ok(f.detail.includes(bad[0].parseError.message.replace(/:$/, '')));
+    assert.doesNotMatch(f.detail, /:\)$/);
   } finally {
     await rmTmp(dir);
   }
+});
+
+test('evaluateComponentLoad: a real fs error message names its code once', async () => {
+  let readError;
+  try {
+    await fs.readFile(join(os.tmpdir(), 'gvt-c3-no-such-dir', 'SKILL.md'), 'utf8');
+  } catch (err) {
+    readError = { code: err.code, message: err.message };
+  }
+  assert.equal(readError.code, 'ENOENT');
+  const f = evaluateComponentLoad({ type: 'skill', name: 'gone', expects: null, frontmatter: null, readError });
+  assert.ok(f.detail.includes(readError.message));
+  assert.equal(f.detail.split('ENOENT:').length - 1, 1);
+});
+
+test('formatReport: a component load error renders as "could not be loaded from"', () => {
+  const f = evaluateComponentLoad({
+    type: 'agent',
+    name: 'bar',
+    expects: null,
+    frontmatter: null,
+    readError: { code: 'EACCES', message: 'permission denied' },
+  });
+  const report = formatReport([f]);
+  assert.match(report, /- \*\*bar\*\* could not be loaded from `agents\/bar\.md` — file could not be read \(EACCES: permission denied\)\./);
+  assert.doesNotMatch(report, /expects `agents\/bar\.md`/);
 });
 
 // The per-component step main() runs. A malformed component must contribute its

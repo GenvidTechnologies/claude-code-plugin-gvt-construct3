@@ -50,8 +50,8 @@ The script:
 4. **Walks the plugin's installed skills and agents** at `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` and `${CLAUDE_PLUGIN_ROOT}/agents/*.md`.
 5. **Parses each component's frontmatter** (as YAML 1.2) to collect `metadata.expects.{files,config,tools,mcp}`. A component whose file can't be read, or whose frontmatter is malformed YAML, is reported as an **error** naming the file and the parser's `code: message`, because its expectations can't be evaluated. It is not skipped.
 6. **Evaluates each expectation** against the current working directory. For an MCP server, the version checked against `minVersion` is **the plugin's own pin** in `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` `mcpServers` — the server the agents actually talk to — and reachability is probed by running that exact pinned spec, `npx -y <package>@<pin> --version` (e.g. `@genvidtech/construct3-chef@2.0.0`), from a fresh temporary directory, so the result does not depend on where the audit was run or what the repo has installed.
-7. **Prints a structured report** grouped by severity (errors for required-but-missing; warnings for advisory runtime-breakers; info for optional-but-missing).
-8. **Exits non-zero** if any required expectation is unmet — warnings and info findings do not change the exit code.
+7. **Prints a structured report** grouped by severity (errors for required-but-missing expectations and for components that could not be loaded; warnings for advisory runtime-breakers; info for optional-but-missing).
+8. **Exits non-zero** if any required expectation is unmet or any component could not be loaded — warnings and info findings do not change the exit code.
 
 ## Read the report
 
