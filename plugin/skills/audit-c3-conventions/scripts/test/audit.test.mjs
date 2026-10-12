@@ -40,6 +40,8 @@ import {
   resolveMcpProjectDirOverride,
   checkRootDivergence,
   formatReport,
+  evaluateComponentLoad,
+  evaluateComponentFindings,
 } from '../lib/audit.mjs';
 
 // ---- marker tests -----------------------------------------------------------
@@ -1340,4 +1342,102 @@ test('checkRootDivergence: no paths.c3project + 0 children → null (agree, both
   } finally {
     await rmTmp(dir);
   }
+});
+
+// ---- component-load tests ---------------------------------------------------
+
+import { walkComponents } from '@genvidtech/audit-core';
+
+test('evaluateComponentLoad: readable component returns null', () => {
+  const c = { type: 'skill', name: 'ok', expects: {}, frontmatter: { name: 'ok' } };
+  assert.equal(evaluateComponentLoad(c), null);
+});
+
+test('evaluateComponentLoad: skill readError → error finding on SKILL.md', () => {
+  const c = {
+    type: 'skill',
+    name: 'foo',
+    expects: null,
+    frontmatter: null,
+    readError: { code: 'EACCES', message: 'permission denied' },
+  };
+  const f = evaluateComponentLoad(c);
+  assert.equal(f.kind, 'component');
+  assert.equal(f.component, 'foo');
+  assert.equal(f.target, 'skills/foo/SKILL.md');
+  assert.equal(f.ok, false);
+  assert.equal(f.severity, 'error');
+  assert.equal(f.required, true);
+  assert.match(f.detail, /EACCES: permission denied/);
+  assert.ok(f.reason.length > 0);
+});
+
+test('evaluateComponentLoad: agent readError → error finding on agents/<name>.md', () => {
+  const c = {
+    type: 'agent',
+    name: 'bar',
+    expects: null,
+    frontmatter: null,
+    readError: { code: 'EISDIR', message: 'is a directory' },
+  };
+  const f = evaluateComponentLoad(c);
+  assert.equal(f.target, 'agents/bar.md');
+  assert.equal(f.severity, 'error');
+  assert.equal(f.required, true);
+  assert.match(f.detail, /EISDIR: is a directory/);
+});
+
+test('evaluateComponentLoad: malformed frontmatter via real walkComponents → error finding', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.mkdir(join(dir, 'skills', 'bad'), { recursive: true });
+    await fs.writeFile(join(dir, 'skills', 'bad', 'SKILL.md'), '---\nname: bad\ndescription: a: b\n---\n');
+    const comps = await walkComponents(dir);
+    const bad = comps.filter((c) => 'parseError' in c);
+    assert.equal(bad.length, 1);
+    const f = evaluateComponentLoad(bad[0]);
+    assert.equal(f.severity, 'error');
+    assert.equal(f.target, 'skills/bad/SKILL.md');
+    assert.ok(f.detail.includes(`${bad[0].parseError.code}: `));
+    assert.match(f.detail, /malformed/);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+// The per-component step main() runs. A malformed component must contribute its
+// load error, not the empty list a component without expects contributes.
+test('evaluateComponentFindings: malformed component via real walkComponents → exactly its load error', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.mkdir(join(dir, 'skills', 'bad'), { recursive: true });
+    await fs.writeFile(join(dir, 'skills', 'bad', 'SKILL.md'), '---\nname: bad\ndescription: a: b\n---\n');
+    const [bad] = await walkComponents(dir);
+    assert.ok('parseError' in bad);
+    const findings = await evaluateComponentFindings(bad, dir, dir);
+    assert.equal(findings.length, 1);
+    assert.equal(findings[0].kind, 'component');
+    assert.equal(findings[0].severity, 'error');
+    assert.equal(findings[0].target, 'skills/bad/SKILL.md');
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
+test('evaluateComponentFindings: readable component → one finding per expectation', async () => {
+  const c = {
+    type: 'skill',
+    name: 'ok',
+    expects: { tools: [{ command: 'node', reason: 'runs scripts' }] },
+    frontmatter: { name: 'ok' },
+  };
+  const findings = await evaluateComponentFindings(c);
+  assert.equal(findings.length, 1);
+  assert.equal(findings[0].kind, 'tool');
+  assert.equal(findings[0].ok, true);
+});
+
+test('evaluateComponentFindings: readable component without expects → no findings', async () => {
+  const c = { type: 'agent', name: 'plain', expects: null, frontmatter: { name: 'plain' } };
+  assert.deepEqual(await evaluateComponentFindings(c), []);
 });
