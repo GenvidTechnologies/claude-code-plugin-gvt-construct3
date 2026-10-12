@@ -130,21 +130,7 @@ export async function main() {
 
   // 2. Walk component expects: files, config, tools, mcp
   for (const component of components) {
-    const expects = component.expects;
-    if (!expects) continue;
-
-    for (const entry of expects.files ?? []) {
-      findings.push(await evaluateFile(component, entry, REPO_ROOT, projectRoot));
-    }
-    for (const entry of expects.config ?? []) {
-      findings.push(await evaluateConfig(component, entry, REPO_ROOT, projectRoot));
-    }
-    for (const entry of expects.tools ?? []) {
-      findings.push(evaluateTool(component, entry));
-    }
-    for (const entry of expects.mcp ?? []) {
-      findings.push(await evaluateMcp(component, entry));
-    }
+    findings.push(...(await evaluateComponentFindings(component, REPO_ROOT, projectRoot)));
   }
 
   const report = formatReport(findings);
@@ -152,6 +138,72 @@ export async function main() {
 
   const hasErrors = findings.some((f) => f.severity === 'error');
   process.exit(hasErrors ? 1 : 0);
+}
+
+// ---- component-load check ---------------------------------------------------
+
+// walkComponents reports a component whose file can't be read, or whose
+// frontmatter is malformed, as `expects: null` plus a `readError` / `parseError`.
+// Without this check the loop in main() would skip it like a component that
+// simply declares no expectations. Returns one error finding for such a
+// component, or null for a readable one.
+export function evaluateComponentLoad(component) {
+  const isRead = 'readError' in component;
+  const isParse = 'parseError' in component;
+  if (!isRead && !isParse) return null;
+  const err = isRead ? component.readError : component.parseError;
+  const target =
+    component.type === 'agent'
+      ? `agents/${component.name}.md`
+      : `skills/${component.name}/SKILL.md`;
+  return {
+    kind: 'component',
+    component: component.name,
+    target,
+    ok: false,
+    severity: 'error',
+    required: true,
+    detail: `${isRead ? 'file could not be read' : 'frontmatter is malformed'} (${loadErrorText(err)})`,
+    reason:
+      'Its `metadata.expects` cannot be evaluated, so its expectations would otherwise be silently missing from the audit.',
+  };
+}
+
+// `code: message` for a load error. A Node fs message already starts with its
+// code ("ENOENT: no such file…"), so the code is not prefixed twice. A yaml
+// message can end with a colon that introduces a source excerpt audit-core
+// drops, so a trailing colon is removed.
+function loadErrorText({ code, message }) {
+  const text = String(message ?? '').trim().replace(/:$/, '');
+  if (!code || text.startsWith(`${code}:`)) return text;
+  return `${code}: ${text}`;
+}
+
+// Every finding main() records for one walked component. An unreadable or
+// malformed component yields exactly its load error. Its expects are null, so
+// without that error it would contribute nothing at all. A readable component
+// yields one finding per files/config/tools/mcp expectation.
+export async function evaluateComponentFindings(component, repoRoot = REPO_ROOT, projectRoot = repoRoot) {
+  const loadFinding = evaluateComponentLoad(component);
+  if (loadFinding) return [loadFinding];
+
+  const expects = component.expects;
+  if (!expects) return [];
+
+  const findings = [];
+  for (const entry of expects.files ?? []) {
+    findings.push(await evaluateFile(component, entry, repoRoot, projectRoot));
+  }
+  for (const entry of expects.config ?? []) {
+    findings.push(await evaluateConfig(component, entry, repoRoot, projectRoot));
+  }
+  for (const entry of expects.tools ?? []) {
+    findings.push(evaluateTool(component, entry));
+  }
+  for (const entry of expects.mcp ?? []) {
+    findings.push(await evaluateMcp(component, entry));
+  }
+  return findings;
 }
 
 // ---- C3 marker check --------------------------------------------------------
@@ -546,6 +598,10 @@ export function formatReport(findings) {
 }
 
 function formatFinding(f) {
+  const reasonText = f.reason ? ` Reason: ${f.reason}` : '';
+  if (f.kind === 'component') {
+    return `- **${f.component}** could not be loaded from \`${f.target}\` — ${f.detail}.${reasonText}`;
+  }
   const target =
     f.kind === 'tool'
       ? `tool \`${f.target}\``

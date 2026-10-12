@@ -15,7 +15,7 @@ metadata:
       - server: construct3-chef
         package: "@genvidtech/construct3-chef"
         minVersion: "1.2.0"
-        reason: User-defined ops (the ops/ directory, list-ops and apply-op CLI/MCP surfaces, OpTemplate substitution) landed in 0.10.0 (construct3-chef #89), below which the skill is inert; the floor is 1.2.0 because this skill cites the path-shaped docs:///reference/ops and docs:///reference/recipe-reference resources, which exist only from 1.2.0 (ADR 0013).
+        reason: "User-defined ops (the ops/ directory, list-ops and apply-op CLI/MCP surfaces, OpTemplate substitution) landed in 0.10.0 (construct3-chef #89), below which the skill is inert; the floor is 1.2.0 because this skill cites the path-shaped docs:///reference/ops and docs:///reference/recipe-reference resources, which exist only from 1.2.0 (ADR 0013)."
 ---
 
 # Create C3 Op

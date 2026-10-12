@@ -143,10 +143,36 @@ Every `expects`-derived finding carries a `required` boolean alongside `severity
 The tally still reads only `severity`. `target` is display text: never match on
 it, because it can carry the project-root suffix.
 
-The parser is a hand-rolled YAML subset: top-level scalars, block scalars
-(`|` / `>`), one level of nesting for `metadata.expects`, and arrays of objects.
-It does not handle anchors or deep nesting, so keep frontmatter within those
-shapes.
+Since audit-core 0.3.0 (#152), frontmatter is parsed by the `yaml` package as
+YAML 1.2. It is no longer a hand-written subset parser, so frontmatter must be
+real YAML:
+
+- In a plain scalar, ` #` starts a comment, so everything after it is cut off.
+  An unquoted `reason: … (construct3-chef #89) …` lost its tail this way until
+  #151 quoted it.
+- A colon-space inside a plain scalar is a parse error.
+- `''` inside a single-quoted scalar unescapes to `'`.
+
+Quote any scalar that contains ` #` or `: `.
+
+A component whose file can't be read (`readError`), or whose frontmatter `yaml`
+rejects (`parseError`), comes back from `walkComponents` with `expects: null`.
+`evaluateComponentLoad` in `scripts/lib/audit.mjs` reports it as an **error**
+finding (`required: true`) that names the component file and carries the
+`code: message`. The audit then exits 1. Under 0.2.1, an unreadable component
+crashed the whole walk, and malformed frontmatter was partly parsed. 0.3.0's two
+new shapes would have been skipped silently without this check.
+
+**`main()` has no test coverage. Put a new per-component check in
+`evaluateComponentFindings`, never inline in `main()`.** `main()` resolves the plugin root
+from its own file location, makes live `npx` probes, and ends in `process.exit`, so
+no test drives it. ADR 0022 rejected a committed end-to-end test for the `npx` reason.
+`main()` calls the exported `evaluateComponentFindings(component, repoRoot, projectRoot)`
+for each walked component, and that function is the testable seam. This is measured,
+not assumed: when #152's load check was first wired inline in `main()`, a mutation
+deleting that call left all 89 tests in `audit.test.mjs` passing. Once the check moved
+into `evaluateComponentFindings`, the same mutation failed exactly the test written for
+it.
 
 ## MCP probing
 
