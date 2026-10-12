@@ -1,5 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync, rmSync, realpathSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   slugify,
@@ -170,4 +175,47 @@ test('checkAnchors: linkSources scopes which files\' own links are checked, not 
   assert.deepEqual(bothSources.deadLines, [
     { file: 'docs/b.md', line: 3, target: '#does-not-exist' },
   ]);
+});
+
+// ---- CLI: an input that would check nothing must not read as a pass ------------
+
+const CLI = resolve(fileURLToPath(new URL('..', import.meta.url)), 'check-doc-anchors.mjs');
+
+function runCli(argv) {
+  return spawnSync(process.execPath, [CLI, ...argv], { encoding: 'utf8' });
+}
+
+test('check-doc-anchors CLI: no paths → usage error, exit 2, no checked= line', () => {
+  const r = runCli([]);
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /usage: node scripts\/check-doc-anchors\.mjs/);
+  assert.doesNotMatch(r.stdout, /checked=/);
+});
+
+test('check-doc-anchors CLI: an unreadable path → exit 2 naming it, even beside a good file', () => {
+  const dir = mkdtempSync(join(realpathSync.native(tmpdir()), 'doc-anchors-cli-'));
+  try {
+    const good = join(dir, 'good.md');
+    writeFileSync(good, '# Title\n\n[self](#title)\n');
+    const missing = join(dir, 'missing.md');
+    const r = runCli([good, missing]);
+    assert.equal(r.status, 2);
+    assert.ok(r.stderr.includes(`UNREADABLE ${missing}`));
+    assert.doesNotMatch(r.stdout, /checked=/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('check-doc-anchors CLI: a readable file with a live anchor → exit 0, checked=1 dead=0', () => {
+  const dir = mkdtempSync(join(realpathSync.native(tmpdir()), 'doc-anchors-cli-'));
+  try {
+    const good = join(dir, 'good.md');
+    writeFileSync(good, '# Title\n\n[self](#title)\n');
+    const r = runCli([good]);
+    assert.equal(r.status, 0);
+    assert.match(r.stdout, /checked=1 dead=0/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

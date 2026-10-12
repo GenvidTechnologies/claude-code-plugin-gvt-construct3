@@ -101,7 +101,7 @@ const SUITES = [
       'scripts/test/plugin-manifest.test.mjs',
       'scripts/test/test-surface.test.mjs',
     ],
-    minPass: 173,
+    minPass: 176,
   },
 ];
 

@@ -6,7 +6,9 @@
 //
 //   node scripts/check-doc-anchors.mjs plugin/docs/c3/*.md
 //
-// Exits 1 if any dead anchor is found, 0 otherwise.
+// Exits 1 if any dead anchor is found, 2 on a usage error (no paths given, or a
+// given path that cannot be read), 0 otherwise. Both usage errors used to exit 0
+// with `checked=0`: a typo'd glob looked like a clean pass.
 
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -30,9 +32,24 @@ function load(path) {
   return entry;
 }
 
+const USAGE = 'usage: node scripts/check-doc-anchors.mjs <file.md>...';
+
+if (argvPaths.length === 0) {
+  console.error('no files given; nothing would be checked');
+  console.error(USAGE);
+  process.exit(2);
+}
+
 // Load the files given on the command line. These are the only link
 // sources: only links that originate in one of these files get checked.
-const primary = argvPaths.map((path) => load(path)).filter(Boolean);
+// An unreadable one is a usage error, never silently dropped.
+const unreadable = argvPaths.filter((path) => load(path) === null);
+if (unreadable.length > 0) {
+  for (const path of unreadable) console.error(`UNREADABLE ${path}`);
+  console.error(USAGE);
+  process.exit(2);
+}
+const primary = argvPaths.map((path) => load(path));
 
 // A file passed on the command line may link into a file that wasn't itself
 // passed (e.g. checking a single agent doc that links into
