@@ -163,6 +163,17 @@ finding (`required: true`) that names the component file and carries the
 crashed the whole walk, and malformed frontmatter was partly parsed. 0.3.0's two
 new shapes would have been skipped silently without this check.
 
+**`main()` has no test coverage. Put a new per-component check in
+`evaluateComponentFindings`, never inline in `main()`.** `main()` resolves the plugin root
+from its own file location, makes live `npx` probes, and ends in `process.exit`, so
+no test drives it. ADR 0022 rejected a committed end-to-end test for the `npx` reason.
+`main()` calls the exported `evaluateComponentFindings(component, repoRoot, projectRoot)`
+for each walked component, and that function is the testable seam. This is measured,
+not assumed: when #152's load check was first wired inline in `main()`, a mutation
+deleting that call left all 89 tests in `audit.test.mjs` passing. Once the check moved
+into `evaluateComponentFindings`, the same mutation failed exactly the test written for
+it.
+
 ## MCP probing
 
 The version checked against an `mcp` entry's `minVersion` is **the plugin's own pin**:
