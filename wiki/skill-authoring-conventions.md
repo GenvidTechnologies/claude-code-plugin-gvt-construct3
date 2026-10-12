@@ -31,7 +31,9 @@ Anthropic-supported fields (`model`, `tools`). **Custom expectations go under
 `metadata.expects`** — never invent new top-level keys, or `claude plugin validate`
 and downstream tooling will choke.
 
-Keep frontmatter within the shapes the hand-rolled parser handles — see
+Frontmatter must be valid YAML 1.2, because the audit parses it with the `yaml`
+package. Quote any scalar containing ` #` (otherwise the rest is read as a
+comment) or `: `. Malformed frontmatter is an audit error. See
 [The convention contract and the audit](/the-audit-contract.md).
 
 ## Tests must live where validation globs them

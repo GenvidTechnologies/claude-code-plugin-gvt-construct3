@@ -21,6 +21,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cleanly: `dist/adapters/locations.js` is byte-identical, and
   `@genvidtech/mcp-utils` stays at `^0.10.0`, whose newest published version
   (`0.10.0`) is already in the reviewed baseline. (#147)
+- **The `@genvidtech/audit-core` pin moves `0.2.1` → `0.3.0` (#152).** audit-core
+  now parses frontmatter with the `yaml` package (YAML 1.2) instead of a hand-written
+  subset parser (GenvidTechnologies/audit-core#4). It also hands back unreadable
+  components instead of rejecting (audit-core#5). Its dependency stays `yaml ^2.9.0`.
+  `audit-c3-conventions` now reports a component whose file can't be read, or whose
+  frontmatter is malformed, as an **error** finding naming the file and the parser's
+  `code: message`, and the audit exits 1. Before, such a component would have been
+  skipped and its `metadata.expects` would have silently disappeared from the report.
+  At the repo root the audit output is byte-identical before and after the bump.
+
+### Fixed
+- **`create-c3-op`'s `mcp` reason is no longer cut off at `(construct3-chef` (#151).**
+  The reason was an unquoted YAML scalar containing ` #89`. A conforming parser reads
+  ` #` as the start of a comment, so audit-core 0.3.0 would have dropped the rest of
+  the reason. The value is now double-quoted. It parses to the same full string under
+  0.2.1 and 0.3.0.
 
 ## [3.2.0] - 2026-10-05
 

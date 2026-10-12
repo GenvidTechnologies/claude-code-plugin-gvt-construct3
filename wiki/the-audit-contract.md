@@ -143,10 +143,24 @@ Every `expects`-derived finding carries a `required` boolean alongside `severity
 The tally still reads only `severity`. `target` is display text: never match on
 it, because it can carry the project-root suffix.
 
-The parser is a hand-rolled YAML subset: top-level scalars, block scalars
-(`|` / `>`), one level of nesting for `metadata.expects`, and arrays of objects.
-It does not handle anchors or deep nesting, so keep frontmatter within those
-shapes.
+Since audit-core 0.3.0 (#152), frontmatter is parsed by the `yaml` package as
+YAML 1.2. It is no longer a hand-written subset parser, so frontmatter must be
+real YAML:
+
+- In a plain scalar, ` #` starts a comment, so everything after it is cut off.
+  An unquoted `reason: … (construct3-chef #89) …` lost its tail this way until
+  #151 quoted it.
+- A colon-space inside a plain scalar is a parse error.
+- `''` inside a single-quoted scalar unescapes to `'`.
+
+Quote any scalar that contains ` #` or `: `.
+
+A component whose file can't be read (`readError`), or whose frontmatter `yaml`
+rejects (`parseError`), comes back from `walkComponents` with `expects: null`.
+`evaluateComponentLoad` in `scripts/lib/audit.mjs` reports it as an **error**
+finding (`required: true`) that names the component file and carries the
+`code: message`. The audit then exits 1. Before #152 such a component was
+skipped, and its expectations silently disappeared from the report.
 
 ## MCP probing
 
