@@ -65,3 +65,5 @@ near-miss is still evaluated, so the typo doesn't hide a real gap.
   audit-core's walk (0.3.0 returns `expects: null` with no error flag). It was noted in a
   comment on GenvidTechnologies/audit-core#19, which closed without addressing it, and is
   now tracked as GenvidTechnologies/audit-core#23.
+- **Update 2026-10-13:** the no-frontmatter gap above is closed by audit-core 0.4.0
+  (#160), which reports such a file as malformed with code `NO_FRONTMATTER`.

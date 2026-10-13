@@ -8,6 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **The `@genvidtech/audit-core` pin moves `0.3.0` → `0.4.0` (#160).** A component
+  file with no frontmatter block now fails the audit. audit-core 0.4.0 reports it as
+  malformed with code `NO_FRONTMATTER` (GenvidTechnologies/audit-core#23); 0.3.0
+  returned it with no error flag, so it gave zero findings and its expectations
+  silently disappeared. That covers no `---` fence, an empty file, a BOM or blank line
+  before the fence, an unclosed fence, and adjacent fences with nothing between them.
+  The walk also follows symlinked skill directories, junctions and symlinked agent
+  files, and reports a path it can't `stat` instead of skipping it
+  (audit-core#19). A `skills/` or `agents/` tree that can't be read is reported
+  against the tree itself. A file expectation whose path exists but can't be checked,
+  or is the wrong kind, now says so (`could not be checked (<code>)`,
+  `expected a file, found a directory`) instead of `not found`. The dependency stays
+  `yaml ^2.9.0`. Every shipped component has frontmatter, and the audit output at the
+  repo root is byte-identical before and after the bump.
+
 ### Fixed
 - **`audit-c3-conventions` reports a malformed `metadata.expects` as an error
   instead of skipping it or crashing.** These declarations used to give zero
@@ -21,7 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   component's well-formed entries are still evaluated. This affects only a plugin
   whose own frontmatter is malformed; every shipped component is well-formed, so a
   consuming repo's audit output is unchanged. The audit-core walk gaps from the same
-  review are tracked upstream as GenvidTechnologies/audit-core#19. (#156)
+  review were fixed upstream (GenvidTechnologies/audit-core#19) and arrive with the
+  0.4.0 pin above. (#156)
 - **`audit-c3-conventions` reports a misplaced or misspelled `expects` block as an
   error.** The audit reads expectations only from `metadata.expects`, so a block
   written anywhere else used to give zero findings and the component silently

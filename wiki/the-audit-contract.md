@@ -163,6 +163,14 @@ finding (`required: true`) that names the component file and carries the
 crashed the whole walk, and malformed frontmatter was partly parsed. 0.3.0's two
 new shapes would have been skipped silently without this check.
 
+Since audit-core 0.4.0 (#160), a file with **no frontmatter block** is a
+`parseError` too, with code `NO_FRONTMATTER`. That covers no `---` fence, an empty
+file, a BOM or blank line before the fence, an unclosed fence, and adjacent fences
+with nothing between them. Under 0.3.0 such a file came back with `expects: null`
+and no error flag, so it gave zero findings. 0.4.0 also reports a `skills/` or
+`agents/` tree that can't be read as one `readError` record named `skills/` or
+`agents/`; the finding names the tree, not a file inside it.
+
 A component that loads but declares its expectations in the wrong shape is reported the
 same way, as an **error** (`kind: 'expects'`, `required: true`) naming the component file
 and the offending dotted path (#156). The shapes it catches:
