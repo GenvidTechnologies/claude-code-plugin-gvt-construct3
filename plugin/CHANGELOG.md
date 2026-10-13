@@ -12,8 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`audit-c3-conventions` reports a malformed `metadata.expects` as an error
   instead of skipping it or crashing.** These declarations used to give zero
   findings: an `expects` (or `metadata`) that is not a mapping, and an unknown key
-  such as `filez`. A key that is not a list (`files: abc`) or an entry missing its
-  `path` made the audit throw and exit 2, without naming the component.
+  such as `filez`. A key that is not a list (`files: abc`), an entry missing its
+  `path`, or a non-string config `in` or mcp `minVersion` made the audit throw and
+  exit 2, without naming the component.
   `config`/`tools`/`mcp` entries missing their required field gave findings with an
   `undefined` or `null` target. Each case is now one error finding naming the
   component file and the offending path, such as `metadata.expects.files[0]`. The

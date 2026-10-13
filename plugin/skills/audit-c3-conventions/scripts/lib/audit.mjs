@@ -183,7 +183,7 @@ function loadErrorText({ code, message }) {
   return `${code}: ${text}`;
 }
 
-// The string fields each expects key must carry; optional fields are not checked.
+// The string fields each expects key must carry.
 const EXPECTS_REQUIRED_FIELDS = {
   files: ['path'],
   config: ['key'],
@@ -191,9 +191,22 @@ const EXPECTS_REQUIRED_FIELDS = {
   mcp: ['server', 'package'],
 };
 
+// Optional fields an evaluator uses as a string when present: `in` is joined
+// into a path, `minVersion` is split for the semver compare. Either one as a
+// number would crash the evaluator. The other optional fields (`required`,
+// `reason`, `base`) are only compared or rendered, so they are not checked.
+const EXPECTS_OPTIONAL_STRING_FIELDS = {
+  config: ['in'],
+  mcp: ['minVersion'],
+};
+
 const isMapping = (v) => typeof v === 'object' && v !== null && !Array.isArray(v);
 
-const typeName = (v) => (Array.isArray(v) ? 'an array' : `a ${typeof v}`);
+const typeName = (v) => {
+  if (v === null) return 'null';
+  if (Array.isArray(v)) return 'an array';
+  return `a ${typeof v}`;
+};
 
 // Checks the shape of a component's `metadata.expects` without evaluating it.
 // walkComponents hands the value over unchecked, so a string where a list
@@ -248,6 +261,13 @@ export function evaluateExpectsShape(component) {
       const missing = EXPECTS_REQUIRED_FIELDS[key].filter((f) => typeof entry[f] !== 'string');
       if (missing.length > 0) {
         flag(`\`${path}[${i}]\` has no string ${missing.map((f) => `\`${f}\``).join(', ')}`);
+        return;
+      }
+      const mistyped = (EXPECTS_OPTIONAL_STRING_FIELDS[key] ?? []).filter(
+        (f) => entry[f] != null && typeof entry[f] !== 'string',
+      );
+      if (mistyped.length > 0) {
+        flag(`\`${path}[${i}]\` has a non-string ${mistyped.map((f) => `\`${f}\``).join(', ')}`);
         return;
       }
       expects[key].push(entry);

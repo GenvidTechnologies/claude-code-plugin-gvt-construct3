@@ -172,10 +172,12 @@ and the offending dotted path (#156). The shapes it catches:
 - a key whose value is not a list;
 - an entry that is not a mapping;
 - an entry missing its required string field: `path` for files, `key` for config,
-  `command` for tools, `server` and `package` for mcp.
+  `command` for tools, `server` and `package` for mcp;
+- a config `in` or an mcp `minVersion` that is present but not a string. The evaluators
+  use both as strings, so a number there would crash the audit.
 
-A null or absent key still means "no entries". The optional fields (`required`, `reason`,
-`base`, `in`, `minVersion`) are not type-checked. Each bad key or entry gets its own
+A null or absent key still means "no entries". The other optional fields (`required`,
+`reason`, `base`) are not type-checked, because they are only compared or rendered. Each bad key or entry gets its own
 finding, and the component's well-formed entries are still evaluated, so a typo does not
 hide a genuinely missing file. Before #156, some of these shapes gave zero findings,
 some made `evaluateComponentFindings` throw (exit 2, without naming the component), and

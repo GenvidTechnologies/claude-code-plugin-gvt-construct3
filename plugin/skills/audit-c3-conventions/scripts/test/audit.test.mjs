@@ -1506,6 +1506,12 @@ const SHAPE_CASES = [
   ['tools entry is a string', 'metadata:\n  expects:\n    tools:\n      - x\n', /`metadata\.expects\.tools\[0\]`/],
   ['mcp entry lacks server and package', 'metadata:\n  expects:\n    mcp:\n      - {}\n', /`metadata\.expects\.mcp\[0\]` has no string `server`, `package`/],
   ['unknown key', 'metadata:\n  expects:\n    filez:\n      - path: x\n', /`metadata\.expects\.filez` is not a known key \(files, config, tools, mcp\)/],
+  ['metadata is an array', 'metadata: []\n', /`metadata` is an array/],
+  ['files entry is null', 'metadata:\n  expects:\n    files:\n      - ~\n', /`metadata\.expects\.files\[0\]` is null, not a mapping/],
+  ['files path is a number', 'metadata:\n  expects:\n    files:\n      - path: 5\n', /`metadata\.expects\.files\[0\]` has no string `path`/],
+  // A non-string `in` or `minVersion` would crash the config / mcp evaluator.
+  ['config in is a number', 'metadata:\n  expects:\n    config:\n      - key: k\n        in: 5\n', /`metadata\.expects\.config\[0\]` has a non-string `in`/],
+  ['mcp minVersion is a number', 'metadata:\n  expects:\n    mcp:\n      - server: s\n        package: "@a/b"\n        minVersion: 2\n', /`metadata\.expects\.mcp\[0\]` has a non-string `minVersion`/],
 ];
 
 for (const [label, yaml, detailRe] of SHAPE_CASES) {
