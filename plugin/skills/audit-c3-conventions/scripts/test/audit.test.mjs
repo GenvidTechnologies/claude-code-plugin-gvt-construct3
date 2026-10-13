@@ -1518,6 +1518,8 @@ const SHAPE_CASES = [
   ['metadata.expect', 'metadata:\n  expect:\n    files:\n      - path: x\n', /`metadata\.expect` looks like a misspelling of `metadata\.expects`, the only key the audit reads/],
   ['metadata.Expects', 'metadata:\n  Expects:\n    files:\n      - path: x\n', /`metadata\.Expects` looks like a misspelling of `metadata\.expects`/],
   ['metadata.expectations', 'metadata:\n  expectations:\n    files:\n      - path: x\n', /`metadata\.expectations` looks like a misspelling of `metadata\.expects`/],
+  // `expcets` is exactly two edits from `expects` and does not start with `expect`.
+  ['metadata.expcets', 'metadata:\n  expcets:\n    files:\n      - path: x\n', /`metadata\.expcets` looks like a misspelling of `metadata\.expects`/],
 ];
 
 for (const [label, yaml, detailRe] of SHAPE_CASES) {
