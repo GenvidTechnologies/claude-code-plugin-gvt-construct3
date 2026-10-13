@@ -142,6 +142,13 @@ export async function main() {
 
 // ---- component-load check ---------------------------------------------------
 
+// The file a component is read from, relative to the plugin root.
+function componentTarget(component) {
+  return component.type === 'agent'
+    ? `agents/${component.name}.md`
+    : `skills/${component.name}/SKILL.md`;
+}
+
 // walkComponents reports a component whose file can't be read, or whose
 // frontmatter is malformed, as `expects: null` plus a `readError` / `parseError`.
 // Without this check the loop in main() would skip it like a component that
@@ -152,10 +159,7 @@ export function evaluateComponentLoad(component) {
   const isParse = 'parseError' in component;
   if (!isRead && !isParse) return null;
   const err = isRead ? component.readError : component.parseError;
-  const target =
-    component.type === 'agent'
-      ? `agents/${component.name}.md`
-      : `skills/${component.name}/SKILL.md`;
+  const target = componentTarget(component);
   return {
     kind: 'component',
     component: component.name,
@@ -179,28 +183,100 @@ function loadErrorText({ code, message }) {
   return `${code}: ${text}`;
 }
 
+// The string fields each expects key must carry; optional fields are not checked.
+const EXPECTS_REQUIRED_FIELDS = {
+  files: ['path'],
+  config: ['key'],
+  tools: ['command'],
+  mcp: ['server', 'package'],
+};
+
+const isMapping = (v) => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+const typeName = (v) => (Array.isArray(v) ? 'an array' : `a ${typeof v}`);
+
+// Checks the shape of a component's `metadata.expects` without evaluating it.
+// walkComponents hands the value over unchecked, so a string where a list
+// belongs, a typo'd key or an entry without its required field would otherwise
+// be skipped silently or crash an evaluator. Returns one error finding per
+// problem, plus the well-formed entries per key; callers evaluate only those,
+// so a bad sibling key or entry doesn't hide the good ones. A null or absent
+// key means no entries and is not an error.
+export function evaluateExpectsShape(component) {
+  const errors = [];
+  const expects = { files: [], config: [], tools: [], mcp: [] };
+  const flag = (detail) =>
+    errors.push({
+      kind: 'expects',
+      component: component.name,
+      target: componentTarget(component),
+      ok: false,
+      severity: 'error',
+      required: true,
+      detail,
+      reason: 'Its expectations would otherwise be silently missing from the audit, or crash it.',
+    });
+
+  const metadata = component.frontmatter?.metadata;
+  if (metadata != null && !isMapping(metadata)) {
+    flag(`\`metadata\` is ${typeName(metadata)}, not a mapping`);
+    return { errors, expects };
+  }
+  const raw = component.expects;
+  if (raw == null) return { errors, expects };
+  if (!isMapping(raw)) {
+    flag(`\`metadata.expects\` is ${typeName(raw)}, not a mapping`);
+    return { errors, expects };
+  }
+
+  for (const [key, value] of Object.entries(raw)) {
+    const path = `metadata.expects.${key}`;
+    if (!Object.hasOwn(EXPECTS_REQUIRED_FIELDS, key)) {
+      flag(`\`${path}\` is not a known key (${Object.keys(EXPECTS_REQUIRED_FIELDS).join(', ')})`);
+      continue;
+    }
+    if (value == null) continue;
+    if (!Array.isArray(value)) {
+      flag(`\`${path}\` is ${typeName(value)}, not a list`);
+      continue;
+    }
+    value.forEach((entry, i) => {
+      if (!isMapping(entry)) {
+        flag(`\`${path}[${i}]\` is ${typeName(entry)}, not a mapping`);
+        return;
+      }
+      const missing = EXPECTS_REQUIRED_FIELDS[key].filter((f) => typeof entry[f] !== 'string');
+      if (missing.length > 0) {
+        flag(`\`${path}[${i}]\` has no string ${missing.map((f) => `\`${f}\``).join(', ')}`);
+        return;
+      }
+      expects[key].push(entry);
+    });
+  }
+  return { errors, expects };
+}
+
 // Every finding main() records for one walked component. An unreadable or
 // malformed component yields exactly its load error. Its expects are null, so
 // without that error it would contribute nothing at all. A readable component
-// yields one finding per files/config/tools/mcp expectation.
+// yields one error per shape problem in its expects (see evaluateExpectsShape)
+// and one finding per well-formed files/config/tools/mcp expectation.
 export async function evaluateComponentFindings(component, repoRoot = REPO_ROOT, projectRoot = repoRoot) {
   const loadFinding = evaluateComponentLoad(component);
   if (loadFinding) return [loadFinding];
 
-  const expects = component.expects;
-  if (!expects) return [];
-
-  const findings = [];
-  for (const entry of expects.files ?? []) {
+  const { errors, expects } = evaluateExpectsShape(component);
+  const findings = [...errors];
+  for (const entry of expects.files) {
     findings.push(await evaluateFile(component, entry, repoRoot, projectRoot));
   }
-  for (const entry of expects.config ?? []) {
+  for (const entry of expects.config) {
     findings.push(await evaluateConfig(component, entry, repoRoot, projectRoot));
   }
-  for (const entry of expects.tools ?? []) {
+  for (const entry of expects.tools) {
     findings.push(evaluateTool(component, entry));
   }
-  for (const entry of expects.mcp ?? []) {
+  for (const entry of expects.mcp) {
     findings.push(await evaluateMcp(component, entry));
   }
   return findings;
@@ -601,6 +677,9 @@ function formatFinding(f) {
   const reasonText = f.reason ? ` Reason: ${f.reason}` : '';
   if (f.kind === 'component') {
     return `- **${f.component}** could not be loaded from \`${f.target}\` — ${f.detail}.${reasonText}`;
+  }
+  if (f.kind === 'expects') {
+    return `- **${f.component}** has malformed expectations in \`${f.target}\` — ${f.detail}.${reasonText}`;
   }
   const target =
     f.kind === 'tool'
