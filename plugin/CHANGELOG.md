@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1] - 2026-10-13
+
 ### Changed
 - **The `@genvidtech/audit-core` pin moves `0.3.0` → `0.4.0` (#160).** A component
   file with no frontmatter block now fails the audit. audit-core 0.4.0 reports it as
