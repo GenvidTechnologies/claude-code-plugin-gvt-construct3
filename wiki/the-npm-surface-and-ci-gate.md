@@ -166,6 +166,16 @@ and the question is only whether the audit still behaves the same. Worked out on
    6 components, only `create-c3-op`'s `mcp` reason differed: 0.3.0 cut it at
    `(construct3-chef`, because ` #` starts a YAML comment (#151). The file diff could
    not have shown that.
+
+   **Then read the `index.d.ts` diff for new record shapes, and follow each one into
+   `audit.mjs`.** This repo's tree walks clean, so a shape that only appears under
+   failure never shows up in the walk above. For each new shape, find every field
+   the audit renders from it, not only the one that first looks wrong. On the 0.4.0 bump (#160)
+   the issue never mentioned the record a `skills/` or `agents/` tree that can't be
+   read now produces, named `skills/` or `agents/`. The `.d.ts` comment named it.
+   `componentTarget` built `skills/skills//SKILL.md` from that name. That was fixed,
+   but the `detail` built from the same record still said `file could not be read`.
+   Only code review caught the second field.
 2. **Capture the audit at the repo root before installing anything.** Run `audit.mjs`
    from the repo root with `C3_PROJECT_DIR` unset, normalise stdout and stderr with
    `scripts/lib/audit-diff.mjs`'s `normalise`, and save them with the exit code. Take it

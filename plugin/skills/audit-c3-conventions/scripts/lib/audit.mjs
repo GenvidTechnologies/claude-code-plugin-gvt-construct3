@@ -142,8 +142,11 @@ export async function main() {
 
 // ---- component-load check ---------------------------------------------------
 
-// The file a component is read from, relative to the plugin root.
+// The file a component is read from, relative to the plugin root. A skills/ or
+// agents/ tree that can't be read comes back from walkComponents as one
+// unreadable record named after the tree itself ('skills/' or 'agents/').
 function componentTarget(component) {
+  if (component.name.endsWith('/')) return component.name;
   return component.type === 'agent'
     ? `agents/${component.name}.md`
     : `skills/${component.name}/SKILL.md`;
@@ -167,10 +170,16 @@ export function evaluateComponentLoad(component) {
     ok: false,
     severity: 'error',
     required: true,
-    detail: `${isRead ? 'file could not be read' : 'frontmatter is malformed'} (${loadErrorText(err)})`,
+    detail: `${loadFailureText(component, isRead)} (${loadErrorText(err)})`,
     reason:
       'Its `metadata.expects` cannot be evaluated, so its expectations would otherwise be silently missing from the audit.',
   };
+}
+
+// What failed to load: a whole skills/ or agents/ tree is a directory, not a file.
+function loadFailureText(component, isRead) {
+  if (!isRead) return 'frontmatter is malformed';
+  return component.name.endsWith('/') ? 'directory could not be read' : 'file could not be read';
 }
 
 // `code: message` for a load error. A Node fs message already starts with its

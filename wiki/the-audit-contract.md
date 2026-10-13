@@ -163,6 +163,14 @@ finding (`required: true`) that names the component file and carries the
 crashed the whole walk, and malformed frontmatter was partly parsed. 0.3.0's two
 new shapes would have been skipped silently without this check.
 
+Since audit-core 0.4.0 (#160), a file with **no frontmatter block** is a
+`parseError` too, with code `NO_FRONTMATTER`. That covers no `---` fence, an empty
+file, a BOM or blank line before the fence, an unclosed fence, and adjacent fences
+with nothing between them. Under 0.3.0 such a file came back with `expects: null`
+and no error flag, so it gave zero findings. 0.4.0 also reports a `skills/` or
+`agents/` tree that can't be read as one `readError` record named `skills/` or
+`agents/`; the finding names the tree, not a file inside it.
+
 A component that loads but declares its expectations in the wrong shape is reported the
 same way, as an **error** (`kind: 'expects'`, `required: true`) naming the component file
 and the offending dotted path (#156). The shapes it catches:
@@ -272,7 +280,8 @@ this bundle ([ADR 0012](/decisions/0012-retiring-docs-into-the-wiki-bundle.md)),
 reports a stable set of findings that are **known cost, not regression**. Subtract these
 before treating any output as a problem.
 
-Re-measured against **gvt-dev 4.33.0** on 2026-10-12 (at `71c7c6b`). Only the Practice
+Re-measured against **gvt-dev 4.34.0** on 2026-10-13 (at `824bf20`), with every row
+unchanged from the **gvt-dev 4.33.0** measurement of 2026-10-12 (at `71c7c6b`). Only the Practice
 Coverage row moved from the first measurement, which was against gvt-dev 4.26.0 at `0a6bacc`,
 v3.0.0:
 
