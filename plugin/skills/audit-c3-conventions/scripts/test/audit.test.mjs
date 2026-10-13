@@ -1420,6 +1420,7 @@ test('evaluateComponentLoad: an unreadable skills/ or agents/ tree targets the t
     });
     assert.equal(f.target, name);
     assert.equal(f.severity, 'error');
+    assert.match(f.detail, /^directory could not be read \(EACCES: permission denied\)$/);
   }
 });
 

@@ -170,10 +170,16 @@ export function evaluateComponentLoad(component) {
     ok: false,
     severity: 'error',
     required: true,
-    detail: `${isRead ? 'file could not be read' : 'frontmatter is malformed'} (${loadErrorText(err)})`,
+    detail: `${loadFailureText(component, isRead)} (${loadErrorText(err)})`,
     reason:
       'Its `metadata.expects` cannot be evaluated, so its expectations would otherwise be silently missing from the audit.',
   };
+}
+
+// What failed to load: a whole skills/ or agents/ tree is a directory, not a file.
+function loadFailureText(component, isRead) {
+  if (!isRead) return 'frontmatter is malformed';
+  return component.name.endsWith('/') ? 'directory could not be read' : 'file could not be read';
 }
 
 // `code: message` for a load error. A Node fs message already starts with its
