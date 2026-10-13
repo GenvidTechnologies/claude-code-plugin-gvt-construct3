@@ -57,7 +57,11 @@ near-miss is still evaluated, so the typo doesn't hide a real gap.
 
 - A component that misplaces or misspells its expectations now fails the audit (exit 1)
   instead of passing with nothing declared.
-- **Accepted false positive:** a legitimate key within distance 2 of `expects`, such as
-  `metadata.exports`, is reported. No component uses one. The remedy is to rename the key.
+- **Accepted false positives:** a legitimate key within distance 2 of `expects`, such as
+  `metadata.exports`, is reported. The prefix clause reaches further than the distance
+  clause: any key starting with `expect`, such as `metadata.expectedVersion`, is reported
+  too. No component uses such a key. The remedy is to rename it.
 - A component with **no frontmatter at all** still gives zero findings. That happens in
-  audit-core's walk and is tracked upstream on GenvidTechnologies/audit-core#19.
+  audit-core's walk (0.3.0 returns `expects: null` with no error flag). It was noted in a
+  comment on GenvidTechnologies/audit-core#19, which closed without addressing it, so no
+  open upstream issue tracks it.
