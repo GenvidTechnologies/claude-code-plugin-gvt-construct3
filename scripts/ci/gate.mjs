@@ -82,7 +82,7 @@ const SUITES = [
       'skills/build-reference/scripts/test/merge.test.mjs',
       'skills/build-reference/scripts/test/reference-index.test.mjs',
     ],
-    minPass: 270,
+    minPass: 278,
   },
   {
     name: 'workspace',
