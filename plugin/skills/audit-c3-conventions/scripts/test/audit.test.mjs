@@ -1454,6 +1454,25 @@ test('evaluateComponentFindings: malformed component via real walkComponents →
   }
 });
 
+// A component with no frontmatter block at all declares nothing, so it must be
+// reported rather than pass with zero findings (audit-core#23, closed in 0.4.0).
+test('evaluateComponentFindings: no frontmatter via real walkComponents → exactly its load error', async () => {
+  const dir = await mkTmp();
+  try {
+    await fs.mkdir(join(dir, 'skills', 'bare'), { recursive: true });
+    await fs.writeFile(join(dir, 'skills', 'bare', 'SKILL.md'), '# A skill with no frontmatter\n');
+    const [bare] = await walkComponents(dir);
+    const findings = await evaluateComponentFindings(bare, dir, dir);
+    assert.equal(findings.length, 1);
+    assert.equal(findings[0].kind, 'component');
+    assert.equal(findings[0].severity, 'error');
+    assert.equal(findings[0].target, 'skills/bare/SKILL.md');
+    assert.match(findings[0].detail, /NO_FRONTMATTER/);
+  } finally {
+    await rmTmp(dir);
+  }
+});
+
 test('evaluateComponentFindings: readable component → one finding per expectation', async () => {
   const c = {
     type: 'skill',
