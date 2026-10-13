@@ -142,8 +142,11 @@ export async function main() {
 
 // ---- component-load check ---------------------------------------------------
 
-// The file a component is read from, relative to the plugin root.
+// The file a component is read from, relative to the plugin root. A skills/ or
+// agents/ tree that can't be read comes back from walkComponents as one
+// unreadable record named after the tree itself ('skills/' or 'agents/').
 function componentTarget(component) {
+  if (component.name.endsWith('/')) return component.name;
   return component.type === 'agent'
     ? `agents/${component.name}.md`
     : `skills/${component.name}/SKILL.md`;

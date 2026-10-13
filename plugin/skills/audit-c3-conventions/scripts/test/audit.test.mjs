@@ -1409,6 +1409,20 @@ test('evaluateComponentLoad: malformed frontmatter via real walkComponents → e
   }
 });
 
+test('evaluateComponentLoad: an unreadable skills/ or agents/ tree targets the tree itself', () => {
+  for (const [type, name] of [['skill', 'skills/'], ['agent', 'agents/']]) {
+    const f = evaluateComponentLoad({
+      type,
+      name,
+      expects: null,
+      frontmatter: null,
+      readError: { code: 'EACCES', message: 'permission denied' },
+    });
+    assert.equal(f.target, name);
+    assert.equal(f.severity, 'error');
+  }
+});
+
 test('evaluateComponentLoad: a real fs error message names its code once', async () => {
   let readError;
   try {
