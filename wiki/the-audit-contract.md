@@ -280,7 +280,8 @@ this bundle ([ADR 0012](/decisions/0012-retiring-docs-into-the-wiki-bundle.md)),
 reports a stable set of findings that are **known cost, not regression**. Subtract these
 before treating any output as a problem.
 
-Re-measured against **gvt-dev 4.33.0** on 2026-10-12 (at `71c7c6b`). Only the Practice
+Re-measured against **gvt-dev 4.34.0** on 2026-10-13 (at `824bf20`), with every row
+unchanged from the **gvt-dev 4.33.0** measurement of 2026-10-12 (at `71c7c6b`). Only the Practice
 Coverage row moved from the first measurement, which was against gvt-dev 4.26.0 at `0a6bacc`,
 v3.0.0:
 
