@@ -79,9 +79,14 @@ between repos.
 |---|---|
 | #31 → chef#98 | Relocated **correctly**: issue filed, both sides linked |
 | #32 | Named chef as its home, but **no chef issue existed** until chef#100 was filed in a much later session — and a memory had wrongly assumed it was tracked |
+| #157 | The issue body said the no-frontmatter gap was "noted on audit-core#19". ADR 0025's first draft repeated that as "tracked", but audit-core#19 had **closed without addressing it**; the code reviewer caught the claim |
 
 When you defer: open the target-repo issue **in the same session**, and comment
 the link back on the origin issue, so the linkage is **bidirectional**.
+
+A comment on someone else's issue is not tracking either: once that issue closes,
+nothing carries the item. Before writing "tracked in X#N" in an ADR, a changelog
+or an issue, run `gh issue view` and confirm X#N is open and is about this item.
 
 ## Label a retained origin-side umbrella `blocked-upstream`
 

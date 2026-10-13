@@ -22,6 +22,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   whose own frontmatter is malformed; every shipped component is well-formed, so a
   consuming repo's audit output is unchanged. The audit-core walk gaps from the same
   review are tracked upstream as GenvidTechnologies/audit-core#19. (#156)
+- **`audit-c3-conventions` reports a misplaced or misspelled `expects` block as an
+  error.** The audit reads expectations only from `metadata.expects`, so a block
+  written anywhere else used to give zero findings and the component silently
+  declared nothing. Now one error names the key for a top-level `expects`, and for a
+  top-level or `metadata` key that is a near-miss of `expects`: case-insensitive,
+  within edit distance 2 (`expect`, `Expects`, `expcts`) or starting with `expect`
+  (`expectations`). Other `metadata` keys, such as `pillar`, are still allowed. A
+  well-formed `metadata.expects` beside a near-miss is still evaluated. Every shipped
+  component is well-formed, so a consuming repo's audit output is unchanged. See
+  ADR 0025. (#157)
 
 ## [3.3.0] - 2026-10-13
 

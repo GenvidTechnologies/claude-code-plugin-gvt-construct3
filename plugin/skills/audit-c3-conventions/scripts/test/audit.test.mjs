@@ -1512,6 +1512,14 @@ const SHAPE_CASES = [
   // A non-string `in` or `minVersion` would crash the config / mcp evaluator.
   ['config in is a number', 'metadata:\n  expects:\n    config:\n      - key: k\n        in: 5\n', /`metadata\.expects\.config\[0\]` has a non-string `in`/],
   ['mcp minVersion is a number', 'metadata:\n  expects:\n    mcp:\n      - server: s\n        package: "@a/b"\n        minVersion: 2\n', /`metadata\.expects\.mcp\[0\]` has a non-string `minVersion`/],
+  // The audit reads only `metadata.expects`; a misplaced or misspelled block would be skipped silently.
+  ['expects at the top level', 'expects:\n  files:\n    - path: x\n', /`expects` is at the top level; the audit reads only `metadata\.expects`/],
+  ['expect at the top level', 'expect:\n  files:\n    - path: x\n', /`expect` is at the top level; the audit reads only `metadata\.expects`/],
+  ['metadata.expect', 'metadata:\n  expect:\n    files:\n      - path: x\n', /`metadata\.expect` looks like a misspelling of `metadata\.expects`, the only key the audit reads/],
+  ['metadata.Expects', 'metadata:\n  Expects:\n    files:\n      - path: x\n', /`metadata\.Expects` looks like a misspelling of `metadata\.expects`/],
+  ['metadata.expectations', 'metadata:\n  expectations:\n    files:\n      - path: x\n', /`metadata\.expectations` looks like a misspelling of `metadata\.expects`/],
+  // `expcets` is exactly two edits from `expects` and does not start with `expect`.
+  ['metadata.expcets', 'metadata:\n  expcets:\n    files:\n      - path: x\n', /`metadata\.expcets` looks like a misspelling of `metadata\.expects`/],
 ];
 
 for (const [label, yaml, detailRe] of SHAPE_CASES) {
@@ -1549,6 +1557,22 @@ test('evaluateComponentFindings: absent metadata, null files, and a good tool st
   assert.equal(tool.length, 1);
   assert.equal(tool[0].kind, 'tool');
   assert.equal(tool[0].ok, true);
+});
+
+test('evaluateComponentFindings: an unrelated metadata key is not flagged as a misspelled expects', async () => {
+  assert.equal((await findingsForSkill('metadata:\n  pillar: x\n')).length, 0);
+});
+
+// `export` is exactly three edits from `expects`, one past the near-miss limit.
+test('evaluateComponentFindings: a metadata key three edits from expects is not flagged', async () => {
+  assert.equal((await findingsForSkill('metadata:\n  export: x\n')).length, 0);
+});
+
+test('evaluateComponentFindings: a near-miss key does not stop a well-formed metadata.expects being evaluated', async () => {
+  const findings = await findingsForSkill(
+    'metadata:\n  expect:\n    files:\n      - path: x\n  expects:\n    files:\n      - path: nope.txt\n',
+  );
+  assert.deepEqual(findings.map((f) => f.kind).sort(), ['expects', 'file']);
 });
 
 test('evaluateExpectsShape: returns only the well-formed entries per key', () => {

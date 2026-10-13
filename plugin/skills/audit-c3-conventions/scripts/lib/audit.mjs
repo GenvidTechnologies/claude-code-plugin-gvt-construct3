@@ -208,13 +208,36 @@ const typeName = (v) => {
   return `a ${typeof v}`;
 };
 
+// Edit distance between two strings (insert, delete, substitute).
+function levenshtein(a, b) {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+// True for a key that is not exactly `expects` but looks like a try at it:
+// case-insensitively within two edits of `expects`, or starting with `expect`.
+export function isExpectsNearMiss(key) {
+  if (key === 'expects') return false;
+  const lower = String(key).toLowerCase();
+  return lower.startsWith('expect') || levenshtein(lower, 'expects') <= 2;
+}
+
 // Checks the shape of a component's `metadata.expects` without evaluating it.
 // walkComponents hands the value over unchecked, so a string where a list
 // belongs, a typo'd key or an entry without its required field would otherwise
-// be skipped silently or crash an evaluator. Returns one error finding per
-// problem, plus the well-formed entries per key; callers evaluate only those,
-// so a bad sibling key or entry doesn't hide the good ones. A null or absent
-// key means no entries and is not an error.
+// be skipped silently or crash an evaluator. The audit reads only
+// `metadata.expects`, so an `expects` block at the top level of the frontmatter
+// or a near-miss spelling (top level or under `metadata`) is flagged too.
+// Returns one error finding per problem, plus the well-formed entries per key;
+// callers evaluate only those, so a bad sibling key or entry doesn't hide the
+// good ones. A null or absent key means no entries and is not an error.
 export function evaluateExpectsShape(component) {
   const errors = [];
   const expects = { files: [], config: [], tools: [], mcp: [] };
@@ -230,7 +253,23 @@ export function evaluateExpectsShape(component) {
       reason: 'Its expectations would otherwise be silently missing from the audit, or crash it.',
     });
 
-  const metadata = component.frontmatter?.metadata;
+  const frontmatter = component.frontmatter;
+  if (isMapping(frontmatter)) {
+    for (const key of Object.keys(frontmatter)) {
+      if (key === 'metadata') continue;
+      if (key === 'expects' || isExpectsNearMiss(key)) {
+        flag(`\`${key}\` is at the top level; the audit reads only \`metadata.expects\``);
+      }
+    }
+  }
+  const metadata = frontmatter?.metadata;
+  if (isMapping(metadata)) {
+    for (const key of Object.keys(metadata)) {
+      if (isExpectsNearMiss(key)) {
+        flag(`\`metadata.${key}\` looks like a misspelling of \`metadata.expects\`, the only key the audit reads`);
+      }
+    }
+  }
   if (metadata != null && !isMapping(metadata)) {
     flag(`\`metadata\` is ${typeName(metadata)}, not a mapping`);
     return { errors, expects };
