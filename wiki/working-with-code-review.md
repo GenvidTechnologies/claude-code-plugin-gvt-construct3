@@ -84,6 +84,9 @@ was compared. A confident verdict and a verified one are indistinguishable in pr
 3. **"Show the command if you ran one."** This is what separates the two modes
    above — an asserted check has no command to show.
 4. **"I treat silence on any numbered item as *not done*, not as *no problem*."**
+5. **"Write any probe under a new filename."** The reviewer has a shell, and it writes
+   to the same scratchpad. In #156 it overwrote the orchestrator's probe file of the
+   same name, which held evidence meant to be re-run.
 
 Two data points, both positive. In #112 this produced per-area verdicts plus the
 branch's only real defect — an ADR citation invalidated by a later commit on the
@@ -91,6 +94,15 @@ same branch, which is exactly the shape the `file:line` rider on
 [doc inventories](/doc-inventories.md) describes. In #105 it returned per-question
 verdicts with commands attached, and its one vague answer was visible *as* the
 vague one, which is what made it worth re-checking by hand.
+
+A third data point, #156, shows the questions reaching past the pledged criteria.
+Question 1 listed concrete input shapes rather than asking "can anything still throw?".
+The reviewer extended that list to the optional fields the plan had scoped out, and
+found two crashes: a non-string config `in` and a non-string mcp `minVersion`. By then
+all ten acceptance rows had been graded satisfied by the implementer, the validator and
+a mutation harness. The rows enumerated shapes, and the defect sat in a shape no row
+named. So **name concrete cases in the question**, and expect the most valuable answer
+to be about the ones next to them.
 
 The corollary is the point of the whole section: **verify flagged inherited facts
 yourself.** The dispatch improves the odds that the reviewer looks; it does not
