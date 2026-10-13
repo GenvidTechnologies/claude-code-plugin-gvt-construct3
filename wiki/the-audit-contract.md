@@ -174,7 +174,13 @@ and the offending dotted path (#156). The shapes it catches:
 - an entry missing its required string field: `path` for files, `key` for config,
   `command` for tools, `server` and `package` for mcp;
 - a config `in` or an mcp `minVersion` that is present but not a string. The evaluators
-  use both as strings, so a number there would crash the audit.
+  use both as strings, so a number there would crash the audit;
+- an `expects` block in the wrong place (#157): a top-level `expects`, or a top-level or
+  `metadata` key that is a near-miss of `expects`, meaning case-insensitive and within
+  edit distance 2 (`expect`, `Expects`) or starting with `expect` (`expectations`).
+  audit-core reads only `metadata.expects`, so such a block used to give zero findings.
+  Other `metadata` keys, such as `pillar`, pass silently
+  ([ADR 0025](/decisions/0025-near-miss-expects-keys-are-errors-other-metadata-keys-pass.md)).
 
 A null or absent key still means "no entries". The other optional fields (`required`,
 `reason`, `base`) are not type-checked, because they are only compared or rendered. Each bad key or entry gets its own
