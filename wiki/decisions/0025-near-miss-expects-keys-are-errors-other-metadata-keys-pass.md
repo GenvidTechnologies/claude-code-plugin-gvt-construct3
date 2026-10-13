@@ -63,5 +63,5 @@ near-miss is still evaluated, so the typo doesn't hide a real gap.
   too. No component uses such a key. The remedy is to rename it.
 - A component with **no frontmatter at all** still gives zero findings. That happens in
   audit-core's walk (0.3.0 returns `expects: null` with no error flag). It was noted in a
-  comment on GenvidTechnologies/audit-core#19, which closed without addressing it, so no
-  open upstream issue tracks it.
+  comment on GenvidTechnologies/audit-core#19, which closed without addressing it, and is
+  now tracked as GenvidTechnologies/audit-core#23.
