@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **`audit-c3-conventions` reports a malformed `metadata.expects` as an error
+  instead of skipping it or crashing.** These declarations used to give zero
+  findings: an `expects` (or `metadata`) that is not a mapping, and an unknown key
+  such as `filez`. A key that is not a list (`files: abc`), an entry missing its
+  `path`, or a non-string config `in` or mcp `minVersion` made the audit throw and
+  exit 2, without naming the component.
+  `config`/`tools`/`mcp` entries missing their required field gave findings with an
+  `undefined` or `null` target. Each case is now one error finding naming the
+  component file and the offending path, such as `metadata.expects.files[0]`. The
+  component's well-formed entries are still evaluated. This affects only a plugin
+  whose own frontmatter is malformed; every shipped component is well-formed, so a
+  consuming repo's audit output is unchanged. The audit-core walk gaps from the same
+  review are tracked upstream as GenvidTechnologies/audit-core#19. (#156)
+
 ## [3.3.0] - 2026-10-13
 
 ### Changed

@@ -1471,3 +1471,114 @@ test('evaluateComponentFindings: readable component without expects → no findi
   const c = { type: 'agent', name: 'plain', expects: null, frontmatter: { name: 'plain' } };
   assert.deepEqual(await evaluateComponentFindings(c), []);
 });
+
+// ---- malformed metadata.expects ---------------------------------------------
+
+// Namespace import so the helper's absence fails its own tests, not the file load.
+import * as auditLib from '../lib/audit.mjs';
+
+// Writes a temp skills/<name>/SKILL.md whose frontmatter ends with `extraYaml`,
+// walks it with the real walkComponents, and returns the findings.
+async function findingsForSkill(extraYaml) {
+  const dir = await mkTmp();
+  try {
+    await fs.mkdir(join(dir, 'skills', 'shape'), { recursive: true });
+    await fs.writeFile(join(dir, 'skills', 'shape', 'SKILL.md'), `---\nname: shape\ndescription: x\n${extraYaml}---\n`);
+    const [c] = await walkComponents(dir);
+    return await evaluateComponentFindings(c, dir, dir);
+  } finally {
+    await rmTmp(dir);
+  }
+}
+
+const SHAPE_CASES = [
+  ['expects is a string', 'metadata:\n  expects: oops\n', /`metadata\.expects` is a string/],
+  ['expects is a number', 'metadata:\n  expects: 42\n', /`metadata\.expects` is a number/],
+  ['expects is an array', 'metadata:\n  expects:\n    - a\n', /`metadata\.expects` is an array/],
+  ['metadata is a string', 'metadata: oops\n', /`metadata` is a string/],
+  ['files is a string', 'metadata:\n  expects:\n    files: abc\n', /`metadata\.expects\.files`/],
+  ['files is a mapping', 'metadata:\n  expects:\n    files:\n      path: x\n', /`metadata\.expects\.files`/],
+  ['mcp is a string', 'metadata:\n  expects:\n    mcp: x\n', /`metadata\.expects\.mcp`/],
+  ['files entry is a string', 'metadata:\n  expects:\n    files:\n      - abc\n', /`metadata\.expects\.files\[0\]`/],
+  ['files entry lacks path', 'metadata:\n  expects:\n    files:\n      - {}\n', /`metadata\.expects\.files\[0\]` has no string `path`/],
+  ['config entry lacks key', 'metadata:\n  expects:\n    config:\n      - {}\n', /`metadata\.expects\.config\[0\]` has no string `key`/],
+  ['tools entry lacks command', 'metadata:\n  expects:\n    tools:\n      - {}\n', /`metadata\.expects\.tools\[0\]` has no string `command`/],
+  ['tools entry is a string', 'metadata:\n  expects:\n    tools:\n      - x\n', /`metadata\.expects\.tools\[0\]`/],
+  ['mcp entry lacks server and package', 'metadata:\n  expects:\n    mcp:\n      - {}\n', /`metadata\.expects\.mcp\[0\]` has no string `server`, `package`/],
+  ['unknown key', 'metadata:\n  expects:\n    filez:\n      - path: x\n', /`metadata\.expects\.filez` is not a known key \(files, config, tools, mcp\)/],
+  ['metadata is an array', 'metadata: []\n', /`metadata` is an array/],
+  ['files entry is null', 'metadata:\n  expects:\n    files:\n      - ~\n', /`metadata\.expects\.files\[0\]` is null, not a mapping/],
+  ['files path is a number', 'metadata:\n  expects:\n    files:\n      - path: 5\n', /`metadata\.expects\.files\[0\]` has no string `path`/],
+  // A non-string `in` or `minVersion` would crash the config / mcp evaluator.
+  ['config in is a number', 'metadata:\n  expects:\n    config:\n      - key: k\n        in: 5\n', /`metadata\.expects\.config\[0\]` has a non-string `in`/],
+  ['mcp minVersion is a number', 'metadata:\n  expects:\n    mcp:\n      - server: s\n        package: "@a/b"\n        minVersion: 2\n', /`metadata\.expects\.mcp\[0\]` has a non-string `minVersion`/],
+];
+
+for (const [label, yaml, detailRe] of SHAPE_CASES) {
+  test(`evaluateComponentFindings: ${label} → one expects error`, async () => {
+    const findings = await findingsForSkill(yaml);
+    assert.equal(findings.length, 1);
+    const [f] = findings;
+    assert.equal(f.kind, 'expects');
+    assert.equal(f.severity, 'error');
+    assert.equal(f.ok, false);
+    assert.equal(f.required, true);
+    assert.equal(f.component, 'shape');
+    assert.equal(f.target, 'skills/shape/SKILL.md');
+    assert.match(f.detail, detailRe);
+    assert.ok(f.reason);
+  });
+}
+
+test('evaluateComponentFindings: a bad key does not stop a sibling key being evaluated', async () => {
+  const findings = await findingsForSkill('metadata:\n  expects:\n    files: abc\n    tools:\n      - command: node\n');
+  assert.deepEqual(findings.map((f) => f.kind).sort(), ['expects', 'tool']);
+  assert.equal(findings.find((f) => f.kind === 'tool').ok, true);
+});
+
+test('evaluateComponentFindings: a bad entry does not stop a sibling entry being evaluated', async () => {
+  const findings = await findingsForSkill('metadata:\n  expects:\n    files:\n      - path: x\n      - {}\n');
+  assert.deepEqual(findings.map((f) => f.kind).sort(), ['expects', 'file']);
+  assert.match(findings.find((f) => f.kind === 'expects').detail, /files\[1\]/);
+});
+
+test('evaluateComponentFindings: absent metadata, null files, and a good tool stay unflagged', async () => {
+  assert.equal((await findingsForSkill('')).length, 0);
+  assert.equal((await findingsForSkill('metadata:\n  expects:\n    files:\n')).length, 0);
+  const tool = await findingsForSkill('metadata:\n  expects:\n    tools:\n      - command: node\n');
+  assert.equal(tool.length, 1);
+  assert.equal(tool[0].kind, 'tool');
+  assert.equal(tool[0].ok, true);
+});
+
+test('evaluateExpectsShape: returns only the well-formed entries per key', () => {
+  const c = {
+    type: 'skill',
+    name: 'u',
+    frontmatter: { metadata: {} },
+    expects: { files: [{ path: 'a' }, {}], tools: null, config: [{ key: 'k' }] },
+  };
+  const { errors, expects } = auditLib.evaluateExpectsShape(c);
+  assert.equal(errors.length, 1);
+  assert.deepEqual(expects.files, [{ path: 'a' }]);
+  assert.deepEqual(expects.config, [{ key: 'k' }]);
+  assert.deepEqual(expects.tools, []);
+  assert.deepEqual(expects.mcp, []);
+});
+
+test('evaluateExpectsShape: a non-mapping expects yields one error and no entries', () => {
+  const c = { type: 'agent', name: 'u', frontmatter: { metadata: { expects: 'x' } }, expects: 'x' };
+  const { errors, expects } = auditLib.evaluateExpectsShape(c);
+  assert.equal(errors.length, 1);
+  assert.equal(errors[0].target, 'agents/u.md');
+  assert.deepEqual(expects, { files: [], config: [], tools: [], mcp: [] });
+});
+
+test('formatReport: an expects shape error names the component, file and detail', async () => {
+  const findings = await findingsForSkill('metadata:\n  expects:\n    files:\n      - {}\n');
+  const report = formatReport(findings);
+  assert.match(report, /- \*\*shape\*\* has malformed expectations in `skills\/shape\/SKILL\.md`/);
+  assert.ok(report.includes(findings[0].detail));
+  assert.doesNotMatch(report, /could not be loaded/);
+  assert.doesNotMatch(report, /expects `undefined`/);
+});
