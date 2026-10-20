@@ -13,11 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tool names register at both versions, so `c3-explorer`'s allow-list needs no
   change. A live `resources/list` goes 59 → 74, purely additive (three new wiki
   pages and ADRs 0042–0053), so no resource citation moves. Agents may notice
-  behaviour changes: `apply-recipe` is atomic and writes nothing when a recipe is
-  refused; `scaffold-layout` / `scaffold-sprite` refuse to overwrite existing
-  project files; a `files` entry with `"create": true` over an existing event
-  sheet is refused; and the txId no longer moves on reads, directory events or the
-  tools' own writes, so stale-token rejections are rarer. The `minVersion` floor holds at `1.2.0` (ADR 0018), so
+  behaviour changes: a refused `apply-recipe` writes nothing (only a file-system
+  error during the final writes can still leave earlier files written);
+  `scaffold-layout` / `scaffold-sprite` refuse to overwrite existing project files;
+  a `files` entry with `"create": true` over an existing event sheet is refused;
+  and the txId no longer moves on a directory event alone, on the first read of a
+  long-unread file on Windows, or on the tools' own writes, so stale-token
+  rejections are rarer. The `minVersion` floor holds at `1.2.0` (ADR 0018), so
   this is *not* breaking for consumers. (#162)
 - **The bundled `c3-domain-manager` pin moves `@0.11.1` → `@0.11.2`.** The same 15
   tool names register at both versions. A live `resources/list` goes 42 → 44,
