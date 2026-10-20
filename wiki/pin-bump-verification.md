@@ -39,6 +39,23 @@ bump can add, rename, or remove MCP tools, and the agents enumerate those by
 hand. `c3-explorer`'s `tools:` is a hard allow-list, so a missed read tool
 becomes **uncallable**: a functional regression, not a doc gap.[^claude-md]
 
+**Running it after the bump has merged.** This is the usual case, because the bump
+lands through `plan-task` first. By then `plugin.json` already carries the new pins,
+so the skill's Phase 1 sees old equal to new and stops with nothing to reconcile.
+Instead, take the old pins from the newest release tag:
+
+```bash
+git show "$(git tag -l 'v*' | sort -V | tail -1)":plugin/.claude-plugin/plugin.json | grep genvidtech/
+```
+
+Pass both versions of each server explicitly. Phase 2's tool-name search,
+`(registerTool|reg)\(`, misses both current idioms and finds about one tool per server.
+Search for the union of idioms described under [The count
+anchors](#the-count-anchors) instead. A clean run (empty
+name-set diff, every `mcp__` reference in `plugin/agents/` resolving, only history left
+in the old-version sweep) produces **no commit**. Done this way on 2026-10-20 at
+`2aa0186` for #162/#163: chef 38 → 38 and dm 15 → 15, with nothing to change.
+
 ## The core rule
 
 **A pin-bump issue's tool/surface table is an assertion to test, not ground
