@@ -605,6 +605,12 @@ extraction artifact rather than a real delta. Confirm with a
 presence-anywhere grep over the raw `dist/` of **both** packed versions before
 believing any "added" entry.
 
+**Keep the installs you will grep.** These anchors are registration-idiom counts
+over `dist/mcp/server.js`, not `tools/list` totals, so they need the installed
+package on disk. Run `pin-bump-check.mjs --keep` for **both** servers. At #162/#163
+only the dm run was kept, and chef 2.1.0 needed a second sealed install just to
+count `regP`/`reg`. Remove the kept directories afterwards; the script prints them.
+
 **Grep `reg(` and `regP(` in `server.js`, not raw `registerTool(`.** A bare
 `registerTool(` grep still barely matches chef — the dynamic `op-<name>` wrapper
 is the main exception — so it undercounts badly.[^reconciliation]
