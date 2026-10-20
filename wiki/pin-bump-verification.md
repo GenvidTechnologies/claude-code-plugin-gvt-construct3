@@ -76,6 +76,27 @@ mis-scopes the whole job (doubling the apparent uncallable-tool risk). Check
 that class of assertion against the agent frontmatter, not just the counts
 against the package.
 
+### Behaviour prose in the CHANGELOG: source it from upstream's CHANGELOG
+
+A bump's `[Unreleased]` entry often tells consumers what an agent may notice.
+Take that wording from the upstream package's own CHANGELOG **at the release tag**,
+not from the bump issue's summary of it:
+
+```bash
+gh api 'repos/GenvidTechnologies/construct3-chef/contents/CHANGELOG.md?ref=v2.1.0' --jq .content | base64 -d
+```
+
+The issue's summary is an assertion like any other in it. At #162 it compressed
+two entries into stronger claims, and the first commit's CHANGELOG repeated them:
+
+- "`apply-recipe` is atomic". Upstream says a refused apply writes nothing, but
+  a file-system error during the final writes can still leave earlier files written.
+- "the txId no longer moves on reads". Upstream fixed only a directory event
+  alone, the first read of a long-unread file on Windows, and the tools' own writes.
+
+The code-reviewer caught both against the tag. Neither surfaces in any check this
+page runs, because a tool-name or resource diff says nothing about behaviour.
+
 ## The rule is not limited to pin-bump issues
 
 It applies to **any issue whose deliverable is prose asserting how a tool
@@ -185,7 +206,10 @@ uses, so no `tar`), then reports:
   the new range resolves to (`npm view`), checked against the reviewed baseline. The
   script reads that baseline from the `Reviewed baseline: {…}` comment in `audit.mjs`,
   so **widening the baseline means editing that comment**, and the script picks it up.
-  A version outside it reports `FAILS procedurally — escalate per ADR 0009` and exits
+  It also means editing `scripts/test/pin-bump-check.test.mjs`: its
+  `parseReviewedBaseline: real audit.mjs` test asserts the real baseline set with
+  `deepEqual`, so the gate goes red until the expected list gains the new member.
+  The #162/#163 plan missed this, and the gate caught it. A version outside it reports `FAILS procedurally — escalate per ADR 0009` and exits
   1. The escalation itself (the closure diff below) is still done by hand;
 - the `package.json` fields that differ (`bin`, `dependencies`, …), so a CHANGELOG
   "nothing changed" claim can name what was compared;
@@ -256,7 +280,11 @@ nothing had moved.[^adr-0009]
 > **The reviewed baseline is now state the check depends on.** It currently stands at
 > **{0.5.1, 0.7.0, 0.8.0, 0.10.0, 0.12.0}**, recorded in the provenance comment above
 > `scanC3ProjectMarkers` in `audit.mjs`, in ADR 0009, and — for `0.10.0` — in ADR 0015.
-> `0.12.0` is recorded in that comment and on this page only (#162/#163).
+> `0.12.0` is recorded in that comment and on this page only (#162/#163), and so
+> was `0.8.0`. ADR 0009's "record it … in this record" described the first
+> escalation. A later widening that passes on byte-identity goes in the comment and
+> on this page; ADRs stay historical. A widening that needs a new adjudication, as
+> `0.10.0` did, gets its own record (ADR 0015).
 > **A baseline that is not written down silently resets the check to its most expensive
 > form.** Note the members were not all admitted by the same standard: the first three
 > are byte-identical to one another, while `0.10.0` is **semantically equivalent but
