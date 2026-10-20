@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-10-20
+
 ### Changed
 - **The bundled `construct3-chef` pin moves `@2.0.0` → `@2.1.0`.** The same 38
   tool names register at both versions, so `c3-explorer`'s allow-list needs no
