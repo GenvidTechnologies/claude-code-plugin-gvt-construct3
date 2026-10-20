@@ -511,7 +511,7 @@ export function classifyDiscovery({
 // NO name-based filtering — `node_modules` and dot-directories are scanned
 // like any other child dir — so this deliberately does not exclude them
 // either (see the regression-lock test in audit.test.mjs).
-// Reviewed baseline: {0.5.1, 0.7.0, 0.8.0, 0.10.0}. `resolveRootFolder.js` and
+// Reviewed baseline: {0.5.1, 0.7.0, 0.8.0, 0.10.0, 0.12.0}. `resolveRootFolder.js` and
 // its only import `mcpError.js` are byte-identical across the first three, so the
 // dm 0.7.0 -> 0.8.0 bump (which moved the range ^0.5.1 -> ^0.7.0) required no
 // change here. The dm 0.8.0 -> 0.9.0 bump moved the range again (^0.7.0 ->
@@ -542,6 +542,13 @@ export function classifyDiscovery({
 // ADR 0007 part 1 failed too. That surface is dm's plural/multi-project path; the
 // plugin configures one single-project `server` invocation, so only the singular
 // semantics mirrored here are exercised.
+//
+// The chef 2.0.0 -> 2.1.0 and dm 0.11.1 -> 0.11.2 bumps both moved the range
+// ^0.10.0 -> ^0.12.0, which resolves only to 0.12.0. They required no change here:
+// `resolveRootFolder.js` and `mcpError.js` are byte-identical 0.10.0 <-> 0.12.0,
+// the import closure is unchanged (node:fs, node:path, mcpError.js), and `diff -rq`
+// over dist/ showed only index.d.ts(.map), observedState.* and optimisticWatcher.*
+// differing — all outside the closure. dm's locations.js was byte-identical too.
 // See ADR 0009, and ADR 0015 for this non-identical-closure escalation.
 export async function scanC3ProjectMarkers(repoRoot) {
   const rootHasMarker = await fileExists(join(repoRoot, 'project.c3proj'));

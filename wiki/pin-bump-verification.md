@@ -59,9 +59,12 @@ from `npm pack`.
 | chef 1.1.0 / dm 0.8.0 (#73/#74) | Both bodies again named only `plugin.json` as the pin site | **Omitted `c3-implementer.md` again** — the same file, the second consecutive bump |
 | same | #73 asserted **both** agents carry hard `tools:` allow-lists | Only `c3-explorer` does; `c3-implementer` has no `tools:` key and says so in its own body |
 | dm 0.11.1 (#147) | Pin sites given as `plugin.json` "plus any agent-doc prose naming the pinned version" | **Did not name `c3-implementer.md`**, which writes the version bare (`@0.11.0`, lines 63 and 65), so a `c3-domain-manager@` grep misses it too. This issue was **filed by hand**, not auto-filed |
+| chef 2.1.0 / dm 0.11.2 (#162/#163) | Both bodies named only `plugin.json` as the pin site | **Omitted `c3-implementer.md` again** (`:22` for chef, `:63`/`:65` for dm), along with `c3-explorer.md` and `toolchain-config.md` |
+| same | #163: "`docs:///` resource surface: one resource added" | **Two** were added (42 → 44). It missed `docs:///process/documentation-conventions` |
+| same | Neither body mentioned that both servers move `@genvidtech/mcp-utils` `^0.10.0` → `^0.12.0` | That move fails ADR 0007 part 2 for **both** bumps, and owes the ADR 0009 escalation below |
 
 **`c3-implementer.md` is not an anecdote — it is the predictable failure mode.**
-Four data points across three bumps, including a hand-filed issue, so the omission
+Six data points across four bumps, including a hand-filed issue, so the omission
 is not an artifact of bot-generated bodies. Find pin sites by grepping the **bare
 version string** (`0.11.0`), not `<package>@<version>`, because `c3-implementer.md`
 writes `@<version>` without the package name. Assume the pin-location list is
@@ -72,6 +75,27 @@ short until you have grepped it yourself, and check `plugin/agents/c3-implemente
 mis-scopes the whole job (doubling the apparent uncallable-tool risk). Check
 that class of assertion against the agent frontmatter, not just the counts
 against the package.
+
+### Behaviour prose in the CHANGELOG: source it from upstream's CHANGELOG
+
+A bump's `[Unreleased]` entry often tells consumers what an agent may notice.
+Take that wording from the upstream package's own CHANGELOG **at the release tag**,
+not from the bump issue's summary of it:
+
+```bash
+gh api 'repos/GenvidTechnologies/construct3-chef/contents/CHANGELOG.md?ref=v2.1.0' --jq .content | base64 -d
+```
+
+The issue's summary is an assertion like any other in it. At #162 it compressed
+two entries into stronger claims, and the first commit's CHANGELOG repeated them:
+
+- "`apply-recipe` is atomic". Upstream says a refused apply writes nothing, but
+  a file-system error during the final writes can still leave earlier files written.
+- "the txId no longer moves on reads". Upstream fixed only a directory event
+  alone, the first read of a long-unread file on Windows, and the tools' own writes.
+
+The code-reviewer caught both against the tag. Neither surfaces in any check this
+page runs, because a tool-name or resource diff says nothing about behaviour.
 
 ## The rule is not limited to pin-bump issues
 
@@ -182,7 +206,10 @@ uses, so no `tar`), then reports:
   the new range resolves to (`npm view`), checked against the reviewed baseline. The
   script reads that baseline from the `Reviewed baseline: {…}` comment in `audit.mjs`,
   so **widening the baseline means editing that comment**, and the script picks it up.
-  A version outside it reports `FAILS procedurally — escalate per ADR 0009` and exits
+  It also means editing `scripts/test/pin-bump-check.test.mjs`: its
+  `parseReviewedBaseline: real audit.mjs` test asserts the real baseline set with
+  `deepEqual`, so the gate goes red until the expected list gains the new member.
+  The #162/#163 plan missed this, and the gate caught it. A version outside it reports `FAILS procedurally — escalate per ADR 0009` and exits
   1. The escalation itself (the closure diff below) is still done by hand;
 - the `package.json` fields that differ (`bin`, `dependencies`, …), so a CHANGELOG
   "nothing changed" claim can name what was compared;
@@ -251,8 +278,13 @@ review that release notes would have talked us out of — and the review then fo
 nothing had moved.[^adr-0009]
 
 > **The reviewed baseline is now state the check depends on.** It currently stands at
-> **{0.5.1, 0.7.0, 0.8.0, 0.10.0}**, recorded in the provenance comment above
+> **{0.5.1, 0.7.0, 0.8.0, 0.10.0, 0.12.0}**, recorded in the provenance comment above
 > `scanC3ProjectMarkers` in `audit.mjs`, in ADR 0009, and — for `0.10.0` — in ADR 0015.
+> `0.12.0` is recorded in that comment and on this page only (#162/#163), and so
+> was `0.8.0`. ADR 0009's "record it … in this record" described the first
+> escalation. A later widening that passes on byte-identity goes in the comment and
+> on this page; ADRs stay historical. A widening that needs a new adjudication, as
+> `0.10.0` did, gets its own record (ADR 0015).
 > **A baseline that is not written down silently resets the check to its most expensive
 > form.** Note the members were not all admitted by the same standard: the first three
 > are byte-identical to one another, while `0.10.0` is **semantically equivalent but
@@ -326,7 +358,24 @@ same evidence. Part 1: `dist/adapters/locations.js` byte-identical (`cmp` exit 0
 All of `dist/` was identical too (`diff -rq` exit 0). Part 2: the range stayed
 `^0.10.0`, and the newest published `mcp-utils` was still `0.10.0`.
 
-Part 2 will expire again the moment `mcp-utils 0.11.0` publishes.
+**Part 2 expired again at the chef `2.1.0` / dm `0.11.2` bumps (#162/#163).** Both
+servers moved the range `^0.10.0` → `^0.12.0`. `mcp-utils` `0.11.0` and `0.12.0` had
+both published, but `^0.12.0` admits only `0.12.0`, so `0.11.0` needed no review.
+`scripts/pin-bump-check.mjs` reported `[FAIL] ADR 0007 part 2 … FAILS procedurally`
+for both pairs, and the ADR 0009 escalation was run against the installs it kept
+(`--keep`), with every exit status observed:
+
+| Check | Result |
+|---|---|
+| ADR 0007 part 1 — dm `dist/adapters/locations.js`, `0.11.1` ↔ `0.11.2` | **byte-identical** (11214 bytes) |
+| ADR 0007 part 2 — range moved `^0.10.0` → `^0.12.0` (both servers) | **fails procedurally** |
+| `dist/resolveRootFolder.js`, mcp-utils `0.10.0` ↔ `0.12.0` | **byte-identical** (`cmp` exit 0) |
+| `dist/mcpError.js` — its only non-node import, which imports nothing | **byte-identical** (`cmp` exit 0); a `cmp` of two different files exited 1 as the control |
+| `diff -rq` over `dist/` (completeness, 72 files each side) | exit 1; only `index.d.ts(.map)`, `observedState.*` and `optimisticWatcher.*` differ, all **outside the closure** |
+
+**Verdict: PASS.** No logic change in `audit.mjs`; the baseline widened to include
+`0.12.0`. Part 2 will expire again the moment a server's range admits a newer
+`mcp-utils`.
 
 ## The explorer allow-list is *not* chef's `READ_ONLY` set
 
@@ -465,6 +514,8 @@ Measured this way on 2026-09-01, before rewriting any reference:
 | `@genvidtech/c3-domain-manager@0.10.1` | **40** — re-probed 2026-09-15 (#107) |
 | `@genvidtech/c3-domain-manager@0.11.0` | **41** — probed 2026-09-23 (#130); purely additive, the one new entry is `docs:///decisions/0030-classification-coverage-gate`; nothing repathed or removed. The 0.10.1 arm, re-probed in the same run, still returned 40 — the control that the harness discriminates |
 | `@genvidtech/c3-domain-manager@0.11.1` | **42** — probed 2026-10-08 (#147) with `scripts/mcp-surface.mjs`; purely additive, the one new entry is `docs:///reference/key-dependencies`; nothing repathed or removed. The 0.11.0 arm, re-probed in the same run, still returned 41. Tools 15 → 15 with identical names, templates 1 → 1 |
+| `@genvidtech/construct3-chef@2.1.0` | **74** — probed 2026-10-20 (#162); purely additive, the 15 new entries are `docs:///architecture/addon-tooling`, `docs:///process/canonical-fixture`, `docs:///process/verification-traps` and `docs:///decisions/0042-…` through `0053-…`; nothing repathed or removed. The 2.0.0 arm, re-probed in the same run, still returned 59. Tools 38 → 38 with identical names, templates 1 → 1 |
+| `@genvidtech/c3-domain-manager@0.11.2` | **44** — probed 2026-10-20 (#163); purely additive, the two new entries are `docs:///decisions/0031-pre-connect-log-stderr-fallback` and `docs:///process/documentation-conventions`; nothing repathed or removed. The 0.11.1 arm, re-probed in the same run, still returned 42. Tools 15 → 15 with identical names, templates 1 → 1 |
 
 Both 2026-09-01 figures matched the counts the bump issues claimed, which is worth
 noting in the other direction: **the probe is cheap enough that confirming a correct
@@ -516,10 +567,10 @@ in `plugin/.claude-plugin/plugin.json`'s `mcpServers`.
 
 | Server | Idiom | Location | Count |
 |---|---|---|---|
-| construct3-chef | `regP("…")` (project-scoped) | `dist/mcp/server.js` | **37** at `2.0.0` — includes `list-ops`, moved in from `opsRegistry.js` at this bump |
-| construct3-chef | `reg("…")` (unscoped) | `dist/mcp/server.js` | **1** at `2.0.0` — `list-projects` only |
-| construct3-chef | total | — | **38** at `2.0.0` — was **37** at `1.2.0` (`reg()` **36** + `list-ops` **1**), **35**, **31** |
-| c3-domain-manager | `registerProjectTool` + one direct `registerTool` | `dist/mcp/server.js` | **15** at `0.11.1` — identical name set to `0.11.0` (#147); **15** at `0.11.0` — identical name set to `0.10.1` (`regenerate` gained a parameter, not a tool); was **14** at `0.7.0` → `0.9.0`, **13** before |
+| construct3-chef | `regP("…")` (project-scoped) | `dist/mcp/server.js` | **37** at `2.1.0` and `2.0.0` — includes `list-ops`, moved in from `opsRegistry.js` at `2.0.0` |
+| construct3-chef | `reg("…")` (unscoped) | `dist/mcp/server.js` | **1** at `2.1.0` and `2.0.0` — `list-projects` only |
+| construct3-chef | total | — | **38** at `2.1.0` — identical name set to `2.0.0` (#162); **38** at `2.0.0` — was **37** at `1.2.0` (`reg()` **36** + `list-ops` **1**), **35**, **31** |
+| c3-domain-manager | `registerProjectTool` + one direct `registerTool` | `dist/mcp/server.js` | **15** at `0.11.2` (14 + 1) — identical name set to `0.11.1` (#163); **15** at `0.11.1` — identical name set to `0.11.0` (#147); **15** at `0.11.0` — identical name set to `0.10.1` (`regenerate` gained a parameter, not a tool); was **14** at `0.7.0` → `0.9.0`, **13** before |
 
 > **dm changed its registration idiom at `0.10.0` — a bare `registerTool(` grep now
 > returns 2, not 15.** Per-project tools register through a `registerProjectTool(name, …)`
@@ -553,6 +604,12 @@ present in one side's extraction and absent from the other's can be an
 extraction artifact rather than a real delta. Confirm with a
 presence-anywhere grep over the raw `dist/` of **both** packed versions before
 believing any "added" entry.
+
+**Keep the installs you will grep.** These anchors are registration-idiom counts
+over `dist/mcp/server.js`, not `tools/list` totals, so they need the installed
+package on disk. Run `pin-bump-check.mjs --keep` for **both** servers. At #162/#163
+only the dm run was kept, and chef 2.1.0 needed a second sealed install just to
+count `regP`/`reg`. Remove the kept directories afterwards; the script prints them.
 
 **Grep `reg(` and `regP(` in `server.js`, not raw `registerTool(`.** A bare
 `registerTool(` grep still barely matches chef — the dynamic `op-<name>` wrapper

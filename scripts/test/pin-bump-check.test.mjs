@@ -31,7 +31,7 @@ test('parseReviewedBaseline: real audit.mjs, semver-sorted', () => {
     new URL('../../plugin/skills/audit-c3-conventions/scripts/lib/audit.mjs', import.meta.url),
     'utf8',
   );
-  assert.deepEqual(parseReviewedBaseline(text), ['0.5.1', '0.7.0', '0.8.0', '0.10.0']);
+  assert.deepEqual(parseReviewedBaseline(text), ['0.5.1', '0.7.0', '0.8.0', '0.10.0', '0.12.0']);
 });
 
 test('parseReviewedBaseline: sorts by semver not lexically', () => {

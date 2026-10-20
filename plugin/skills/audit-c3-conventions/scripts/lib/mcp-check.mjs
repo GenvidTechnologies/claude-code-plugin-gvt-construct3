@@ -13,7 +13,7 @@ import os from 'node:os';
 // plugin's own manifest object — never the consuming repo's node_modules.
 // Looks for the arg of manifest.mcpServers[server].args that starts with
 // `${pkg}@` (the real args look like
-// ["-y", "@genvidtech/construct3-chef@2.0.0", "server"]) and returns
+// ["-y", "@genvidtech/construct3-chef@2.1.0", "server"]) and returns
 // everything after that prefix, keyed purely on `pkg` — this is a lookup, not
 // a second validator of the argument's format (scripts/ci/check-plugin-manifest.mjs
 // already enforces that shape in CI).
@@ -95,7 +95,7 @@ export function evaluateMcpExpectation({ component, entry, pin, probe }) {
 }
 
 // Matches exactly a scoped package name plus an exact `x.y.z` version, e.g.
-// `@genvidtech/construct3-chef@2.0.0` — nothing looser (no ranges, no
+// `@genvidtech/construct3-chef@2.1.0` — nothing looser (no ranges, no
 // unscoped names, no trailing junk) is considered probeable.
 export const PROBE_SPEC_RE = /^@[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*@\d+\.\d+\.\d+$/;
 
@@ -138,7 +138,7 @@ export function buildNpxInvocation(spec, platform) {
 // escape `"` or `%`. A rejected spec never reaches spawn and creates no
 // probe directory. See ADR 0023.
 //
-//   spec     — the exact spec to probe, e.g. "@genvidtech/construct3-chef@2.0.0".
+//   spec     — the exact spec to probe, e.g. "@genvidtech/construct3-chef@2.1.0".
 //   spawn    — injected spawn function (spawnSync's signature); required, so
 //              this is exercisable without ever shelling out to real npx.
 //   tmpRoot  — defaults to os.tmpdir(); overridable for tests.

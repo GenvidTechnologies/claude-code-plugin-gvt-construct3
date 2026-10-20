@@ -8,6 +8,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **The bundled `construct3-chef` pin moves `@2.0.0` → `@2.1.0`.** The same 38
+  tool names register at both versions, so `c3-explorer`'s allow-list needs no
+  change. A live `resources/list` goes 59 → 74, purely additive (three new wiki
+  pages and ADRs 0042–0053), so no resource citation moves. Agents may notice
+  behaviour changes: a refused `apply-recipe` writes nothing (only a file-system
+  error during the final writes can still leave earlier files written);
+  `scaffold-layout` / `scaffold-sprite` refuse to overwrite existing project files;
+  a `files` entry with `"create": true` over an existing event sheet is refused;
+  and the txId no longer moves on a directory event alone, on the first read of a
+  long-unread file on Windows, or on the tools' own writes, so stale-token
+  rejections are rarer. The `minVersion` floor holds at `1.2.0` (ADR 0018), so
+  this is *not* breaking for consumers. (#162)
+- **The bundled `c3-domain-manager` pin moves `@0.11.1` → `@0.11.2`.** The same 15
+  tool names register at both versions. A live `resources/list` goes 42 → 44,
+  purely additive (`docs:///decisions/0031-pre-connect-log-stderr-fallback`,
+  `docs:///process/documentation-conventions`). Log lines emitted before the MCP
+  transport connects now go to the server's stderr instead of being dropped. The
+  `minVersion` floor holds at `0.6.1`. ADR 0007 part 1 passes:
+  `dist/adapters/locations.js` is byte-identical. (#163)
+- **The reviewed `@genvidtech/mcp-utils` baseline widens to include `0.12.0`.** Both
+  bumps move the range `^0.10.0` → `^0.12.0`, which fails ADR 0007 part 2
+  procedurally. The ADR 0009 escalation passes: `dist/resolveRootFolder.js` and its
+  only import `mcpError.js` are byte-identical between `0.10.0` and `0.12.0`, so the
+  audit's discovery-check mirror needs no logic change. Only the `Reviewed baseline`
+  comment in `audit.mjs` moves. (#162, #163)
+
 ## [3.3.1] - 2026-10-13
 
 ### Changed
