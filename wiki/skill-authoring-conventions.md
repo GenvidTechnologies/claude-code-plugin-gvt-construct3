@@ -196,6 +196,16 @@ against the checks actually present in `audit.mjs`. If a remediation only works
 once a not-yet-written check exists, it belongs in the **issue/plan** for that
 check, not in the shipped skill.
 
+Operational guidance that is **not** a finding goes in the blockquote notes after
+the bullets, not in a new bullet. Examples are approving the bundled servers once,
+or the first-launch `CONNECT_TIMEOUT` after a pin-changing update. A criterion
+that pins the section's `- **` bullet count holds that line.
+
+> **Precedent.** #166 asked for its timeout note in "Act on findings". Triage graded
+> that target as agreement, and only planning noticed that a bullet would describe a
+> check the audit doesn't run. The note shipped as a second blockquote paragraph
+> beside "Plugin-provided servers", with a row pinning the bullet count at 9.
+
 ## Prose must not restate a value a declarative source owns
 
 The sibling of the rule above: that one is prose describing a check that does
