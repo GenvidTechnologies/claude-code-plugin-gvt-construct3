@@ -15,7 +15,7 @@ It is distributed through the [`claude-code-gvt-marketplace`](https://github.com
 
 The plugin declares `construct3-chef` and `c3-domain-manager` in its `plugin.json` (`mcpServers`), so they start when the plugin is enabled. They may appear as **"Pending approval"** — approve them once.
 
-Right after a plugin update, the first launch of each server can fail with `CONNECT_TIMEOUT` while `npx` downloads the newly pinned version. The servers are not broken: run `/mcp` to reconnect them.
+After an update that moves a bundled server to a new pinned version, that server's first launch can fail with `CONNECT_TIMEOUT`, likely because `npx` is still downloading the new version. Run `/mcp` to reconnect.
 
 Then verify the repo satisfies the contract:
 
