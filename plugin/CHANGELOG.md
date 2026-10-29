@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **The first-launch `CONNECT_TIMEOUT` after a plugin update is now documented.**
+  When a release pins new server versions, the first launch of each bundled MCP
+  server can time out while `npx` downloads them, and their tools are missing
+  from the session. Run `/mcp` to reconnect. The README, `CONVENTIONS.md` and
+  the `audit-c3-conventions` skill now say so. (#166)
+
 ## [3.4.0] - 2026-10-20
 
 ### Changed
