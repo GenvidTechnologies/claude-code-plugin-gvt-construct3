@@ -8,6 +8,8 @@
 //       auto-discovery; suppressed by an explicit root pin
 //   1c. Root divergence (bespoke, advisory `info`) — the paths.c3project root
 //       differs from the one bare-args discovery would pick
+//   1d. Local-install lag (advisory `info`) — a locally installed copy of a
+//       pinned MCP server package differs from the version plugin.json pins
 //   2.  Walk plugin skills/agents metadata.expects (files, config, tools, mcp).
 //       An `mcp` entry's minVersion is probed via `npx -y <package> --version`;
 //       this file states no floors of its own — each component's
@@ -46,6 +48,7 @@ import {
   evaluateTool,
 } from '@genvidtech/audit-core';
 import { findPinnedVersion, evaluateMcpExpectation, probeMcpPackage } from './mcp-check.mjs';
+import { checkLocalInstalls } from './local-install.mjs';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 // scripts/lib -> scripts -> audit-c3-conventions -> skills -> plugin root
@@ -127,6 +130,13 @@ export async function main() {
         'The gvt-dev config file was renamed `.genvid-agent.json` → `.gvt-agent.json`; the legacy name is still accepted during the transition.',
     });
   }
+
+  // 1d. Local-install check — advisory `info`; compares each pinned MCP server
+  // package installed under the repo root / project root against the plugin's
+  // pin (ADR 0021). Reads node_modules directly, never an ancestor's.
+  findings.push(
+    ...checkLocalInstalls({ manifest: loadPluginManifest(), repoRoot: REPO_ROOT, projectRoot }),
+  );
 
   // 2. Walk component expects: files, config, tools, mcp
   for (const component of components) {
