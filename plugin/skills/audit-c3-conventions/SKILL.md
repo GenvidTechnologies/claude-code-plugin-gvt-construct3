@@ -77,6 +77,8 @@ When a required check fails, take the reason seriously — it's what the compone
 - **Malformed `metadata.expects`** — a skill or agent in the plugin declares its expectations in a shape the audit can't evaluate. The finding names the file and the offending path. This is a defect in the plugin itself, not in your repo. Update or reinstall the plugin, or, as its maintainer, fix the frontmatter.
 
 > **Plugin-provided servers:** `gvt-construct3` declares both MCP servers in its `plugin.json` (`mcpServers`), so they start automatically when the plugin is enabled. Bundled plugin servers may need a one-time approval in Claude Code before the agents can call their tools — approve them in the Claude Code UI. This is independent of the audit's `npx` probe above, which invokes npx directly and needs no approval.
+>
+> **After a pin-changing update:** when an update moves a bundled server to a new pinned version, that server's first launch can fail with `CONNECT_TIMEOUT`, likely because `npx` is still downloading the new version, and the session then has none of that server's tools. Run `/mcp` to reconnect. The audit's reachability probe runs `npx` separately and can still pass in that session.
 
 ## Output format
 

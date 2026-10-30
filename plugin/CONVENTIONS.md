@@ -14,6 +14,8 @@ This document is the contract between the `gvt-construct3` Claude Code plugin an
 
 The plugin **declares both servers in its `plugin.json`** (`mcpServers`), so they start automatically when `gvt-construct3` is enabled. Bundled plugin servers may install as **"Pending approval"** — approve them once in Claude Code. If the consuming repo also wires these servers in its own `.mcp.json`, that is redundant but harmless.
 
+After an update that moves a bundled server to a new pinned version, that server's first launch can fail with `CONNECT_TIMEOUT`, likely because `npx` is still downloading the new version. Run `/mcp` to reconnect.
+
 ## Recommended: validate bundled addons in your validation chain
 
 If your project bundles its addons (`.c3addon` packages committed under `addons/`,

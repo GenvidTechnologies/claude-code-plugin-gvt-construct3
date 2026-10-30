@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **The first-launch `CONNECT_TIMEOUT` after a pin-changing update is now
+  documented.** After an update that moves a bundled server to a new pinned
+  version, that server's first launch can fail with `CONNECT_TIMEOUT`, likely
+  because `npx` is still downloading the new version, and its tools are missing
+  from the session. Run `/mcp` to reconnect. The README, `CONVENTIONS.md` and
+  the `audit-c3-conventions` skill now say so. (#166)
+
 ## [3.4.0] - 2026-10-20
 
 ### Changed
