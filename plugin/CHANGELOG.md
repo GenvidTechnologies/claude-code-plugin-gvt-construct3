@@ -15,6 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   because `npx` is still downloading the new version, and its tools are missing
   from the session. Run `/mcp` to reconnect. The README, `CONVENTIONS.md` and
   the `audit-c3-conventions` skill now say so. (#166)
+- **The audit reports when your repo's own copy of a bundled MCP server
+  differs from the plugin's pin.** If `@genvidtech/construct3-chef` or
+  `@genvidtech/c3-domain-manager` is installed under `node_modules` (in the
+  repo root, or in the `paths.c3project` directory when that is elsewhere) at
+  a version other than the one `plugin.json` pins, `audit-c3-conventions` now
+  prints a `local-install` info finding naming both versions. Your npm scripts
+  run the local copy while the agents run the pinned server, so their output
+  can disagree. The finding is advisory and never changes the exit code; the
+  MCP version check still reads only the plugin's pin. (#167)
 
 ## [3.4.0] - 2026-10-20
 
