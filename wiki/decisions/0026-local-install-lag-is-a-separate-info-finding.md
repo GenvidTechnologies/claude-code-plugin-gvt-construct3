@@ -39,9 +39,11 @@ so it needs its own finding.
    the exit code and is never an input to the MCP version or reachability check, which is
    unchanged.
 2. **Read exactly `<dir>/node_modules/<package>/package.json`.** No module resolution and no
-   upward walk: an ancestor's `node_modules` says nothing about what this repo's scripts run, and
-   on the planning machine the user's temp directory holds its own `package.json` and a
-   `node_modules` with `c3-domain-manager` 0.11.0. A missing, unreadable or version-less file means
+   upward walk: an ancestor's `node_modules` says nothing about what this repo's scripts run.
+   Measured on the planning machine on 2026-10-30 (`ls "$LOCALAPPDATA/Temp"`): the user's temp
+   directory holds its own `package.json` and a `node_modules` with `c3-domain-manager` 0.11.0.
+   That is one machine's state, not a general fact, but it is the kind of ancestor a walk would
+   find. A missing, unreadable or version-less file means
    no local install and no finding.
 3. **Two locations.** The repo root, which is the audit's working directory, and, when
    `paths.c3project` resolves to a different directory, that project root too. One finding per

@@ -54,7 +54,8 @@ export function readInstalledVersion(dir, pkg) {
   }
 }
 
-const PLAIN_SEMVER_RE = /^\d+\.\d+\.\d+$/;
+// No leading zeros, so `2.01.0` is not mistaken for a numerically equal `2.1.0`.
+const PLAIN_SEMVER_RE = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 
 // Builds the `info` finding for one pinned server in one directory, or null
 // when there is nothing to report. Pure.

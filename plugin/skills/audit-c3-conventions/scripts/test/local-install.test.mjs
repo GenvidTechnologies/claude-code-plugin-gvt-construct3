@@ -173,7 +173,33 @@ test('a non-x.y.z installed version gets neutral wording with both versions', ()
   assert.equal(f.severity, 'info');
   assert.ok(f.detail.includes('2.2.0-beta.1'));
   assert.ok(f.detail.includes('2.1.0'));
-  assert.ok(f.detail.includes('differ'));
+  assert.ok(f.detail.includes('the versions differ'));
+  assert.ok(!f.detail.includes('refresh the lock'));
+  assert.ok(!f.detail.includes('update the plugin'));
+});
+
+test('a leading-zero version is not plain x.y.z and gets neutral wording', () => {
+  for (const [pin, installed] of [
+    ['2.1.0', '2.01.0'],
+    ['2.1.0', '2.1.00'],
+    ['2.01.0', '2.1.0'],
+  ]) {
+    const f = evaluateLocalInstall({ server: SERVER, pkg: PKG, pin, installed, location: '' });
+    assert.ok(f.detail.includes('the versions differ'), `${pin} vs ${installed}`);
+    assert.ok(!f.detail.includes('refresh the lock'), `${pin} vs ${installed}`);
+  }
+});
+
+test('a project root outside the repo root reports a ../ target', () => {
+  withTemp((root) => {
+    const repo = join(root, 'repo');
+    const other = join(root, 'other');
+    mkdirSync(repo);
+    mkdirSync(other);
+    install(other, '2.0.0');
+    const findings = checkLocalInstalls({ manifest: MANIFEST, repoRoot: repo, projectRoot: other });
+    assert.deepEqual(findings.map((f) => f.target), [`../other/node_modules/${PKG}`]);
+  });
 });
 
 test('evaluateLocalInstall returns null for null, undefined or equal installed versions', () => {
