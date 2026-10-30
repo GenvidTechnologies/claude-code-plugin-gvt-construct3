@@ -88,7 +88,8 @@ between `error` and `info`. Neither finding changes the exit code; only an
    against the plugin's pin, which no component's `expects` can name. It reads
    exactly that file, never an ancestor's `node_modules` and never via `npx`, and
    it is never an input to the MCP version check below. The pure logic is
-   `scripts/lib/local-install.mjs`.
+   `scripts/lib/local-install.mjs`
+   ([ADR 0026](/decisions/0026-local-install-lag-is-a-separate-info-finding.md)).
 
 ## The validation boundary: presence here, content in chef
 
