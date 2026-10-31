@@ -424,9 +424,16 @@ against this table:
 
 ```
 node ~/.claude/plugins/cache/gvt-plugins/gvt-dev/<version>/skills/audit-conventions/scripts/audit.mjs
+node scripts/audit-snapshot.mjs --audit ~/.claude/plugins/cache/gvt-plugins/gvt-dev/<version>/skills/audit-conventions/scripts/audit.mjs
 ```
 
-Unchanged figures are the expected outcome and cost one command. A **moved** figure is
+The second command reduces the same run to four lines (`broken-link`, `retired-token`,
+`orphaned-doc`, `exit`), which map onto rows of the table. If a digest line disagrees with
+its row, the digest or the table is wrong, and the run has found a defect either way.
+Up to #169 the digest printed `orphaned-doc: 1` against the table's 0, and nobody
+noticed, because this section asked only for the raw audit.
+
+Unchanged figures are the expected outcome and cost two commands. A **moved** figure is
 not automatically a defect — it may be the legitimate consequence of the page you just
 added — but it must be *noticed*, and either explained in the PR or folded into this
 table as part of the same change.
@@ -450,6 +457,14 @@ also said "when #390 lands the Practice Coverage row returns … to `adopted`", 
 gates *it*, not the nearest issue about the same bug** — the two can be fixed on
 different schedules. That is what happened: #467 shipped in gvt-dev 4.30.0 and the row
 returned to `adopted`, while #390 is still open (re-measured 2026-10-12 on 4.33.0).
+
+**Date a change by the release that shipped it, not by the first version measured here.**
+This repo does not measure every gvt-dev release, so the first measurement that shows a
+change can be later than the release that made it. Take the version from the gvt-dev
+CHANGELOG's `## [x.y.z]` heading, and when this repo skipped that release, write "new at
+X, first measured here at Y". The orphan skip note is the example: this page dated it to
+4.26.0 because the measurements jumped from 4.24.0 to 4.26.0, but it shipped in 4.25.0.
+The wrong version was then copied into new code, and only a CHANGELOG check caught it.
 
 Re-measure on the next gvt-dev bump rather than carrying this table forward — which is
 why this page's `stale_after` sits in the six-month bucket for version-pinned content
