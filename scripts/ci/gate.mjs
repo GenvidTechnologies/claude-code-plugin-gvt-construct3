@@ -73,6 +73,7 @@ const SUITES = [
       'skills/audit-c3-conventions/scripts/test/config-resolve.test.mjs',
       'skills/audit-c3-conventions/scripts/test/frontmatter-branches.test.mjs',
       'skills/audit-c3-conventions/scripts/test/frontmatter.test.mjs',
+      'skills/audit-c3-conventions/scripts/test/local-install.test.mjs',
       'skills/audit-c3-conventions/scripts/test/mcp-check.test.mjs',
       'skills/audit-c3-conventions/scripts/test/preflight.test.mjs',
       'skills/author-navigation-patterns/scripts/test/dsl-files.test.mjs',
@@ -82,7 +83,7 @@ const SUITES = [
       'skills/build-reference/scripts/test/merge.test.mjs',
       'skills/build-reference/scripts/test/reference-index.test.mjs',
     ],
-    minPass: 281,
+    minPass: 295,
   },
   {
     name: 'workspace',

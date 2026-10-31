@@ -1,7 +1,7 @@
 ---
 type: reference
 title: The convention contract and the audit
-description: How audit-c3-conventions validates a consuming repo — the data-driven expects model, the two checks deliberately baked into the script, the presence-vs-content validation boundary, base project resolution, and the audit residue this repo expects on every run as known cost rather than regression.
+description: How audit-c3-conventions validates a consuming repo — the data-driven expects model, the checks deliberately baked into the script, the presence-vs-content validation boundary, base project resolution, and the audit residue this repo expects on every run as known cost rather than regression.
 tags: [audit, expects, contract, discovery, adr-0002, adr-0005, adr-0006]
 status: stable
 stale_after: 2027-03-19
@@ -48,9 +48,9 @@ An entry with `required: false` reports at `info` severity and never affects the
 exit code — that is how an *optional* expectation is expressed without a script
 change.
 
-## The two deliberate exceptions
+## The deliberate exceptions
 
-Two things are baked into `audit.mjs` directly because they are **inexpressible**
+Three things are baked into `audit.mjs` directly because they are **inexpressible**
 as `expects` entries:
 
 1. **The C3-project marker** — a bespoke OR-check across three indicators:
@@ -78,6 +78,18 @@ override on the `c3-domain-manager` entry, or a live `C3_PROJECT_DIR` env var.
 The ambiguity finding introduced the report's **`warning`** tier — advisory,
 between `error` and `info`. Neither finding changes the exit code; only an
 `error` exits non-zero.
+
+3. **The local-install check** (#167) — for each server package pinned in
+   `plugin.json` `mcpServers`, it reads `node_modules/<package>/package.json` in
+   the repo root and, when `paths.c3project` resolves elsewhere, in the project
+   root. When the installed version differs from the pin it emits one
+   **`local-install` `info`** per server and location: the agents talk to the
+   pinned server while the repo's own npm scripts run the local copy. It compares
+   against the plugin's pin, which no component's `expects` can name. It reads
+   exactly that file, never an ancestor's `node_modules` and never via `npx`, and
+   it is never an input to the MCP version check below. The pure logic is
+   `scripts/lib/local-install.mjs`
+   ([ADR 0026](/decisions/0026-local-install-lag-is-a-separate-info-finding.md)).
 
 ## The validation boundary: presence here, content in chef
 
@@ -215,7 +227,10 @@ the argument of `mcpServers[<server>].args` in `plugin/.claude-plugin/plugin.jso
 that starts with `<package>@`, where `package:` is the scoped npm name the `mcp`
 expects entry declares. That is the server the agents actually talk to, so the
 consuming repo's `node_modules` plays no part in the check — installing or removing
-a devDependency cannot change the verdict.
+a devDependency cannot change the verdict. A local copy that differs from the pin
+is reported separately, by the `local-install` `info` described under
+[The deliberate exceptions](#the-deliberate-exceptions); that finding never feeds
+this check.
 
 Reachability is confirmed by running that exact pinned spec,
 `npx -y <package>@<pin> --version` — the **scoped** package, since npx resolves by
