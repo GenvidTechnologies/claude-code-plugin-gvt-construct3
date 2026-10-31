@@ -116,6 +116,25 @@ test('formatDigest emits exactly the four canonical lines in order', () => {
   ]);
 });
 
+test('orphan count ignores the skip notes and counts a real orphan finding', () => {
+  // Both skip-note forms gvt-dev prints when it declines the orphan scan, and
+  // one real `orphaned-doc` finding. Only the last is a finding. The strings
+  // are copied from gvt-dev's audit-conventions `scripts/lib/hygiene.mjs`
+  // (the `orphan-check-skipped` and `orphaned-doc` details); if gvt-dev
+  // rewords them, update this fixture and FINDING_PATTERNS together.
+  const report = `## Audit Results
+
+### Info
+- orphan check skipped — the docs root 'wiki/' is inside the wiki bundle 'wiki/', where orphaned pages are owned by /gvt-dev:maintain-wiki lint, not this scan
+- orphan check skipped — no docs index found at docs/TOC.md
+- docs/stray.md is not referenced in docs/TOC.md
+
+## Summary
+- required: 36 of 36 satisfied.
+`;
+  assert.equal(parseAuditOutput(report, 0).orphanedDoc, 1);
+});
+
 test('the Summary anchor matches real audit output and not near-misses', () => {
   // Positive control: this exact line shape is what the live audit prints.
   assert.ok(SUMMARY_ANCHOR.test('- required: 35 of 35 satisfied.'));

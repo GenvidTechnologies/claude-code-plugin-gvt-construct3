@@ -516,7 +516,8 @@ Two things worth carrying:
 > `lint` has no retired-token check of its own, and dead-wiki-link/orphan
 > checks still don't reach `<wikiDir>/`. A live `/gvt-dev:audit-conventions`
 > run on this repo now flags the three deliberate citations above at `info`
-> severity, same as it did before the move. Filed upstream as
+> severity, same as it did before the move, plus a fourth in `wiki/log.md` (see
+> the expected-residue table in `the-audit-contract.md`). Filed upstream as
 > `GenvidTechnologies/claude-code-plugin-gvt-dev#366`, and this is the fix that
 > landed for it.
 >

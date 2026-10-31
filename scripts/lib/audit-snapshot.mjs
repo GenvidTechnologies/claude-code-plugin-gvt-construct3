@@ -21,17 +21,20 @@ export const SUMMARY_ANCHOR = /^- required: \d+ of \d+ satisfied\./m;
 
 // Substring matched against each output line, per finding kind.
 //
-// CAVEAT worth keeping: `orphanedDoc`'s pattern has never been exercised
-// against a real finding in this repo. The orphan count has been 0 at every
-// measurement, and post-migration `scanOrphanedDocs` is inert entirely (it
-// resolves a hard-coded `TOC.md` inside the docs root, which an OKF bundle
-// named `index.md` never has). So this pattern is inferred from the scanner's
-// documented purpose, not confirmed from output. If an orphan finding ever
-// does appear and this digest still says 0, suspect this line first.
+// `orphanedDoc` matches the text of gvt-dev's own `orphaned-doc` finding,
+// `<path> is not referenced in <index>` (audit-conventions
+// `scripts/lib/hygiene.mjs`; unchanged from gvt-dev 4.37.0 through 4.45.0).
+// It must not be the bare word `orphan`: since gvt-dev 4.25.0 the audit
+// prints an `orphan check skipped — …` info line whenever it declines the
+// scan, which is on every run in this repo. The bare word counted that note as
+// a finding and reported `orphaned-doc: 1` against a true 0. This repo never
+// produces a real orphan finding (the scan is declined here), so the line
+// shape was confirmed on a throwaway repo with a docs/TOC.md index, where
+// gvt-dev 4.45.0 printed `- docs/stray.md is not referenced in docs/TOC.md`.
 export const FINDING_PATTERNS = {
   brokenLink: 'broken link',
   retiredToken: 'contains retired token',
-  orphanedDoc: 'orphan',
+  orphanedDoc: ' is not referenced in ',
 };
 
 export const PARSE_FAILED = null;
