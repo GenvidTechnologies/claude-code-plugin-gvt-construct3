@@ -24,12 +24,13 @@ export const SUMMARY_ANCHOR = /^- required: \d+ of \d+ satisfied\./m;
 // `orphanedDoc` matches the text of gvt-dev's own `orphaned-doc` finding,
 // `<path> is not referenced in <index>` (audit-conventions
 // `scripts/lib/hygiene.mjs`; unchanged from gvt-dev 4.37.0 through 4.45.0).
-// It must not be the bare word `orphan`: since gvt-dev 4.26.0 the audit
+// It must not be the bare word `orphan`: since gvt-dev 4.25.0 the audit
 // prints an `orphan check skipped — …` info line whenever it declines the
 // scan, which is on every run in this repo. The bare word counted that note as
-// a finding and reported `orphaned-doc: 1` against a true 0. No real orphan
-// finding has appeared in this repo since the wiki migration, so the pattern
-// comes from gvt-dev's source, not from observed output.
+// a finding and reported `orphaned-doc: 1` against a true 0. This repo never
+// produces a real orphan finding (the scan is declined here), so the line
+// shape was confirmed on a throwaway repo with a docs/TOC.md index, where
+// gvt-dev 4.45.0 printed `- docs/stray.md is not referenced in docs/TOC.md`.
 export const FINDING_PATTERNS = {
   brokenLink: 'broken link',
   retiredToken: 'contains retired token',

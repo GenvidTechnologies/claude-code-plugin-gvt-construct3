@@ -118,7 +118,10 @@ test('formatDigest emits exactly the four canonical lines in order', () => {
 
 test('orphan count ignores the skip notes and counts a real orphan finding', () => {
   // Both skip-note forms gvt-dev prints when it declines the orphan scan, and
-  // one real `orphaned-doc` finding. Only the last is a finding.
+  // one real `orphaned-doc` finding. Only the last is a finding. The strings
+  // are copied from gvt-dev's audit-conventions `scripts/lib/hygiene.mjs`
+  // (the `orphan-check-skipped` and `orphaned-doc` details); if gvt-dev
+  // rewords them, update this fixture and FINDING_PATTERNS together.
   const report = `## Audit Results
 
 ### Info

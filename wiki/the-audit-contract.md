@@ -296,18 +296,18 @@ reports a stable set of findings that are **known cost, not regression**. Subtra
 before treating any output as a problem.
 
 Re-measured against **gvt-dev 4.45.0** on 2026-10-31 (at `f8c55b2`). Three things moved
-since the **gvt-dev 4.34.0** measurement of 2026-10-13 (at `824bf20`), all because of
-gvt-dev 4.40.0. The retired-token count halved, the single `scanned` line split into one
-line per scanner, and the table gained an advisory-findings row. Every other row is
-unchanged. The Practice Coverage row moved earlier, at gvt-dev 4.30.0; the first
+since the **gvt-dev 4.34.0** measurement of 2026-10-13 (at `824bf20`). Two came from
+gvt-dev 4.40.0: the retired-token count halved, and the single `scanned` line split into
+one line per scanner. The third is this page's own: the table now records the Summary's
+advisory count, which the audit already printed. Every other row is unchanged. The Practice Coverage row moved earlier, at gvt-dev 4.30.0; the first
 measurement was against gvt-dev 4.26.0 at `0a6bacc`, v3.0.0:
 
 | Signal | Expected | Cause |
 |---|---|---|
 | broken-link warnings | **0** | `wiki/` is **not link-checked at all** any more. gvt-dev #421 closed by *declining* OKF bundle content rather than by fixing the resolution, deferring dead links to `/gvt-dev:maintain-wiki lint` (gvt-dev ADR-0053). See the coverage gap below — this is a zero from a check that did not run. |
 | retired-token findings | **4** | The four deliberate retired-token citations this repo carries on purpose: three in `wiki/doc-inventories.md`, one in `wiki/log.md`. Each is reported once. Up to gvt-dev 4.39.0 each was reported twice, because this repo's overrides make the docs-root and wiki-dir walks the same directory. gvt-dev #453 fixed that in 4.40.0. |
-| orphaned-doc findings | **0** | **Not a pass**, same as before — but the mechanism changed. It used to be silently inert (`scanOrphanedDocs` looked for a `TOC.md` that this bundle names `index.md`). 4.26.0 now *announces* the skip, on the same ADR-0053 bundle-ownership grounds. Index completeness is still checked by hand. `scripts/audit-snapshot.mjs` reports this row as `orphaned-doc: 0`. Before #169 it matched the bare word `orphan`, counted the skip note, and reported 1. |
-| skip-notes | **2** (`info`) | New at 4.26.0: one `… were not link-checked` line naming the wiki file count, one `orphan check skipped` line. Both are the two rows above declaring themselves. |
+| orphaned-doc findings | **0** | **Not a pass**, same as before — but the mechanism changed. It used to be silently inert (`scanOrphanedDocs` looked for a `TOC.md` that this bundle names `index.md`). gvt-dev 4.25.0 began *announcing* the skip, on the same ADR-0053 bundle-ownership grounds (this repo first measured it at 4.26.0, having skipped 4.25.0). Index completeness is still checked by hand. `scripts/audit-snapshot.mjs` reports this row as `orphaned-doc: 0`. Until #169 narrowed its pattern it matched the bare word `orphan`, counted the skip note, and reported 1. |
+| skip-notes | **2** (`info`) | New at gvt-dev 4.25.0, first measured here at 4.26.0: one `… were not link-checked` line naming the wiki file count, one `orphan check skipped` line. Both are the two rows above declaring themselves. |
 | Practice Coverage → Environment | **`adopted`** | **Correct since gvt-dev 4.30.0**, which fixed **#467** (closed 2026-10-11). `scripts/lib/practice-detect.mjs` now resolves the schema doc through `config.paths`, so this repo's `"docs/wiki-schema.md": "wiki/wiki-schema.md"` override is honoured. Up to 4.29.0 it hard-coded `SCHEMA_DOC = 'docs/wiki-schema.md'` and reported a false `partial adoption`, with 5 of 6 signals present. #390, `maintain-wiki`'s copy of the same hard-coding, is still open and did not gate this row. |
 | advisory findings | **6** | The Summary's advisory count: the 4 retired-token findings plus the 2 skip-notes. It was 10 up to gvt-dev 4.39.0, when the retired-token findings were doubled. |
 | exit code | **0** | Only `error` severity moves the exit code; everything above is `warning` or `info`. |
@@ -362,12 +362,15 @@ pinned to zero is not a weaker verifier, it is a broken one.
 > The figure went from 21 to 22 with gvt-dev 4.40.0 (#401), while the corpus stayed at 20
 > pages. 4.40.0 split the single `scanned` line into one line per scanner, built from each
 > scanner's own file set, and the retired-token scanner's set includes git-tracked
-> repo-root config files. It has scanned them since gvt-dev 4.3.0 (#134), but the old line
-> never listed them. So `.gvt-agent.json` was always read; 4.40.0 only started
-> *reporting* it. Today's figure is 20 wiki pages outside `hygiene.excludePaths`, plus
-> `CLAUDE.md`, plus `.gvt-agent.json`: 22. The version bump changed what the line reports,
-> not what the audit reads. That could only be established by counting the corpus first
-> and finding it unchanged.
+> repo-root config files. It has scanned them since gvt-dev 4.3.0 (#134): the 4.39.0
+> `hygiene.mjs` already lists `.gvt-agent.json` in its config allow-list and intersects it
+> with `git ls-files`. The old line simply never listed them. So `.gvt-agent.json` has
+> been read since 4.3.0, and 4.40.0 only started *reporting* it. Today's figure is 20 wiki
+> pages outside `hygiene.excludePaths`, plus `CLAUDE.md`, plus `.gvt-agent.json`: 22. For
+> this figure the version bump changed what the line reports, not which files the scan
+> reads. (4.40.0 did change the finding count, through the deduplication in the row
+> above.) That could only be established by counting the corpus first and finding it
+> unchanged.
 >
 > If a run still reports a different number, the **measured** value remains authoritative
 > — but count the corpus before concluding the audit changed.
@@ -408,8 +411,9 @@ claim above rests on the gate, which was re-read in the 4.26.0 source, not on th
 The table above says what the residue *should* be; nothing currently tells a contributor
 to **check** it. Adding or editing a page under `wiki/` can move these figures — a new page
 outside `hygiene.excludePaths` moves the retired-token `scanned` line and the links line's
-declined count, and a retired-token citation moves the token count and the advisory count. That change is invisible in the authoring PR and surfaces later, in someone
-else's unrelated audit run, as residue they did not cause.
+declined count, and a retired-token citation moves the token count and the advisory
+count. That change is invisible in the authoring PR and surfaces later, in someone else's
+unrelated audit run, as residue they did not cause.
 
 (Adding a bundle-absolute link no longer moves anything, because that scan no longer runs
 here — see *The broken-link invariant is retired* above, and run `maintain-wiki lint`
