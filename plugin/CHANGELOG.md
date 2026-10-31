@@ -25,6 +25,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   can disagree. The finding is advisory and never changes the exit code; the
   MCP version check still reads only the plugin's pin. (#167)
 
+### Fixed
+- **`c3-implementer` gotcha 13 no longer names a removed `add-function` op.**
+  It said the shorthand ignores `category`, so implementers left `category` and
+  `description` out of recipes and patched the JSON by hand. The `function-block`
+  shorthand passes both through. The gotcha now says to set them in the recipe,
+  because an omitted key is written as `""`. Chef's recipe reference doesn't list
+  these keys yet (construct3-chef#353). (#168)
+
 ## [3.4.0] - 2026-10-20
 
 ### Changed
