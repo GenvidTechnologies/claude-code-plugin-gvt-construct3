@@ -210,6 +210,7 @@ After the insert, `git grep -F` each old generated name across the repo, outside
 - One task = one commit.
 - **Finalize `extracted/` with the consumer's repo-pinned generation command, not MCP `regenerate`, and confirm `git status` shows no version-skew-only DSL drift before staging** (see [Finalizing regeneration](#finalizing-regeneration--the-version-skew-dsl-drift-trap)).
 - Stage eventSheet JSON, layout JSON, AND extracted files together.
+- **Files you fetch or derive but don't ship go in the scratchpad, never the project tree.** Write another repo's file read through `gh api`, a decoded blob, or a probe's output to the session scratchpad your brief names, under an explicit, non-empty filename. If no scratchpad path was provided, use a fresh `mktemp -d` directory, which sits outside the project tree. A stray file in the tree can be swept into a commit by a `git add -A`.
 - Use `git commit -n` if the orchestrator runs validation separately.
 
 ## Hand-back report
