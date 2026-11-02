@@ -584,10 +584,10 @@ in `plugin/.claude-plugin/plugin.json`'s `mcpServers`.
 
 | Server | Idiom | Location | Count |
 |---|---|---|---|
-| construct3-chef | `regP("…")` (project-scoped) | `dist/mcp/server.js` | **37** at `2.1.0` and `2.0.0` — includes `list-ops`, moved in from `opsRegistry.js` at `2.0.0` |
-| construct3-chef | `reg("…")` (unscoped) | `dist/mcp/server.js` | **1** at `2.1.0` and `2.0.0` — `list-projects` only |
-| construct3-chef | total | — | **38** at `2.1.0` — identical name set to `2.0.0` (#162); **38** at `2.0.0` — was **37** at `1.2.0` (`reg()` **36** + `list-ops` **1**), **35**, **31** |
-| c3-domain-manager | `registerProjectTool` + one direct `registerTool` | `dist/mcp/server.js` | **15** at `0.11.2` (14 + 1) — identical name set to `0.11.1` (#163); **15** at `0.11.1` — identical name set to `0.11.0` (#147); **15** at `0.11.0` — identical name set to `0.10.1` (`regenerate` gained a parameter, not a tool); was **14** at `0.7.0` → `0.9.0`, **13** before |
+| construct3-chef | `regP("…")` (project-scoped) | `dist/mcp/server.js` | **37** at `2.2.0`, `2.1.0` and `2.0.0` — includes `list-ops`, moved in from `opsRegistry.js` at `2.0.0` |
+| construct3-chef | `reg("…")` (unscoped) | `dist/mcp/server.js` | **1** at `2.2.0`, `2.1.0` and `2.0.0` — `list-projects` only |
+| construct3-chef | total | — | **38** at `2.2.0` — identical name set to `2.1.0` (#171); **38** at `2.1.0` — identical name set to `2.0.0` (#162); **38** at `2.0.0` — was **37** at `1.2.0` (`reg()` **36** + `list-ops` **1**), **35**, **31** |
+| c3-domain-manager | `registerProjectTool` + one direct `registerTool` | `dist/mcp/server.js` | **15** at `0.12.0` (14 + 1) — identical name set to `0.11.2`, `dist/mcp/server.js` byte-identical (#170); **15** at `0.11.2` — identical name set to `0.11.1` (#163); **15** at `0.11.1` — identical name set to `0.11.0` (#147); **15** at `0.11.0` — identical name set to `0.10.1` (`regenerate` gained a parameter, not a tool); was **14** at `0.7.0` → `0.9.0`, **13** before |
 
 > **dm changed its registration idiom at `0.10.0` — a bare `registerTool(` grep now
 > returns 2, not 15.** Per-project tools register through a `registerProjectTool(name, …)`
