@@ -25,6 +25,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   can disagree. The finding is advisory and never changes the exit code; the
   MCP version check still reads only the plugin's pin. (#167)
 
+### Changed
+- **The bundled `construct3-chef` pin moves `@2.1.0` → `@2.2.0`.** The same 38
+  tool names register at both versions, so `c3-explorer`'s allow-list needs no
+  change. A live `resources/list` goes 74 → 84, purely additive (ADRs
+  0054–0063), so no resource citation moves. Agents may notice behaviour
+  changes:
+  - A recipe dry-run (`validate-recipe`, `apply-recipe --dry-run`) runs the same
+    computation as apply, so both report the same first error. `apply-recipe` no
+    longer refuses a recipe that `validate-recipe` passed because of a stale
+    source-layout cache.
+  - `scaffold-layout` refuses when `<extractedDir>/sid-registry.txt` is missing
+    and says to run the `regenerate` tool first. It still doesn't check whether
+    the registry is stale.
+  - `scaffold-sprite` and `scaffold-layout` refuse more bad inputs before
+    writing. `scaffold-sprite` refuses an empty name or one containing `:`.
+    `scaffold-layout` refuses an empty name or event sheet, an output path that
+    is not a named `.json` file, and a directory `--source`.
+  - `scaffold-sprite` finds its `--source` objectType in any `objectTypes/`
+    subfolder. It refuses a name that matches only when letter case is ignored,
+    or that exists in more than one location.
+  - A recipe `objectTypes` CREATE refuses inputs it used to accept: a
+    re-declaration in another subfolder or in another letter case, a `name` or
+    `folder` that escapes `objectTypes/`, and an empty or `null` `folder`.
+  - The MCP read tools (`read-dsl`, `read-dsl-index`, `read-event-sids`,
+    `read-scripts`, `resolve-anchor`, `read-layout`) refuse a `sheet` or
+    `layout` argument that escapes `eventSheets/` or `layouts/`.
+  - MCP `sync-project` moves the `txId` only when it wrote `project.c3proj`.
+  - `validate-project` and `sync-project` treat C3's nameless timelines
+    `transitions` container as always present, so an editor-saved project no
+    longer reports permanent drift. `validate-project` now reports, and
+    `sync-project` removes, a ghost entry whose name also exists in another
+    folder of the same section.
+  - The MCP recipe tools seed new SIDs from the configured `extractedDir`.
+  - `generate` / `regenerate` work on a project without `scripts/`, and a
+    failing generator no longer deletes its existing `extracted/` outputs.
+  - `validate-addons` reports a run that checked no bundled addon as "nothing
+    to validate" instead of "all consistent".
+
+  The `minVersion` floor holds at `1.2.0`, so this is *not* breaking for
+  consumers. Its first launch after the update can hit the `CONNECT_TIMEOUT`
+  described under Added above; run `/mcp` to reconnect. (#171)
+- **The bundled `c3-domain-manager` pin moves `@0.11.2` → `@0.12.0`.** The same 15
+  tool names and the same 44 resources are live at both versions. The server's
+  `@genvidtech/c3source` floor moves to `^3.0.0`, whose stricter section-item
+  rule means a file named exactly `.json` in `eventSheets/`, `layouts/`,
+  `objectTypes/` or `families/` is no longer listed by `list-uncategorized` or
+  indexed in the domain index. The inert-override report in
+  `list-stale-overrides` gives an override key named `.json` an empty-stem
+  reason, and a key whose stem ends in a backslash (possible only on POSIX) its
+  own reason instead of the false "has no .json extension". The `minVersion`
+  floor holds at `0.6.1`. ADR 0007 passes: `dist/adapters/locations.js` is
+  byte-identical and the `@genvidtech/mcp-utils` range stays `^0.12.0`. Its
+  first launch after the update can hit the `CONNECT_TIMEOUT` described under
+  Added above; run `/mcp` to reconnect. (#170)
+- **Both bundled servers now depend on `@genvidtech/c3source` `^3.0.0`**, so
+  they apply the same c3source rules. The two pins move together for that
+  reason. (#170, #171)
+
 ### Fixed
 - **`c3-implementer` gotcha 13 no longer names an `add-function` op**, which the
   pinned `construct3-chef` doesn't ship. It said the shorthand ignores
