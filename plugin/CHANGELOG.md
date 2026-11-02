@@ -36,8 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     longer refuses a recipe that `validate-recipe` passed because of a stale
     source-layout cache.
   - `scaffold-layout` refuses when `<extractedDir>/sid-registry.txt` is missing
-    and says to run the `regenerate` tool first. It still doesn't check whether
-    the registry is stale.
+    and names what to run first: the `regenerate` tool over MCP, or
+    `construct3-chef generate --only sid-registry` on the CLI. MCP
+    `scaffold-layout` still doesn't check whether the registry is stale.
   - `scaffold-sprite` and `scaffold-layout` refuse more bad inputs before
     writing. `scaffold-sprite` refuses an empty name or one containing `:`.
     `scaffold-layout` refuses an empty name or event sheet, an output path that
@@ -58,13 +59,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `sync-project` removes, a ghost entry whose name also exists in another
     folder of the same section.
   - The MCP recipe tools seed new SIDs from the configured `extractedDir`.
-  - `generate` / `regenerate` work on a project without `scripts/`, and a
-    failing generator no longer deletes its existing `extracted/` outputs.
+  - `generate` / `regenerate` work on a project without `scripts/`, and the
+    scripts, DSL and layout-summary generators no longer delete their existing
+    `extracted/` outputs when a run fails partway.
   - `validate-addons` reports a run that checked no bundled addon as "nothing
     to validate" instead of "all consistent".
 
-  The `minVersion` floor holds at `1.2.0`, so this is *not* breaking for
-  consumers. Its first launch after the update can hit the `CONNECT_TIMEOUT`
+  The `minVersion` floor holds at `1.2.0`, so no consumer is pushed onto a new
+  floor, but some inputs listed above that used to be accepted are now refused.
+  Its first launch after the update can hit the `CONNECT_TIMEOUT`
   described under Added above; run `/mcp` to reconnect. (#171)
 - **The bundled `c3-domain-manager` pin moves `@0.11.2` → `@0.12.0`.** The same 15
   tool names and the same 44 resources are live at both versions. The server's
@@ -73,7 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `objectTypes/` or `families/` is no longer listed by `list-uncategorized` or
   indexed in the domain index. The inert-override report in
   `list-stale-overrides` gives an override key named `.json` an empty-stem
-  reason, and a key whose stem ends in a backslash (possible only on POSIX) its
+  reason instead of treating it as a live file, and a key whose stem ends in a backslash (possible only on POSIX) its
   own reason instead of the false "has no .json extension". The `minVersion`
   floor holds at `0.6.1`. ADR 0007 passes: `dist/adapters/locations.js` is
   byte-identical and the `@genvidtech/mcp-utils` range stays `^0.12.0`. Its
