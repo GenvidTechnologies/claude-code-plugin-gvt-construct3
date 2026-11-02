@@ -1,7 +1,7 @@
 ---
 type: reference
 title: Agent capability envelopes
-description: The two agents' model and tools frontmatter is a functional constraint, not documentation — don't instruct an agent to do what it cannot observe or call.
+description: The two agents' model and tools frontmatter is a functional constraint, not documentation — don't instruct an agent to do what it cannot observe or call; and how to live-probe an edited agent body before it ships.
 tags: [agents, c3-explorer, c3-implementer, capabilities, adr-0003]
 status: stable
 stale_after: 2027-08-18
@@ -73,6 +73,39 @@ removed the same instruction from `docs/c3` (#145).
 records the rule. It extends the `docs/c3` rule in
 [The knowledge boundaries](/knowledge-boundaries.md) § "Name chef's *capability*,
 never chef's *symbol*" to agent bodies.
+
+## Live-probing an agent body before release
+
+A dispatch from inside a session runs the **installed** plugin, which is the last
+tagged release. So it can't exercise an agent body you've just edited, and a
+"live dispatch" acceptance row can't be graded that way before the change ships.
+Run the working-tree plugin headless instead, from a throwaway git repo under the
+long-form temp path (`C:\Users\FabienNinoles\…`, not the `FABIEN~1` short form,
+which headless permission checks deny):
+
+```bash
+claude -p "<tell the main session to dispatch gvt-construct3:<agent> with brief X>" \
+  --plugin-dir C:/repos/claude-code-plugin-gvt-construct3/plugin \
+  --settings '{"enabledPlugins":{"gvt-construct3@gvt-plugins":false}}' \
+  --allowedTools "Agent,Bash,Read,Grep,Glob" \
+  --output-format stream-json --verbose > stream.jsonl
+```
+
+The stream is the evidence:
+
+- **The working tree loaded.** The `system`/`init` record lists exactly one
+  `gvt-construct3`, with `source: gvt-construct3@inline` and a path ending
+  `\plugin`. A second copy, or a `@gvt-plugins` source, means the installed
+  release ran instead.
+- **What the agent actually did.** A subagent's tool calls carry a
+  `parent_tool_use_id`, so you can quote its real Bash commands rather than its
+  own summary of them.
+
+The bundled MCP servers may time out on launch. That's harmless when the brief
+doesn't need them. One run is one sample of a non-deterministic model, and the
+old body often passes the same probe, so record the result as a **smoke check**
+that the new rules are followed, not as proof that they prevent the defect.
+First used for #173's R6 (PR #179).
 
 [^claude-md]: CLAUDE.md, "Components" and "Respect each agent's capability
 envelope".

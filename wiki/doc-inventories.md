@@ -1,7 +1,7 @@
 ---
 type: practice-note
 title: Doc inventories, ADRs, and the changelog
-description: Which hand-maintained inventories a new skill, a new docs/c3 doc, or even a new section must be added to; how to scope an absence criterion and why every such row needs auditing; why a discovery sweep must be as broad as the defect class it describes; the intra-repo anchor checker and the index-mirror checker — plus why ADRs are never rewritten and the one metadata defect that is corrected in place, why a file:line citation can be falsified by your own PR, why a pure content correction still earns a CHANGELOG entry, and why a link inside the shipped plugin subtree must never escape it.
+description: Which hand-maintained inventories a new skill, a new docs/c3 doc, or even a new section must be added to; how to scope an absence criterion and why every such row needs auditing; why a discovery sweep must be as broad as the defect class it describes; the intra-repo anchor checker and the index-mirror checker — plus why ADRs are never rewritten and the one metadata defect that is corrected in place, why a file:line citation can be falsified by your own PR, why a pure content correction still earns a CHANGELOG entry, why a link inside the shipped plugin subtree must never escape it, and why an agent-body CHANGELOG entry states an instruction, not a guarantee.
 tags: [docs, inventories, changelog, adr, drift]
 status: stable
 stale_after: 2027-08-18
@@ -144,6 +144,20 @@ down, and #72's plan omitted it until review.
 
 Say **what was wrong, what it is now, and what a reader who believed the old text
 should go re-check.**
+
+## An agent-body change is an instruction, not a guarantee
+
+A change to `plugin/agents/*.md` changes what an agent is **told** to do. Nothing
+enforces it. So its CHANGELOG entry says the agent "is now told to…" or that "its
+instructions now…", never that it "keeps…" or "always…". A consumer reads the
+second form as a guard they can rely on.
+
+#173's first draft said c3-explorer "keeps the files it saves out of your project
+tree". Code review flagged it, and the shipped entry calls the rules "prompt
+rules, not an enforced guard". The same applies to any consequence the entry or
+the agent body states: if the issue's own triage notes call it unverified, as
+#173's did for `validate-c3proj`, leave it out of the shipped text, hedged or
+not.
 
 ## A link inside `plugin/` must not escape `plugin/`
 
