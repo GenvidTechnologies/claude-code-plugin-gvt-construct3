@@ -295,11 +295,13 @@ this bundle ([ADR 0012](/decisions/0012-retiring-docs-into-the-wiki-bundle.md)),
 reports a stable set of findings that are **known cost, not regression**. Subtract these
 before treating any output as a problem.
 
-Re-measured against **gvt-dev 4.45.0** on 2026-10-31 (at `f8c55b2`). Three things moved
-since the **gvt-dev 4.34.0** measurement of 2026-10-13 (at `824bf20`). Two came from
-gvt-dev 4.40.0: the retired-token count halved, and the single `scanned` line split into
-one line per scanner. The third is this page's own: the table now records the Summary's
-advisory count, which the audit already printed. Every other row is unchanged. The Practice Coverage row moved earlier, at gvt-dev 4.30.0; the first
+Re-measured against **gvt-dev 4.48.0** on 2026-11-02 (at `3e546f8`). Nothing moved since
+the **gvt-dev 4.45.0** measurement of 2026-10-31 (at `f8c55b2`): every row below matched,
+exit code included. At 4.45.0, three things had moved since the **gvt-dev 4.34.0**
+measurement of 2026-10-13 (at `824bf20`). Two came from gvt-dev 4.40.0: the retired-token
+count halved, and the single `scanned` line split into one line per scanner. The third is
+this page's own: the table now records the Summary's advisory count, which the audit
+already printed. The Practice Coverage row moved earlier, at gvt-dev 4.30.0; the first
 measurement was against gvt-dev 4.26.0 at `0a6bacc`, v3.0.0:
 
 | Signal | Expected | Cause |

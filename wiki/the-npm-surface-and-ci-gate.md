@@ -5,6 +5,7 @@ description: >-
   Why the manifest and lockfile live in plugin/ and nowhere else, why an empty dependency set still makes a real gate, the four measured ways a check here passes while verifying nothing — npm ci walking up to an ancestor manifest, a glob matched from the wrong directory, a wrong path reporting as a deleted lockfile, and a reporter whose counters cannot be grepped — and what to do when a test-count floor moves: the file-count floor is derived from a declared inventory, so only the pass-count floor is ever a number you touch by hand. Also how to bump the audit-core pin and prove the audit's behaviour did not change.
 tags: [ci, npm, lockfile, verification, fail-open, plugin-artifact, audit-core, pin-bump]
 status: stable
+stale_after: 2027-05-02
 generated: { by: process:plan-task, at: 2026-09-19T00:00:00Z }
 ---
 # The npm surface and the CI gate

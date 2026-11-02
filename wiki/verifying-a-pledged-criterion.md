@@ -5,6 +5,7 @@ description: >-
   How a criterion's own check goes wrong — a grep standing in for coverage, a recount standing in for a diff, a diff read with context standing in for its changed lines, a hand-guessed mutation standing in for a discriminating one, a token count standing in for the sites it means, and a line range standing in for an anchor — with the measurement that settles each.
 tags: [verification, acceptance-criteria, testing, coverage]
 status: stable
+stale_after: 2027-11-02
 generated: { by: process:plan-task, at: 2026-09-02T00:00:00Z }
 ---
 # Verifying a pledged acceptance criterion
