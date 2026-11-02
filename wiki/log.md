@@ -15,6 +15,18 @@ before. If a past entry itself needs correcting, add a new entry that says
 so; never edit or remove the old one in place. See `wiki/wiki-schema.md` for
 the full maintenance schema.
 
+## 2026-11-02
+
+* **Update**: `agent-capability-envelopes.md` gains § *Live-probing an agent body
+  before release*, from the #173 retro: an in-session dispatch runs the installed
+  release, so #173's R6 was graded with a headless `claude -p --plugin-dir plugin`
+  run with the installed copy disabled, proven by the stream's `init` record.
+  Session observation, not a `raw/` capture.
+* **Update**: `doc-inventories.md` gains § *An agent-body change is an instruction,
+  not a guarantee*, from the same retro: #173's first CHANGELOG draft overclaimed
+  a prompt rule as a guard, and an unverified consequence reached an agent body.
+  Both were caught by code review. Session observation, not a `raw/` capture.
+
 ## 2026-09-23
 
 * **Update**: `skill-authoring-conventions.md` gains § *A test imports what it tests —
