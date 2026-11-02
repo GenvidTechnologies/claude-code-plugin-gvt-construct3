@@ -26,14 +26,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   MCP version check still reads only the plugin's pin. (#167)
 
 ### Changed
-- **`c3-explorer` keeps the files it saves out of your project tree, and
-  reports any it creates.** Content it saves to disk (another repo's file read
-  through `gh api`, a decoded blob, a probe's output) now goes in the session
-  scratchpad under an explicit filename, or in a fresh temp directory when no
-  scratchpad was given. It compares `git status --porcelain` at the start and
-  end of a dispatch and lists every new project-tree path in its report,
-  without deleting it. `c3-implementer` follows the same scratchpad rule for
-  files it fetches but doesn't ship. A c3-explorer dispatch had left a stray
+- **`c3-explorer` is now told to keep the files it saves out of your project
+  tree, and to report any it creates.** Its instructions send content it saves
+  to disk (another repo's file read through `gh api`, a decoded blob, a probe's
+  output) to the session scratchpad under an explicit filename, or to a fresh
+  temp directory when no scratchpad was given. They also have it run
+  `git status --porcelain` at the start and end of a dispatch and list every
+  new project-tree path in its report, without deleting it. These are prompt
+  rules, not an enforced guard. `c3-implementer` gets the same scratchpad rule
+  for files it fetches but doesn't ship. A c3-explorer dispatch had left a stray
   untracked file in a consumer's repo root, where a later `git add -A` could
   commit it. (#173)
 - **The bundled `construct3-chef` pin moves `@2.1.0` → `@2.2.0`.** The same 38

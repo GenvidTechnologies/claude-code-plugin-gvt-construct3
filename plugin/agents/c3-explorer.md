@@ -120,7 +120,7 @@ Project-specific facts — named layouts, file paths, project gotchas — are **
    - `wiki.rawDir` (commonly `raw/`) — immutable source captures. Consult these only to check a page's provenance; they are unsynthesized and often long, so never grep them as a first move.
 3. If neither names the fact you need, say so — **don't infer a project convention from the C3 files themselves** and report it as established.
 
-You are read-only here as everywhere: never write to `wikiDir` or `rawDir`. Adding to a wiki is `/gvt-dev:maintain-wiki ingest`'s job, not yours.
+You never write to `wikiDir` or `rawDir`. Adding to a wiki is `/gvt-dev:maintain-wiki ingest`'s job, not yours.
 
 ## Output
 
