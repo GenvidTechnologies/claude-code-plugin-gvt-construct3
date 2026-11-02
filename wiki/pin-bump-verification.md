@@ -114,6 +114,31 @@ two entries into stronger claims, and the first commit's CHANGELOG repeated them
 The code-reviewer caught both against the tag. Neither surfaces in any check this
 page runs, because a tool-name or resource diff says nothing about behaviour.
 
+### The `minVersion` row: grep the key, not the word
+
+A plain pin bump leaves every skill's `minVersion` floor alone, so bump plans
+usually pledge a row saying so. **Write that row over the key line.** Copy it
+from here, not from memory:
+
+```bash
+# must print 0: no minVersion key line added or removed on the branch
+git diff origin/main...HEAD -- plugin | grep -c -E '^[-+]\s*minVersion:'
+# positive control, so the pattern is known to be live (7 at e1c1a7e:
+# 5 in skill frontmatter, 2 in audit.test.mjs)
+git grep -c -E '^\s*minVersion:' origin/main -- plugin
+```
+
+The bare word is wrong because the plan's own edits put it back in the diff.
+Every bump's CHANGELOG entry says "the `minVersion` floor holds at …", and
+`audit-c3-conventions/SKILL.md`'s example-pin line, which the bump edits,
+mentions `minVersion` too. A bare-word grep therefore returns 4 lines on a
+correct branch, and the row reads red.
+
+This has happened twice. The bare-word row was amended as *defective* on #162,
+and the same row was written again for #170, even though #164 in between had
+used the right form ("every `minVersion:` key line is unchanged"). Both times
+the row was paraphrased instead of copied.
+
 ## The rule is not limited to pin-bump issues
 
 It applies to **any issue whose deliverable is prose asserting how a tool
