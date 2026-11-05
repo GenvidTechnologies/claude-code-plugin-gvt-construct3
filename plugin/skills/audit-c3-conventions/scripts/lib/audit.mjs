@@ -521,7 +521,7 @@ export function classifyDiscovery({
 // NO name-based filtering — `node_modules` and dot-directories are scanned
 // like any other child dir — so this deliberately does not exclude them
 // either (see the regression-lock test in audit.test.mjs).
-// Reviewed baseline: {0.5.1, 0.7.0, 0.8.0, 0.10.0, 0.12.0}. `resolveRootFolder.js` and
+// Reviewed baseline: {0.5.1, 0.7.0, 0.8.0, 0.10.0, 0.12.0, 0.13.0, 0.14.0}. `resolveRootFolder.js` and
 // its only import `mcpError.js` are byte-identical across the first three, so the
 // dm 0.7.0 -> 0.8.0 bump (which moved the range ^0.5.1 -> ^0.7.0) required no
 // change here. The dm 0.8.0 -> 0.9.0 bump moved the range again (^0.7.0 ->
@@ -558,6 +558,14 @@ export function classifyDiscovery({
 // `resolveRootFolder.js` and `mcpError.js` are byte-identical 0.10.0 <-> 0.12.0,
 // the import closure is unchanged (node:fs, node:path, mcpError.js), and `diff -rq`
 // over dist/ showed only index.d.ts(.map), observedState.* and optimisticWatcher.*
+// differing — all outside the closure. dm's locations.js was byte-identical too.
+//
+// The dm 0.12.0 -> 0.13.0 bump moved the range ^0.12.0 -> ^0.13.0, and the chef
+// 2.2.0 -> 3.0.0 bump moved it ^0.12.0 -> ^0.14.0; each resolves only to its own
+// minor. They required no change here: `resolveRootFolder.js` and `mcpError.js`
+// are byte-identical 0.12.0 <-> 0.13.0 and 0.12.0 <-> 0.14.0, the import closure
+// is unchanged (node:fs, node:path, mcpError.js), and `diff -rq` over dist/
+// 0.12.0 <-> 0.14.0 showed only index.*, mcpContent.* and observedState.*
 // differing — all outside the closure. dm's locations.js was byte-identical too.
 // See ADR 0009, and ADR 0015 for this non-identical-closure escalation.
 export async function scanC3ProjectMarkers(repoRoot) {
