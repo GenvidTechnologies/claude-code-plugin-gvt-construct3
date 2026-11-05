@@ -420,7 +420,7 @@ for both pairs, and the ADR 0009 escalation was run against the installs it kept
 `mcp-utils`.
 
 **Part 2 expired again at the chef `3.0.0` / dm `0.13.0` bumps (#183/#184), and the
-two servers moved to different ranges for the first time:** dm `^0.12.0` → `^0.13.0`,
+two servers moved to different ranges:** dm `^0.12.0` → `^0.13.0`,
 chef `^0.12.0` → `^0.14.0`. Each range admits only its own minor, so both new
 versions needed review. `scripts/pin-bump-check.mjs` reported `FAILS procedurally`
 for both pairs, and the escalation was run against the installs it kept:

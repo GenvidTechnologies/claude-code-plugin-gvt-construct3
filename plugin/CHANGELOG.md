@@ -95,8 +95,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   first launch after the update can hit the `CONNECT_TIMEOUT` described under
   Added above; run `/mcp` to reconnect. (#170)
 - **The bundled `construct3-chef` pin moves `@2.2.0` → `@3.0.0`, a major
-  release with one breaking change: `sync-project` withholds removals unless
-  it is called with `prune: true`** (CLI `--prune`). It used to drop a
+  release. The change upstream labels breaking: `sync-project` withholds
+  removals unless it is called with `prune: true`** (CLI `--prune`). It used to drop a
   manifest entry as soon as its file was missing from disk. It now applies
   additions only. Every removal is still reported, with ` [withheld]`
   appended, and the entry stays in `project.c3proj`. This covers every kind of
@@ -114,7 +114,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `validate-project`, `validate-addons`, `scan-addon-usage`,
     `preview-addon-metadata-sync` and `sync-addon-metadata` list an
     `outputSchema` and return `structuredContent: { clean, report }`. `clean`
-    is `false` exactly where the CLI exits 1. `isError` stays reserved for
+    is `false` exactly where the CLI exits 1 for the same inputs
+    (`validate-addons`: the CLI without `--skip-gate`). `isError` stays reserved for
     tool failure, and MCP `scan-addon-usage` now returns it for an
     unresolvable `addon` or `from`. Both agents now say to read `clean`.
 
@@ -124,13 +125,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `[duplicates]` and `[links]`, which never change `clean`.
   - `sync-project` syncs the `video` file section and adds unlisted files by
     the C3 editor's own rescan rule, not one extension per section.
-    `files/` no longer adds a dotfile such as `.gitkeep`, a name the editor
-    reserves directly under `files/`, or a `.js` with a `.ts` twin.
+    `files/` no longer adds a dotfile such as `.gitkeep`, one of the names the
+    editor reserves directly under `files/` (the same names in a subfolder are
+    still added), or a `.js` whose `.ts` twin is listed and present; an
+    unlisted `x.ts` and `x.js` pair adds both.
   - A listed file is no longer reported missing because of its extension.
   - The c3source walks no longer follow a symbolic link or junction below a
     section root, so a linked layout, event sheet or objectType there is no
-    longer seen by the finders, and a link loop or dangling link there no
-    longer fails `validate-project` or `sync-project`.
+    longer seen by the c3source finders, and a link loop or dangling link
+    under a name-section folder no longer fails `validate-project` or
+    `sync-project`. Known divergence upstream (construct3-chef#375): the
+    `walkFiles` of `@genvidtech/mcp-utils` still follows links, and
+    `scaffold-sprite`, MCP `search`, generator outputs and CLI paths use it,
+    so one linked file can be seen by some tools and not by others. A link
+    under a file-section folder is not listed in `[links]`.
   - `scaffold-layout` refuses a name that differs from its output file name,
     or that matches another layout's JSON `name` ignoring letter case. New
     objectType names follow C3's name rules: they refuse an existing family's
@@ -140,7 +148,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Windows reserved device names (`NUL`, `con.txt`, `COM1`) are refused in
     every write target.
   - MCP `scaffold-layout` detects a stale `sid-registry.txt` and bumps `txId`.
-  - Creating an editor-local file in a watched folder no longer bumps `txId`.
+  - On the MCP server, creating an editor-local file (such as a
+    `*.uistate.json`) in a watched folder no longer bumps `txId`. A source file
+    created in the same subfolder still does.
 
   The `minVersion` floor holds at `1.2.0`, so no consumer is pushed onto a new
   floor, but some inputs listed above that used to be accepted are now refused.
@@ -155,7 +165,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   longer listed by `list-uncategorized` or indexed in the domain index; a
   section root that is itself a link is still followed. A dangling link below
   `scripts/` no longer makes the walk fail. The inert-override report in
-  `list-stale-overrides` gives a key reached through such a link a link reason
+  `list-stale-overrides` gives a key reached through a link below its section root a link reason
   instead of reporting it as neither stale nor inert. The `minVersion` floor
   holds at `0.6.1`. Its first launch after the update can hit the
   `CONNECT_TIMEOUT` described under Added above; run `/mcp` to reconnect.
