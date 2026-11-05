@@ -66,9 +66,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - MCP `sync-project` moves the `txId` only when it wrote `project.c3proj`.
   - `validate-project` and `sync-project` treat C3's nameless timelines
     `transitions` container as always present, so an editor-saved project no
-    longer reports permanent drift. `validate-project` now reports, and
-    `sync-project` removes, a ghost entry whose name also exists in another
-    folder of the same section.
+    longer reports permanent drift. `validate-project` now reports a ghost
+    entry whose name also exists in another folder of the same section, and
+    `sync-project` removes it (from `@3.0.0`, only with `prune: true`; see
+    below).
   - The MCP recipe tools seed new SIDs from the configured `extractedDir`.
   - `generate` / `regenerate` work on a project without `scripts/`, and the
     scripts, DSL and layout-summary generators no longer delete their existing
@@ -93,9 +94,79 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   byte-identical and the `@genvidtech/mcp-utils` range stays `^0.12.0`. Its
   first launch after the update can hit the `CONNECT_TIMEOUT` described under
   Added above; run `/mcp` to reconnect. (#170)
-- **Both bundled servers now depend on `@genvidtech/c3source` `^3.0.0`**, so
-  they apply the same c3source rules. The two pins move together for that
-  reason. (#170, #171)
+- **The bundled `construct3-chef` pin moves `@2.2.0` → `@3.0.0`, a major
+  release with one breaking change: `sync-project` withholds removals unless
+  it is called with `prune: true`** (CLI `--prune`). It used to drop a
+  manifest entry as soon as its file was missing from disk. It now applies
+  additions only. Every removal is still reported, with ` [withheld]`
+  appended, and the entry stays in `project.c3proj`. This covers every kind of
+  removal: a missing file, subfolder or section directory, a missing or moved
+  name-section entry, a missing folder, and a stale duplicate.
+  `validate-project` runs the same default sync, so it reports drift while any
+  withheld entry remains. A file moved between subfolders of one section keeps
+  its SID when pruned. The syncs after `scaffold-layout` and `scaffold-sprite`
+  never prune. `c3-implementer` now says when to pass `prune: true`.
+
+  The same 38 tool names register at both versions, so `c3-explorer`'s
+  allow-list needs no change, but tool inputs and outputs changed:
+  - `sync-project` gains `prune`, and MCP `validate-project` gains `section`,
+    the same values as the CLI's `--section`.
+  - `validate-project`, `validate-addons`, `scan-addon-usage`,
+    `preview-addon-metadata-sync` and `sync-addon-metadata` list an
+    `outputSchema` and return `structuredContent: { clean, report }`. `clean`
+    is `false` exactly where the CLI exits 1. `isError` stays reserved for
+    tool failure, and MCP `scan-addon-usage` now returns it for an
+    unresolvable `addon` or `from`. Both agents now say to read `clean`.
+
+  A live `resources/list` goes 84 → 91, purely additive (ADRs 0064–0070), so
+  no resource citation moves. Agents may notice other behaviour changes:
+  - `validate-project` and `sync-project` print two advisory sections,
+    `[duplicates]` and `[links]`, which never change `clean`.
+  - `sync-project` syncs the `video` file section and adds unlisted files by
+    the C3 editor's own rescan rule, not one extension per section.
+    `files/` no longer adds a dotfile such as `.gitkeep`, a name the editor
+    reserves directly under `files/`, or a `.js` with a `.ts` twin.
+  - A listed file is no longer reported missing because of its extension.
+  - The c3source walks no longer follow a symbolic link or junction below a
+    section root, so a linked layout, event sheet or objectType there is no
+    longer seen by the finders, and a link loop or dangling link there no
+    longer fails `validate-project` or `sync-project`.
+  - `scaffold-layout` refuses a name that differs from its output file name,
+    or that matches another layout's JSON `name` ignoring letter case. New
+    objectType names follow C3's name rules: they refuse an existing family's
+    name, the reserved words `self`, `true`, `false` and `system`, System
+    expression names such as `Time`, and names the editor rewrites on load,
+    such as `My Sprite`.
+  - Windows reserved device names (`NUL`, `con.txt`, `COM1`) are refused in
+    every write target.
+  - MCP `scaffold-layout` detects a stale `sid-registry.txt` and bumps `txId`.
+  - Creating an editor-local file in a watched folder no longer bumps `txId`.
+
+  The `minVersion` floor holds at `1.2.0`, so no consumer is pushed onto a new
+  floor, but some inputs listed above that used to be accepted are now refused.
+  Its first launch after the update can hit the `CONNECT_TIMEOUT` described
+  under Added above; run `/mcp` to reconnect. (#184)
+- **The bundled `c3-domain-manager` pin moves `@0.12.0` → `@0.13.0`.** The same
+  15 tool names are live at both versions. A live `resources/list` goes 44 →
+  45, purely additive (ADR 0032). The server's `@genvidtech/c3source` floor
+  moves to `^4.0.0`, whose walks no longer follow a symbolic link or junction
+  below a section root. So a file reached only through a link in
+  `eventSheets/`, `layouts/`, `objectTypes/`, `families/` or `scripts/` is no
+  longer listed by `list-uncategorized` or indexed in the domain index; a
+  section root that is itself a link is still followed. A dangling link below
+  `scripts/` no longer makes the walk fail. The inert-override report in
+  `list-stale-overrides` gives a key reached through such a link a link reason
+  instead of reporting it as neither stale nor inert. The `minVersion` floor
+  holds at `0.6.1`. Its first launch after the update can hit the
+  `CONNECT_TIMEOUT` described under Added above; run `/mcp` to reconnect.
+  (#183)
+- **Both bundled servers now depend on `@genvidtech/c3source` 4.x** (chef
+  `^4.1.0`, dm `^4.0.0`), so they apply the same c3source rules. Both also
+  move `@genvidtech/mcp-utils` (chef `^0.14.0`, dm `^0.13.0`). The audit's
+  `resolveRootFolder` mirror needs no change: the function and its one non-Node
+  import are byte-identical across mcp-utils 0.12.0, 0.13.0 and 0.14.0. The two pins
+  move together for that reason, as they did at `@2.2.0` / `@0.12.0`, when
+  both moved to c3source `^3.0.0`. (#170, #171, #183, #184)
 
 ### Fixed
 - **`c3-implementer` gotcha 13 no longer names an `add-function` op**, which the
