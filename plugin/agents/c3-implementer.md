@@ -19,7 +19,7 @@ Read these as needed at runtime:
 
 ## MCP Tools
 
-These are the construct3-chef tools at the pinned `@2.2.0`. (Unlike `c3-explorer`,
+These are the construct3-chef tools at the pinned `@3.0.0`. (Unlike `c3-explorer`,
 this agent has no `tools:` allow-list — it can call anything, so this list is for
 accuracy, not capability gating.)
 
@@ -35,7 +35,7 @@ accuracy, not capability gating.)
 - `search` — regex search across extracted files (`type`: `dsl`, `ts`, `layout`, `md`, `json`, `idx`; `path`: optional subdirectory; `context`: lines around each match)
 - `search-docs` — look up C3 ACE reference (param names/types, expression syntax, condition/action ids) before authoring a recipe; covers custom addons always, and built-ins/layouts/scripting/Expression-language when the `c3-reference` cache is present (produced by the `build-reference` skill)
 - `resolve-anchor` — look up a DSL coordinate (line/SID/name) → JSON path + SID; target recipes by the SID, since the JSON path is positional and shifts when earlier siblings are inserted or removed
-- `validate-project` — dry-run sync of `project.c3proj` vs disk; reports drift before you `sync-project` (non-mutating)
+- `validate-project` — dry-run sync of `project.c3proj` vs disk; reports drift before you `sync-project` (non-mutating). Read pass/fail from its `structuredContent.clean`, not from the report text: `clean` is `false` on manifest drift, withheld removals included, and strays and image drift never affect it. `isError` means the tool itself failed
 - `generate-sids` — mint fresh unique SIDs seeded from the registry (non-mutating); use these instead of hand-picking (gotcha #14)
 - `list-ops` — list the project's user-defined ops (parameterized recipe templates) with their parameters; use it to discover which `op-<name>` tools exist before applying one
 
@@ -44,7 +44,7 @@ accuracy, not capability gating.)
 - `apply-recipe` — apply recipe with optional regeneration
 - `regenerate` — run all C3 generators (runs the **plugin-bundled** chef — in a consuming repo, finalize with the consumer's repo-pinned generation command instead; see [Finalizing regeneration](#finalizing-regeneration--the-version-skew-dsl-drift-trap))
 - `scaffold-layout` / `scaffold-sprite` — clone a layout / objectType with UID/SID remapping
-- `sync-project` — sync project.c3proj after file changes
+- `sync-project` — sync project.c3proj after file changes. By default it applies additions only: every kind of removal (for example an entry whose file, subfolder or section directory is gone, a name-section entry that is missing or moved, or a stale duplicate) is reported with ` [withheld]` appended, and the entry stays in `project.c3proj`, so `validate-project` stays not clean. After you deliberately delete, rename or move files, pass `prune: true` to apply the removals; with it, a file moved between subfolders of one section keeps its SID. Prune only when every withheld line is a file you meant to remove: a pruned entry whose file is only temporarily absent loses its entry and SID. The syncs that `scaffold-layout` and `scaffold-sprite` run never prune
 - `sync-addon-metadata` — sync `project.c3proj`'s `usedAddons` `version`/`author` fields against the bundled `.c3addon` packages. `direction` is mandatory and names the source of truth: **only `manifest-from-package` writes** — chef has no `.c3addon` writer, so `package-from-manifest` is a read-only report identical to `c3-explorer`'s `preview-addon-metadata-sync`. Pass `txId` from the preview for optimistic concurrency; the returned `txId` bumps only when the manifest was actually written. Preview first (that's the explorer's job), then apply here
 
 **Template & layer mutations** (the recipes that *execute* a `c3-explorer` swap/replica recon):
@@ -60,9 +60,9 @@ accuracy, not capability gating.)
 
 To author or fix an op *wrapper* (params + `{{PARAM}}` placement) and dry-run-validate it before applying, use the `/gvt-construct3:create-c3-op` skill.
 
-## Domain-config maintenance (c3-domain-manager @0.12.0)
+## Domain-config maintenance (c3-domain-manager @0.13.0)
 
-The domain-manager server (pinned `@0.12.0`) exposes write tools for the
+The domain-manager server (pinned `@0.13.0`) exposes write tools for the
 project's domain taxonomy, plus the `validate-editor` read diagnostic. The
 *capability* is generic, but the **content is project-specific** — which file
 maps to which domain is a fact that lives in the consuming repo, not here. Treat

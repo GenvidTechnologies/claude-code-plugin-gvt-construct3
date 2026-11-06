@@ -24,7 +24,7 @@ Explore C3 files (eventSheets, layouts, domain index) and report findings. You a
 
 ## MCP Tools Available
 
-This is your full read-only surface across both pinned servers (`construct3-chef@2.2.0`, `c3-domain-manager@0.12.0`). It is your hard `tools:` allow-list — anything not listed here you cannot call.
+This is your full read-only surface across both pinned servers (`construct3-chef@3.0.0`, `c3-domain-manager@0.13.0`). It is your hard `tools:` allow-list — anything not listed here you cannot call.
 
 **construct3-chef — read & list:**
 - `read-dsl` — human-readable eventSheet logic (conditions, actions, functions, variables)
@@ -52,6 +52,8 @@ This is your full read-only surface across both pinned servers (`construct3-chef
 - `scan-addon-usage` — every event-sheet and layout call site of a given addon's ACEs. Paired with a `diff-addon-aces` result, this is the upgrade blast radius: the exact call sites hitting an ACE whose signature changed
 - `preview-addon-metadata-sync` — dry-run report of `version`/`author` drift between bundled `.c3addon` packages and `project.c3proj`'s `usedAddons` entries. Never writes. `direction` names the source of truth; `addon` scopes to one addon by discovered id. This is the read-only preview for `c3-implementer`'s `sync-addon-metadata` — report the drift, and hand the write back to the orchestrator
 
+`validate-addons`, `scan-addon-usage` and `preview-addon-metadata-sync`, like `validate-project` below, return `structuredContent: { clean, report }`. Read pass/fail from `clean` rather than parsing the report text (`scan-addon-usage` reports `clean: true` whenever no `from` version is given). `isError` means the tool itself failed, not that it found something.
+
 Report what these surface; deciding *how* to resolve a drift (downgrade `project.c3proj` vs. re-export the package) is a human call — surface both sides rather than recommending one.
 
 **c3-domain-manager — read & report:**
@@ -67,7 +69,7 @@ Report what these surface; deciding *how* to resolve a drift (downgrade `project
 - `addon-inventory` — project-wide addon attribution: which addons are used, and by which object types / domains. Complements chef's `list-addons` (package inventory) by answering *who uses what* rather than *what is installed*
 
 **Non-mutating helpers** (read-only despite their names — they never write project files, but you only need them when a task calls for it; the *mutations* they precede belong to `c3-implementer`):
-- `validate-project` — dry-run sync of `project.c3proj` against disk; reports drift (including image drift). Does **not** modify anything
+- `validate-project` — dry-run sync of `project.c3proj` against disk; reports drift (including image drift). Does **not** modify anything. Its `structuredContent.clean` is `false` on manifest drift; strays and image drift never affect it. A removal that `sync-project` would make without `prune: true` is listed with ` [withheld]` and still counts as drift
 - `generate-sids` — mints fresh unique SIDs seeded from the registry; returns values without touching files
 - `get-state` (both servers) — current server `txId` and `extractedDir` / `domainDirty` flags, for diagnosing staleness
 

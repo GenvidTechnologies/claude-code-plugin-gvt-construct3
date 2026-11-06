@@ -320,10 +320,10 @@ review that release notes would have talked us out of — and the review then fo
 nothing had moved.[^adr-0009]
 
 > **The reviewed baseline is now state the check depends on.** It currently stands at
-> **{0.5.1, 0.7.0, 0.8.0, 0.10.0, 0.12.0}**, recorded in the provenance comment above
+> **{0.5.1, 0.7.0, 0.8.0, 0.10.0, 0.12.0, 0.13.0, 0.14.0}**, recorded in the provenance comment above
 > `scanC3ProjectMarkers` in `audit.mjs`, in ADR 0009, and — for `0.10.0` — in ADR 0015.
 > `0.12.0` is recorded in that comment and on this page only (#162/#163), and so
-> was `0.8.0`. ADR 0009's "record it … in this record" described the first
+> were `0.8.0`, and `0.13.0` and `0.14.0` (#183/#184). ADR 0009's "record it … in this record" described the first
 > escalation. A later widening that passes on byte-identity goes in the comment and
 > on this page; ADRs stay historical. A widening that needs a new adjudication, as
 > `0.10.0` did, gets its own record (ADR 0015).
@@ -418,6 +418,24 @@ for both pairs, and the ADR 0009 escalation was run against the installs it kept
 **Verdict: PASS.** No logic change in `audit.mjs`; the baseline widened to include
 `0.12.0`. Part 2 will expire again the moment a server's range admits a newer
 `mcp-utils`.
+
+**Part 2 expired again at the chef `3.0.0` / dm `0.13.0` bumps (#183/#184), and the
+two servers moved to different ranges:** dm `^0.12.0` → `^0.13.0`,
+chef `^0.12.0` → `^0.14.0`. Each range admits only its own minor, so both new
+versions needed review. `scripts/pin-bump-check.mjs` reported `FAILS procedurally`
+for both pairs, and the escalation was run against the installs it kept:
+
+| Check | Result |
+|---|---|
+| ADR 0007 part 1 — dm `dist/adapters/locations.js`, `0.12.0` ↔ `0.13.0` | **byte-identical** (11214 bytes) |
+| ADR 0007 part 2 — dm `^0.12.0` → `^0.13.0`, chef `^0.12.0` → `^0.14.0` | **fails procedurally** |
+| `dist/resolveRootFolder.js`, mcp-utils `0.12.0` ↔ `0.13.0` and `0.12.0` ↔ `0.14.0` | **byte-identical** (`cmp` exit 0, both pairs) |
+| `dist/mcpError.js` — its only non-node import | **byte-identical** (`cmp` exit 0, both pairs); a `cmp` of two different files exited 1 as the control |
+| imports of `resolveRootFolder.js` | unchanged: `node:fs`, `node:path`, `./mcpError.js` |
+| `diff -rq` over `dist/`, `0.12.0` ↔ `0.14.0` (72 files each side) | exit 1; only `index.*`, `mcpContent.*` and `observedState.*` differ, all **outside the closure** |
+
+**Verdict: PASS.** No logic change in `audit.mjs`; the baseline widened to include
+`0.13.0` and `0.14.0`, and after the widening both `pin-bump-check.mjs` runs exit 0.
 
 ## The explorer allow-list is *not* chef's `READ_ONLY` set
 
@@ -558,6 +576,10 @@ Measured this way on 2026-09-01, before rewriting any reference:
 | `@genvidtech/c3-domain-manager@0.11.1` | **42** — probed 2026-10-08 (#147) with `scripts/mcp-surface.mjs`; purely additive, the one new entry is `docs:///reference/key-dependencies`; nothing repathed or removed. The 0.11.0 arm, re-probed in the same run, still returned 41. Tools 15 → 15 with identical names, templates 1 → 1 |
 | `@genvidtech/construct3-chef@2.1.0` | **74** — probed 2026-10-20 (#162); purely additive, the 15 new entries are `docs:///architecture/addon-tooling`, `docs:///process/canonical-fixture`, `docs:///process/verification-traps` and `docs:///decisions/0042-…` through `0053-…`; nothing repathed or removed. The 2.0.0 arm, re-probed in the same run, still returned 59. Tools 38 → 38 with identical names, templates 1 → 1 |
 | `@genvidtech/c3-domain-manager@0.11.2` | **44** — probed 2026-10-20 (#163); purely additive, the two new entries are `docs:///decisions/0031-pre-connect-log-stderr-fallback` and `docs:///process/documentation-conventions`; nothing repathed or removed. The 0.11.1 arm, re-probed in the same run, still returned 42. Tools 15 → 15 with identical names, templates 1 → 1 |
+| `@genvidtech/construct3-chef@2.2.0` | **84** — recorded in PR #178 (#171), merged 2026-11-02; purely additive, the 10 new entries are `docs:///decisions/0054-…` through `0063-…`; nothing removed. Tools 38 → 38 with identical names, templates 1 → 1. Row added at #183/#184 from the figures recorded in PR #178 |
+| `@genvidtech/c3-domain-manager@0.12.0` | **44** — recorded in PR #178 (#170), merged 2026-11-02; unchanged from 0.11.2. Tools 15 → 15 with identical names, templates 1 → 1. Row added at #183/#184 from the figures recorded in PR #178 |
+| `@genvidtech/construct3-chef@3.0.0` | **91** — probed 2026-11-05 (#184); purely additive, the 7 new entries are `docs:///decisions/0064-…` through `0070-…`; nothing repathed or removed. Tools 38 → 38 with identical names, templates 1 → 1 |
+| `@genvidtech/c3-domain-manager@0.13.0` | **45** — probed 2026-11-05 (#183); purely additive, the one new entry is `docs:///decisions/0032-link-safe-walks`; nothing repathed or removed. Tools 15 → 15 with identical names, templates 1 → 1 |
 
 Both 2026-09-01 figures matched the counts the bump issues claimed, which is worth
 noting in the other direction: **the probe is cheap enough that confirming a correct
@@ -617,10 +639,10 @@ in `plugin/.claude-plugin/plugin.json`'s `mcpServers`.
 
 | Server | Idiom | Location | Count |
 |---|---|---|---|
-| construct3-chef | `regP("…")` (project-scoped) | `dist/mcp/server.js` | **37** at `2.2.0`, `2.1.0` and `2.0.0` — includes `list-ops`, moved in from `opsRegistry.js` at `2.0.0` |
-| construct3-chef | `reg("…")` (unscoped) | `dist/mcp/server.js` | **1** at `2.2.0`, `2.1.0` and `2.0.0` — `list-projects` only |
-| construct3-chef | total | — | **38** at `2.2.0` — identical name set to `2.1.0` (#171); **38** at `2.1.0` — identical name set to `2.0.0` (#162); **38** at `2.0.0` — was **37** at `1.2.0` (`reg()` **36** + `list-ops` **1**), **35**, **31** |
-| c3-domain-manager | `registerProjectTool` + one direct `registerTool` | `dist/mcp/server.js` | **15** at `0.12.0` (14 + 1) — identical name set to `0.11.2`, `dist/mcp/server.js` byte-identical (#170); **15** at `0.11.2` — identical name set to `0.11.1` (#163); **15** at `0.11.1` — identical name set to `0.11.0` (#147); **15** at `0.11.0` — identical name set to `0.10.1` (`regenerate` gained a parameter, not a tool); was **14** at `0.7.0` → `0.9.0`, **13** before |
+| construct3-chef | `regP("…")` (project-scoped) | `dist/mcp/server.js` | **37** at `3.0.0`, `2.2.0`, `2.1.0` and `2.0.0` — includes `list-ops`, moved in from `opsRegistry.js` at `2.0.0` |
+| construct3-chef | `reg("…")` (unscoped) | `dist/mcp/server.js` | **1** at `3.0.0`, `2.2.0`, `2.1.0` and `2.0.0` — `list-projects` only |
+| construct3-chef | total | — | **38** at `3.0.0` — identical name set to `2.2.0` (#184); **38** at `2.2.0` — identical name set to `2.1.0` (#171); **38** at `2.1.0` — identical name set to `2.0.0` (#162); **38** at `2.0.0` — was **37** at `1.2.0` (`reg()` **36** + `list-ops` **1**), **35**, **31** |
+| c3-domain-manager | `registerProjectTool` + one direct `registerTool` | `dist/mcp/server.js` | **15** at `0.13.0` (14 + 1) — identical name set to `0.12.0`, `dist/mcp/server.js` byte-identical (#183); **15** at `0.12.0` (14 + 1) — identical name set to `0.11.2`, `dist/mcp/server.js` byte-identical (#170); **15** at `0.11.2` — identical name set to `0.11.1` (#163); **15** at `0.11.1` — identical name set to `0.11.0` (#147); **15** at `0.11.0` — identical name set to `0.10.1` (`regenerate` gained a parameter, not a tool); was **14** at `0.7.0` → `0.9.0`, **13** before |
 
 > **dm changed its registration idiom at `0.10.0` — a bare `registerTool(` grep now
 > returns 2, not 15.** Per-project tools register through a `registerProjectTool(name, …)`
