@@ -47,6 +47,7 @@ Comprehensive reference for Construct 3 platform behavior: event sheets, layouts
   - [Token-Based String Iteration](#token-based-string-iteration)
   - [Animation Name Is Unreliable as an Identity](#animation-name-is-unreliable-as-an-identity)
   - [Testing Whether an Object Exists on the Current Layout](#testing-whether-an-object-exists-on-the-current-layout)
+  - [Item Names Are Scoped by Kind, Ignoring Letter Case](#item-names-are-scoped-by-kind-ignoring-letter-case)
   - [Common C3 Editor Errors](#common-c3-editor-errors)
   - [Sheet-Root Variables Are Globals](#sheet-root-variables-are-globals)
   - [Function/ACE Calls Hoist; Handler Blocks Don't](#functionace-calls-hoist-handler-blocks-dont)
@@ -584,12 +585,24 @@ do:   MyPlugin.<action>
 
 The count check is self-maintaining: adding a new layout that doesn't host the object Just Works without further edits. Layout-name exclusion lists are a known regression source. When you see `LayoutName != "X" AND LayoutName != "Y" [AND …]` guarding access to an object type, replace with `ObjectType.Count > 0` (or `> 1` for global singletons whose first instance is the canonical one).
 
+### Item Names Are Scoped by Kind, Ignoring Letter Case
+
+The C3 editor checks item names while it loads a project, and the scope of the check depends on the kind of item:
+
+- **Object types and families share one project-wide name namespace.** Both are object classes, and the editor keeps their names in one set, compared after Unicode normalization with letter case ignored. An object type and a family with the same name, or two object classes whose names differ only in letter case, make the editor's project loader throw `object class name '…' already used`. A new family cannot take a name an object type already uses, and a new object type cannot take a family's name.
+- **A layout's identity is its JSON `"name"`, not its file name.** The layout loader reads the file the manifest lists and takes the layout's name from that file's `"name"` key. It never compares the key with the file name, so a layout whose `"name"` differs from its file name still loads. (The object-type and family loaders do compare the two.) Two layouts whose `"name"` values match with letter case ignored make the loader throw `layout name '…' already used`.
+
+When you author or rename one of these items by hand, check the new name with letter case ignored: an object type or family name against every object type and family, and a layout's `"name"` against every other layout's `"name"`. Keep a layout's `"name"` equal to its file name, so that the two cannot drift apart.
+
+These facts were traced in the C3 editor r495-2 bundle (`projectResources.js` and `main.js`), which was read but not run, and are recorded in [GenvidTechnologies/c3source#123](https://github.com/GenvidTechnologies/c3source/issues/123). Whether older editor releases behave the same was not checked. A load-time check leaves nothing on disk to observe, so `construct3-sample` cannot confirm or contradict either rule.
+
 ### Common C3 Editor Errors
 
 - **"expected finite number"** on project open — a JSON value has wrong type (string where C3 expects number). Check recipe-generated params.
 - **"Error removing animation: animation name '' does not exist"** — iterating an Array with default values (`0`). Guard with `CurValue <> ""` AND `CurValue <> 0`.
 - **"Unknown expression 'varName'"** — referencing a variable outside its scope. See [Variable and Function Accessibility](#variable-and-function-accessibility).
 - **"Property 'X' does not exist on type 'IConstructProjectLocalVariables_NNNNN'"** in a script block — sheet-root variables are globals, not locals. Wrap the variable (and its consumers) in a top-level group. See [Sheet-Root Variables Are Globals](#sheet-root-variables-are-globals).
+- **"object class name '…' already used"** or **"layout name '…' already used"** on project open — two items share a name in the same scope, letter case ignored. See [Item Names Are Scoped by Kind, Ignoring Letter Case](#item-names-are-scoped-by-kind-ignoring-letter-case).
 
 ### Sheet-Root Variables Are Globals
 
