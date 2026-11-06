@@ -15,6 +15,14 @@ before. If a past entry itself needs correcting, add a new entry that says
 so; never edit or remove the old one in place. See `wiki/wiki-schema.md` for
 the full maintenance schema.
 
+## 2026-11-06
+
+* **Update**: `verifying-against-construct3-sample.md` § *Citing provenance*
+  gains ADR 0008's per-place citation table, including the squash-body row (tag
+  and path, no line), and a three-item check for a docs/c3 marker change.
+  `wiki-schema.md` says a hand edit outside an ingest also gets a `log.md` entry.
+  From the retro on #185. Session observation, not a `raw/` capture.
+
 ## 2026-11-05
 
 * **Creation**: `tracing-c3-editor-facts.md`, from the retro on #181–#184. It
@@ -29,6 +37,11 @@ the full maintenance schema.
   `resources/list` rows as part of the refresh, which #170/#171 skipped.
   `process/issue-triage.md` gains the marker-scope rule for acceptance rows that
   triage drafts on docs/c3 facts. Session observations, not `raw/` captures.
+* **Update**: `verifying-against-construct3-sample.md` § *Getting the ground
+  truth* no longer lists the sample's tags as stopping at `v0.4.0`. It names
+  `v1.3.0` as of 2026-11-05 and gives the command that lists the current tags.
+  The stale list is how a "no example at any tag" marker went unchecked (#185).
+  Session observation, not a `raw/` capture.
 
 ## 2026-11-02
 
