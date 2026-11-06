@@ -217,6 +217,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `v1.3.0`) has an `isInverted` key, so the inverted form stays marked
   unverified. The JSON example is unchanged. If you authored a false check
   with `"isInverted": true`, confirm it against a real editor save. (#185)
+- **`c3-implementer` gotcha 3 now says the `call` shorthand keeps booleans
+  native.** It said `call` params are stringified, `true` included. The pinned
+  `construct3-chef` 3.0.0 writes a boolean argument as a native JSON boolean
+  and turns only other values, such as numbers, into strings. This matches the
+  guidance to write a native `true`/`false` in a boolean slot. construct3-chef
+  2.1.0 and earlier did stringify booleans. The C3 editor build traced for
+  construct3-chef#371 (r495-2, read but not run) loads the string `"false"` in
+  a boolean argument as `true`, so a `false` argument that `call` wrote with
+  one of those versions can load as `true`. Check any recipe applied with
+  them. (#189)
 
 ## [3.4.0] - 2026-10-20
 

@@ -121,7 +121,7 @@ High-frequency rules for authoring recipes. The full numbered list with details 
 
 1. **Read the DSL index before writing any recipe.** Use `read-dsl-index` per target sheet. Use SID-based targeting (`"in": "sid:XXXXXXXXXXXXXXX"`) — immune to index shifts.
 2. **`patch-script` fields are `find`/`replace`**, NOT `old`/`new`. Wrong names pass validation silently.
-3. **`call` params are auto-stringified** — `0` → `"0"`, `true` → `"true"`.
+3. **`call` params keep booleans native; other values become strings** — `0` → `"0"`, `true` stays `true`. Write a native `true`/`false` for a boolean argument. (construct3-chef 2.1.0 and earlier wrote booleans as strings, and the traced C3 editor loads `"false"` as `true` — see [`#keep-boolean-slots-constant`](../docs/c3/construct3-guide.md#keep-boolean-slots-constant).)
 4. **`comparison` params are integers** — `0` equal, `1` not-equal, etc.
 5. **All `layer` params are quoted expressions** — `"\"LayerName\""` (actions AND conditions).
 6. **`actionIndex` is 0-based** but DSL cross-refs are 1-based — `Act1` = `actionIndex: 0`.

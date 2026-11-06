@@ -114,6 +114,24 @@ two entries into stronger claims, and the first commit's CHANGELOG repeated them
 The code-reviewer caught both against the tag. Neither surfaces in any check this
 page runs, because a tool-name or resource diff says nothing about behaviour.
 
+### Behaviour changes can falsify the `c3-implementer` cheat-sheet
+
+The same upstream CHANGELOG entries can make a `c3-implementer` recipe gotcha wrong.
+The cheat-sheet restates chef's recipe-param behaviour in one line per rule, so a chef
+fix to that behaviour leaves the gotcha stating the old behaviour. No check on this page
+sees it, for the reason above.
+
+For each upstream CHANGELOG entry between the old and the new tag that changes what a
+recipe op writes, find the op it names in the cheat-sheet
+(`## Recipe-tooling cheat-sheet` in `plugin/agents/c3-implementer.md`). Correct any
+gotcha the entry falsifies in the same bump.
+
+This was missed once. chef 2.2.0's CHANGELOG says the `call` shorthand writes a native
+boolean instead of `"true"` / `"false"` (construct3-chef#322). The 2.2.0 bump (#171)
+did not touch gotcha 3, which kept saying `true` → `"true"` until #189. During that
+time the agent told implementers that `call` stringifies booleans, which contradicted
+the `docs/c3` rule to write a native `true`/`false` in a boolean slot.
+
 ### The `minVersion` row: grep the key, not the word
 
 A plain pin bump leaves every skill's `minVersion` floor alone, so bump plans
