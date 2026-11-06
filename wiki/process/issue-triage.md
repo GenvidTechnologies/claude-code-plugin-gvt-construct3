@@ -67,6 +67,19 @@ reads to the next person as *checked and unchanged*. Answer the resource questio
 explicitly even when the answer is "no change" — and settle it by speaking MCP to
 the pinned server and reading `resources/list`, not from the issue's own table.
 
+**A docs/c3 fact issue owes acceptance rows that follow the marker scope.** When
+triage drafts acceptance criteria for a C3 platform fact, first classify the fact.
+A structural or JSON-shape claim is checked against `construct3-sample` and takes
+the ADR 0008 marker when the sample cannot settle it. An editor or runtime claim
+(load-time checks, editor save behaviour, how a value is coerced) takes **no**
+marker. Its row asks for the provenance in prose (the source, whether it was read
+or run, and what was not checked), and its default home is the guide's
+field-knowledge sections (§5, §7), not a doc without that carve-out (ADR 0011).
+Triage on 2026-11-05 drafted "carries the ADR 0008 provenance marker" rows for
+both #181 and #182, which are editor-loader facts, and planning had to correct
+both as defective. See [Verifying docs/c3 against
+construct3-sample](/verifying-against-construct3-sample.md).
+
 Missing the essentials → add the **`question`** label and comment exactly what is
 needed. (This repo has no dedicated `needs-info` label; `question` serves that
 role — the `needsInfoLabel` in the `bugTracker` block must be set to `question`.)

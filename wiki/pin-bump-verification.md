@@ -604,6 +604,14 @@ diff.** Refreshing them is a checklist item, not a judgement call, because leavi
 stale doesn't break the bump that made them wrong — **it breaks the one after**, and
 that failure mode is invisible at the time you cause it.[^reconciliation]
 
+The checklist has two parts: the idiom counts in the table below, **and** a row per
+new pin in the `resources/list` table under [Verify resource names against a live
+`resources/list`](#verify-resource-names-against-a-live-resourceslist). The second
+is the one that gets skipped. The chef `2.2.0` / dm `0.12.0` bump (#170/#171)
+refreshed the idiom counts but added no `resources/list` rows. #183/#184 had to
+backfill them from the figures PR #178 recorded, which made those rows inherited,
+not measured.
+
 **Packages pinned:** `@genvidtech/construct3-chef` and `@genvidtech/c3-domain-manager`,
 in `plugin/.claude-plugin/plugin.json`'s `mcpServers`.
 
