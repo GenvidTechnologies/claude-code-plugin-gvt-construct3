@@ -262,7 +262,7 @@ This is invisible to lint, typecheck, and c3proj validation. The only validator 
 
 ### Boolean Event Variable Conditions
 
-> **Unverified — no example exists in the sample.** `construct3-sample` contains no `compare-boolean-eventvar` condition and no `isInverted` key at any tag (`v0.1.0`–`v0.4.0`). The sample *does* carry the sibling `compare-eventvar` with `{variable, comparison, value}`, which is structurally analogous — but an analogy is **not** a verified example, and it must not be promoted to one. Confirm this shape against a real editor save before authoring it by hand.
+> **Base shape confirmed; `isInverted` unverified.** `construct3-sample@v1.3.0` carries a `compare-boolean-eventvar` condition whose keys (`id`, `objectClass`, `sid`, `parameters.variable`) match the example below. No `isInverted` key appears at `v0.1.0`–`v0.4.0` or at `v1.3.0`, so the inverted form described below is not established. Confirm it against a real editor save before authoring it by hand.
 
 Boolean event variables (static, var, or const) must use `System.compare-boolean-eventvar`, **not** `System.compare-two-values` against `0`. In eventSheet JSON:
 

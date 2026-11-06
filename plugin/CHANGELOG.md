@@ -209,6 +209,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   shorthand passes both through. The gotcha now says to set them in the recipe,
   because an omitted key is written as `""`. Chef's recipe reference doesn't list
   these keys yet (construct3-chef#353). (#168)
+- **The `compare-boolean-eventvar` marker in `construct3-guide.md` now says
+  what the sample confirms.** The guide said `construct3-sample` held no
+  `compare-boolean-eventvar` condition at any tag. `construct3-sample@v1.3.0`
+  holds one, and its keys match the guide's JSON example, so the marker now
+  says the base shape is confirmed. No tag checked (`v0.1.0`–`v0.4.0` and
+  `v1.3.0`) has an `isInverted` key, so the inverted form stays marked
+  unverified. The JSON example is unchanged. (#185)
 
 ## [3.4.0] - 2026-10-20
 

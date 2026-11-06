@@ -32,7 +32,9 @@ shape in it was written by a real Construct 3 editor save.[^claude-md]
 
 ## Getting the ground truth
 
-The sample is `gh`-reachable (tags `v0.1.0`–`v0.4.0`). Grab it **whole** rather
+The sample is `gh`-reachable (tags `v0.1.0` through `v1.3.0` as of 2026-11-05;
+list the current ones with `gh api repos/GenvidTechnologies/construct3-sample/tags --jq '.[].name'`
+before you cite "any tag"). Grab it **whole** rather
 than making per-file API calls, then `grep -rn` the addon id across `project/`
 to find *every* site of a fact at once — declaration, applied data, and the
 `usedAddons` entry — instead of guessing which file holds it:
