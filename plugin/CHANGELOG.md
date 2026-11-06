@@ -215,7 +215,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   holds one, and its keys match the guide's JSON example, so the marker now
   says the base shape is confirmed. No tag checked (`v0.1.0`–`v0.4.0` and
   `v1.3.0`) has an `isInverted` key, so the inverted form stays marked
-  unverified. The JSON example is unchanged. (#185)
+  unverified. The JSON example is unchanged. If you authored a false check
+  with `"isInverted": true`, confirm it against a real editor save. (#185)
 
 ## [3.4.0] - 2026-10-20
 

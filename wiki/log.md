@@ -29,6 +29,11 @@ the full maintenance schema.
   `resources/list` rows as part of the refresh, which #170/#171 skipped.
   `process/issue-triage.md` gains the marker-scope rule for acceptance rows that
   triage drafts on docs/c3 facts. Session observations, not `raw/` captures.
+* **Update**: `verifying-against-construct3-sample.md` § *Getting the ground
+  truth* no longer lists the sample's tags as stopping at `v0.4.0`. It names
+  `v1.3.0` as of 2026-11-05 and gives the command that lists the current tags.
+  The stale list is how a "no example at any tag" marker went unchecked (#185).
+  Session observation, not a `raw/` capture.
 
 ## 2026-11-02
 
