@@ -15,6 +15,21 @@ before. If a past entry itself needs correcting, add a new entry that says
 so; never edit or remove the old one in place. See `wiki/wiki-schema.md` for
 the full maintenance schema.
 
+## 2026-11-05
+
+* **Creation**: `tracing-c3-editor-facts.md`, from the retro on #181–#184. It
+  covers reading the C3 editor's published JavaScript at a named release to settle
+  an editor-behaviour claim: the files, hash matching, read-only handling, the
+  r495-2 landmarks that worked, and five ways a trace draft over-claimed and was
+  corrected in review. Sources are the construct3-chef#371 trace comments and
+  c3source#123. Session observation, not a `raw/` capture.
+* **Update**: `verifying-against-construct3-sample.md` trap 6 gains the #181 and
+  #182 placements and a rule that a row quoting C3 syntax is a claim (`!=` vs
+  `<>`). `pin-bump-verification.md` § *The count anchors* names the
+  `resources/list` rows as part of the refresh, which #170/#171 skipped.
+  `process/issue-triage.md` gains the marker-scope rule for acceptance rows that
+  triage drafts on docs/c3 facts. Session observations, not `raw/` captures.
+
 ## 2026-11-02
 
 * **Update**: `agent-capability-envelopes.md` gains § *Live-probing an agent body

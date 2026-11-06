@@ -174,6 +174,23 @@ not at the rule being invoked.
    the fact stayed in `construct3-guide.md` §7, whose carve-out already covered
    it, and `layout-reference.md` was left untouched.
 
+   The rule decided placement twice more on 2026-11-05. #181 asked for its
+   layout-identity fact on "the layout … pages", and #182 asked for its
+   boolean-slot rule beside the implementer guidance. Both are editor-loader
+   behaviour, read from the editor bundle rather than from any on-disk project.
+   Both went into §7 with their provenance in prose, and `layout-reference.md`
+   got only a link, which makes no claim. A link line is the cheap way to keep a
+   topical neighbour pointing at a fact without moving the fact under a note
+   that would vouch for it.
+
+   **A row that quotes C3 syntax is a claim to check, not a string to copy.** #182's
+   body proposed a number "tested with `!= 0`", and the acceptance row copied it.
+   C3 expressions write not-equal as `<>` (the guide's own "Common C3 Editor
+   Errors" already uses `CurValue <> ""`), and `!=` has no hit in the r495-2
+   editor bundle. The row was defective as written and was amended in the open.
+   Before pledging a row that greps for an operator, ACE id or expression form,
+   find it once in the guide or in the editor's ACE definitions.
+
 7. **The sweep cannot see broken navigation — and marker-absence will imply it
    can.** This is trap 5's shape a second time, and the repetition is the point:
    the sample settles *shapes*, so every non-shape property of a doc is outside
