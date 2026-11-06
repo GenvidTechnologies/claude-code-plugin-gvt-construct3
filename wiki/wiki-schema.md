@@ -128,6 +128,9 @@ one topic. Two situations, two different actions:
   paragraphs — integrate the new facts into the existing prose, updating the
   `description` if the topic's shape has changed, and refresh the frontmatter
   `sources` list. Append an entry to `wiki/log.md` either way.
+- **A hand edit outside an ingest → log it too.** A change to a wiki page made
+  in an ordinary PR also appends a `wiki/log.md` entry. Say that it is a session
+  observation, not a `raw/` capture.
 
 When it's ambiguous whether a source is a new topic or a refinement of an
 existing one, prefer updating the closer existing page — a wiki with one

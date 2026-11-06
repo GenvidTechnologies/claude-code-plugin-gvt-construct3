@@ -48,9 +48,24 @@ gh api repos/GenvidTechnologies/construct3-sample/tarball/v0.1.0 > s.tgz && tar 
 Cite the sample **tag** in shipped docs, never `path:line`
 ([ADR 0008](/decisions/0008-recording-verification-provenance-in-docs-c3.md)).
 A line number points into a moving target and rots silently on a re-tag, and a
-wrong citation inside a *verification* note is worse than no note at all. Put
-the precise `sample@<tag> <path>:<line>` in the **commit message**, which is
-frozen.
+wrong citation inside a *verification* note is worse than no note at all. ADR
+0008's table gives each place its own form:
+
+| Where | Cite | Where it ends up |
+| --- | --- | --- |
+| Branch commit message | `sample@<tag> <path>:<line>` | The PR's commit list only. This repo squash-merges, so the branch commit never reaches `main`. |
+| `plugin/CHANGELOG.md` and the PR description (the squash body) | `sample@<tag> <path>`, no line | `main`. The PR description becomes the squash commit's message. |
+| Shipped `plugin/docs/c3/*.md` | the tag only | The installed plugin. |
+
+So the line number is kept in the PR's history, and `main` carries tag and path.
+
+**Before committing a docs/c3 marker change, check three things.** Each one was
+missed once in #185 and caught in review:
+
+1. The branch commit message carries `sample@<tag> <path>:<line>`.
+2. The `plugin/CHANGELOG.md` entry says what a reader who believed the old text
+   should re-check ([Doc inventories and the changelog](/doc-inventories.md)).
+3. A hand edit to a wiki page has a `wiki/log.md` entry.
 
 Each swept doc carries a provenance note that makes marker-*absence* meaningful
 (unmarked ⇒ verified), so a fact you add must either be verified against the
