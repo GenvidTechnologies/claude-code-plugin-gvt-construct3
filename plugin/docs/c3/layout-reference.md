@@ -29,7 +29,7 @@ Layouts define the visual screens of the project. When placing objects into a la
 }
 ```
 
-For how the editor uses a layout's `"name"` when it loads the project, see [Item Names Are Scoped by Kind, Ignoring Letter Case](construct3-guide.md#item-names-are-scoped-by-kind-ignoring-letter-case).
+For the editor's name checks on layouts, see [Item Names Are Scoped by Kind, Ignoring Letter Case](construct3-guide.md#item-names-are-scoped-by-kind-ignoring-letter-case).
 
 Projects typically group layouts into directories by purpose (gameplay levels, login/loading, menus, modals, template holders, etc.).
 

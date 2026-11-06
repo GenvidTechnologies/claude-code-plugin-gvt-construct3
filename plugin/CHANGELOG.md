@@ -29,8 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Letter Case", states that object types and families share one project-wide
   name namespace, and that a layout's identity is its JSON `"name"`, not its
   file name. A duplicate in either scope, letter case ignored, makes the
-  editor's project loader throw. The facts come from a read of the C3 editor
-  r495-2 bundle, not from a run, and older editor releases were not checked.
+  editor's name check throw. The facts come from a read of the C3 editor
+  r495-2 bundle, not from a run; that the object-class check runs during
+  project load is inferred, and other editor releases were not checked.
   `layout-reference.md` links to the section, and the guide's editor-errors
   list names both error messages. (#181)
 
