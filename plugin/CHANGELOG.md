@@ -24,6 +24,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   run the local copy while the agents run the pinned server, so their output
   can disagree. The finding is advisory and never changes the exit code; the
   MCP version check still reads only the plugin's pin. (#167)
+- **The C3 docs now say how the editor scopes item names.** A new
+  `construct3-guide.md` section, "Item Names Are Scoped by Kind, Ignoring
+  Letter Case", states that object types and families share one project-wide
+  name namespace, and that a layout's identity is its JSON `"name"`, not its
+  file name. A duplicate in either scope, letter case ignored, makes the
+  editor's name check throw. The facts come from a read of the C3 editor
+  r495-2 bundle, not from a run; that the object-class check runs during
+  project load is inferred, and other editor releases were not checked.
+  `layout-reference.md` links to the section, and the guide's editor-errors
+  list names both error messages. (#181)
 
 ### Changed
 - **`c3-explorer` is now told to keep the files it saves out of your project
