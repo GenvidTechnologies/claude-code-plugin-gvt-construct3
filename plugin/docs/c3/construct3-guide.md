@@ -42,6 +42,7 @@ Comprehensive reference for Construct 3 platform behavior: event sheets, layouts
 - [6. Layout Architecture](#6-layout-architecture)
 - [7. Platform Gotchas and Field Knowledge](#7-platform-gotchas-and-field-knowledge)
   - [Declaration Order: Nodes Process in Array Order](#declaration-order-nodes-process-in-array-order)
+  - [Keep Boolean Slots Constant](#keep-boolean-slots-constant)
   - [Blocking Input: Layer Interactivity vs. Group Deactivation](#blocking-input-layer-interactivity-vs-group-deactivation)
   - [Instance Variables for Cross-Block State](#instance-variables-for-cross-block-state)
   - [Token-Based String Iteration](#token-based-string-iteration)
@@ -509,6 +510,23 @@ These are runtime and editor behaviours observed in the field, not conventions r
 ### Declaration Order: Nodes Process in Array Order
 
 **Never reference a variable before its declaration in the JSON tree**, even if it's `static` or `const`. While C3 scoping makes variables visible throughout their group, the runtime processes nodes in array order — referencing a variable before its declaration position can produce `NaN` or `undefined` values at runtime (e.g., NaN coordinates when positioning objects). See [Variable and Function Accessibility](#variable-and-function-accessibility) for the full scoping rules.
+
+### Keep Boolean Slots Constant
+
+Some event-sheet slots keep only the constant `true` or `false`. An expression written there, by hand or by a recipe, does not survive: the editor replaces it while it loads the project, and the next save writes the replacement. The load code raises no error (what the editor UI shows was not checked), so the event logic can change unnoticed.
+
+The replacement depends on the slot's parameter type:
+
+- **A boolean parameter** is coerced by JavaScript truthiness. This covers a function-call argument for a function parameter of type boolean, and a built-in ACE parameter of type boolean, such as `create-hierarchy` on `System.create-object`. A falsy JavaScript value (`false`, `0`, `""`, `null`) becomes `false`, and any other value becomes `true`: an expression such as `isBulk`, every non-zero number, and the strings `"false"` and `"0"`. Write a native JSON `true` or `false` here, never a string.
+- **The `value` of `System.set-boolean-eventvar` and of an object's `set-boolean-instvar`** is a two-item dropdown, not a boolean parameter. Its stored value is one of the item **strings** `"false"` or `"true"`. Any other value is not accepted. An expression is ignored, and the parameter keeps its initial value, `"true"`. A native JSON `true` or `false` is not an item either; the loader first checks that the value is a string, and whether that check fails loudly or the value is ignored like an expression was not traced.
+
+To pass a computed boolean, use one of these instead:
+
+- a condition on the value (`System.compare-boolean-eventvar`, or `is-boolean-instance-variable-set` for an instance variable; both ids are in the r495-2 bundle) and an `else`, each branch setting a constant;
+- a number parameter or variable in place of the boolean, so that the slot holds an ordinary number expression, and a test for non-zero (`<> 0` in a C3 expression) where the value is read, for example in the called function's condition;
+- a script block that sets the value.
+
+This was traced in the C3 editor r495-2 bundle (`projectResources.js`, `main.js` and `plugins/allAces.json`), which was read but not run: the boolean parameter's loader stores `!!value`, the dropdown's loader accepts only one of its item strings, and the parameter types and initial values come from the ACE definitions. The trace is recorded on [GenvidTechnologies/construct3-chef#371](https://github.com/GenvidTechnologies/construct3-chef/issues/371), which also tracks construct3-chef refusing an expression in these slots; construct3-chef does not reject one yet. A consuming project saw the coercion in practice: an editor save turned the boolean argument `isBulk` of a function call into `true`. Other editor releases, and the parameters of custom actions, were not checked.
 
 ### Blocking Input: Layer Interactivity vs. Group Deactivation
 
