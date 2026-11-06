@@ -34,6 +34,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   project load is inferred, and other editor releases were not checked.
   `layout-reference.md` links to the section, and the guide's editor-errors
   list names both error messages. (#181)
+- **The C3 docs now say that a boolean slot keeps only a constant.** A new
+  `construct3-guide.md` section, "Keep Boolean Slots Constant", states that
+  on load the C3 editor turns any non-empty string in a boolean function
+  argument or boolean ACE parameter into `true`, the string `"false"`
+  included. It also states that an expression in the `value` of
+  `set-boolean-eventvar` or `set-boolean-instvar`, which is a two-item
+  dropdown, falls back to `"true"`. Neither case reports an error, and the
+  next save keeps the replacement. The section lists three ways to pass a
+  computed boolean instead. The facts come from a read of the C3 editor r495-2
+  bundle, not from a run. `c3-implementer` is now told to write native
+  `true`/`false` in these slots. construct3-chef does not reject an
+  expression there yet (construct3-chef#371). (#182)
 
 ### Changed
 - **`c3-explorer` is now told to keep the files it saves out of your project
