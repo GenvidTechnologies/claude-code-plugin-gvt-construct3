@@ -42,6 +42,7 @@ Comprehensive reference for Construct 3 platform behavior: event sheets, layouts
 - [6. Layout Architecture](#6-layout-architecture)
 - [7. Platform Gotchas and Field Knowledge](#7-platform-gotchas-and-field-knowledge)
   - [Declaration Order: Nodes Process in Array Order](#declaration-order-nodes-process-in-array-order)
+  - [Keep Boolean Slots Constant](#keep-boolean-slots-constant)
   - [Blocking Input: Layer Interactivity vs. Group Deactivation](#blocking-input-layer-interactivity-vs-group-deactivation)
   - [Instance Variables for Cross-Block State](#instance-variables-for-cross-block-state)
   - [Token-Based String Iteration](#token-based-string-iteration)
@@ -509,6 +510,23 @@ These are runtime and editor behaviours observed in the field, not conventions r
 ### Declaration Order: Nodes Process in Array Order
 
 **Never reference a variable before its declaration in the JSON tree**, even if it's `static` or `const`. While C3 scoping makes variables visible throughout their group, the runtime processes nodes in array order — referencing a variable before its declaration position can produce `NaN` or `undefined` values at runtime (e.g., NaN coordinates when positioning objects). See [Variable and Function Accessibility](#variable-and-function-accessibility) for the full scoping rules.
+
+### Keep Boolean Slots Constant
+
+Some event-sheet slots keep only the constant `true` or `false`. An expression written there, by hand or by a recipe, does not survive: the editor replaces it while it loads the project, reports nothing, and writes the replacement on the next save. The event logic then changes without any error.
+
+The replacement depends on the slot's parameter type:
+
+- **A boolean parameter** is coerced by JavaScript truthiness. This covers a function-call argument for a function parameter of type boolean, and a built-in ACE parameter of type boolean, such as `create-hierarchy` on `System.create-object`. Any non-empty string becomes `true`, including an expression such as `isBulk` and the string `"false"`. Only `""`, `0` and `false` become `false`. Write a native JSON `true` or `false`, never a string.
+- **The `value` of `System.set-boolean-eventvar` and of an object's `set-boolean-instvar`** is a two-item dropdown (`"false"`, `"true"`), not a boolean parameter. A value that is not one of those two item strings is ignored, and the parameter keeps its initial value, `"true"`.
+
+To pass a computed boolean, use one of these instead:
+
+- a condition on the value (`System.compare-boolean-eventvar`, or `is-boolean-instance-variable-set` for an instance variable) and an `else`, each branch setting a constant;
+- a number parameter or variable in place of the boolean, tested for non-zero (`<> 0` in a C3 expression);
+- a script block that sets the value.
+
+This was traced in the C3 editor r495-2 bundle (`projectResources.js` and `main.js`), which was read but not run: the boolean parameter's loader stores `!!value`, and the dropdown's loader accepts only one of its items. The trace is recorded on [GenvidTechnologies/construct3-chef#371](https://github.com/GenvidTechnologies/construct3-chef/issues/371), which also tracks construct3-chef refusing an expression in these slots; construct3-chef does not reject one yet. A consuming project saw the coercion in practice: an editor save turned the boolean argument `isBulk` of a function call into `true`. Other editor releases, and the parameters of custom actions, were not checked.
 
 ### Blocking Input: Layer Interactivity vs. Group Deactivation
 
