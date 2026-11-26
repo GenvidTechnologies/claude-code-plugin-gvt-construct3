@@ -26,6 +26,24 @@ them — never invent a taxonomy the repo doesn't have.
 **Chores** (pin bumps, release mechanics) have no dedicated label in this repo;
 label them `enhancement` and let the title's `chore:` prefix carry the intent.
 
+**A defect in the dev-workspace `scripts/`** (maintainer tooling that does not
+ship) is labelled `enhancement` too, because `bug` covers shipped plugin
+functionality only. Triage decided this on 2026-11-25 for #200 and #209.
+
+## Project
+
+Every triaged issue is an item of the GitHub project `GenvidTechnologies/1`,
+which this repo shares with the other gvt plugins. Its `Road block` field holds
+one road block whose goal the issue serves, or `Standalone` when the issue
+serves no larger goal. Read the field's options and their "Done when" before
+you choose. Add the issue to the project, set the value before the `triaged`
+stamp, and read the value back.
+
+Until 2026-11-25 no issue of this repo was in a project. The triage of that day
+added the 19 open issues. This contract has no recipe for the write yet. That
+run set the value with a GraphQL `updateProjectV2ItemFieldValue` mutation and
+read it back with `fieldValueByName(name: "Road block")`.
+
 ## Priorities
 
 **This repo has no priority labels.** Don't invent a `priority/*` scheme. When
@@ -186,8 +204,8 @@ full `owner/repo#<id>` form and apply `blocked-upstream` (see above).
 ## Mutation recipes
 
 The exact commands the triage skill runs to apply **approved** changes. `{id}`,
-`{type}`, `{otherTypes}`, `{text}`, `{canonical}`, `{other}`, `{title}`, `{body}`,
-`{tmpfile}`, `{triagedLabel}`, and `{needsInfoLabel}` are substituted by the skill.
+`{type}`, `{otherTypes}`, `{canonical}`, `{other}`, `{title}`, `{tmpfile}`,
+`{triagedLabel}`, `{needsInfoLabel}`, and `{closeReason}` are substituted by the skill.
 `{otherTypes}` is the comma-separated category set `bug,enhancement,documentation,question`
 **with `{type}` removed**. (There are no `{p}`/`{a}` substitutions — this repo has no
 priority or area labels.)
@@ -198,12 +216,13 @@ priority or area labels.)
   recipe, which removed the whole category set, dropped the label it had just added on
   #151 (`bug`) and kept it on #152 (`enhancement`). Read the labels back after the edit.
 - Edit body (language fix / fill missing info): `gh issue edit {id} --body-file {tmpfile}` — the skill writes the approved new body to `{tmpfile}` first
-- Comment: `gh issue comment {id} --body "{text}"`
+- Comment: `gh issue comment {id} --body-file {tmpfile}` — the skill writes the comment text to `{tmpfile}` first
 - Flag missing info: `gh issue edit {id} --add-label {needsInfoLabel}` (i.e. `question`; pair with a Comment saying what's missing)
 - Clear missing-info flag: `gh issue edit {id} --remove-label {needsInfoLabel}`
 - Mark duplicate: `gh issue edit {id} --add-label duplicate` then `gh issue comment {id} --body "Duplicate of #{canonical}"`
 - Close duplicate (only with approval): `gh issue close {id} --reason "not planned" --comment "Duplicate of #{canonical}"`
-- Create split issue: `gh issue create --title "{title}" --body "{body}" --label "{type}"`
+- Close as completed or not planned (only with approval): `gh issue close {id} --reason "{closeReason}"` — post the reason first through the Comment recipe; `{closeReason}` is `completed` or `not planned`
+- Create split issue: `gh issue create --title "{title}" --body-file {tmpfile} --label "{type}"` — the skill writes the drafted split body to `{tmpfile}` first
 - Link dependency: `gh issue comment {id} --body "Blocked by #{other}"`
 - Mark blocked upstream: `gh issue edit {id} --add-label blocked-upstream`
 - Clear upstream block: `gh issue edit {id} --remove-label blocked-upstream`
