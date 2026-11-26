@@ -15,6 +15,16 @@ before. If a past entry itself needs correcting, add a new entry that says
 so; never edit or remove the old one in place. See `wiki/wiki-schema.md` for
 the full maintenance schema.
 
+## 2026-11-25
+
+* **Update**: `process/issue-triage.md`. Three Mutation recipes are re-synced
+  with the gvt-dev 6.3.0 flat template: Comment and Create split issue take
+  `--body-file {tmpfile}`, and a "Close as completed or not planned" recipe is
+  added. § Types says a defect in the unshipped `scripts/` is `enhancement`. A
+  new § Project says each triaged issue gets a `Road block` value in the
+  project `GenvidTechnologies/1`. From the retro on the triage of #193–#207.
+  Session observation, not a `raw/` capture.
+
 ## 2026-11-06
 
 * **Update**: `verifying-against-construct3-sample.md` § *Citing provenance*
